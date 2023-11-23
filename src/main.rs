@@ -3,7 +3,8 @@ use rand::Rng;
 use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{self, Write};
+use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Read, Result};
+use std::path::Path;
 
 // Define a struct to represent an individual
 #[derive(Debug, Clone)]
@@ -34,9 +35,21 @@ struct Cell {
     counter: usize,
 }
 
+// Define a struct to represent global variables
 struct GlobalVariables {
     age_mortality: u32,
     n_individuals: usize,
+}
+
+// Landscape metadata i.e. ASCII header
+#[derive(Debug)]
+struct LandscapeMetadata {
+    ncols: usize,
+    nrows: usize,
+    xllcorner: usize,
+    yllcorner: usize,
+    cellsize: f64,
+    nodata_value: i32,
 }
 
 //Constants / inputs
@@ -47,19 +60,117 @@ const MAX_KNOWN_CELLS: usize = 20;
 const MAX_LAST_VISITED_CELLS: usize = 3;
 
 
-fn landscape_setup(grid_size: usize) -> Vec<Vec<Cell>> {
-    // Initialize the grid with random quality values and counters
-    let mut grid: Vec<Vec<Cell>> = Vec::with_capacity(grid_size);
-    for _ in 0..grid_size {
-        let row: Vec<Cell> = (0..grid_size)
-            .map(|_| Cell {
-                quality: rand::thread_rng().gen_range(1..=20) as f64, //FIX ME no typecasting
-                counter: 0,
-            })
-            .collect();
-        grid.push(row);
+fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>, LandscapeMetadata)> {
+    // Open the file in read-only mode
+    let file = File::open(file_path)?;
+
+    // Create a cloneable reader
+    let reader = BufReader::new(file);
+
+    // Skip the header
+    let mut lines = reader.lines();
+    for _ in 0..6 {
+        lines.next();
     }
-    grid
+
+    // Create a new BufReader from the file
+    let mut new_reader = BufReader::new(File::open(file_path)?);
+
+    // Extract metadata from the file
+    let metadata = extract_metadata(&mut new_reader)?;
+
+    // Determine grid size from the file
+    let nrows = metadata.nrows;
+
+    // Initialize the grid with quality values from the ASCII file
+    let mut grid: Vec<Vec<Cell>> = Vec::with_capacity(nrows);
+
+    // Read the rows
+    for _ in 0..nrows {
+        if let Some(Ok(line)) = lines.next() {
+            let row: Vec<Cell> = line
+                //.chars()
+                //.map(|c| Cell {
+                //    quality: c.to_digit(10).unwrap_or(0) as f64, // Convert ASCII char to digit
+                //    counter: 0,
+                .split_whitespace()
+                .map(|s| Cell {
+                    quality: s.parse().unwrap_or(0.0), // Assume it's a numeric, signed value
+                    counter: 0,
+                })
+                .collect();
+
+            grid.push(row);
+        } else {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Not enough data rows in the ASCII file",
+            ));
+        }
+    }
+
+    Ok((grid, metadata))
+}
+
+fn extract_metadata(reader: &mut BufReader<File>) -> Result<LandscapeMetadata> {
+    // Variables to store metadata values
+    let mut ncols = 0;
+    let mut nrows = 0;
+    let mut xllcorner = 0;
+    let mut yllcorner = 0;
+    let mut cellsize = 0.0;
+    let mut nodata_value = 0;
+
+    // Read metadata lines
+    for _ in 0..6 {
+        let mut line = String::new();
+        reader.read_line(&mut line)?;
+
+        // Parse metadata from each line
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() != 2 {
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                "Invalid format in metadata lines",
+            ));
+        }
+
+        let key = parts[0];
+        let value = parts[1].parse::<i32>().map_err(|_| {
+            Error::new(
+                ErrorKind::InvalidData,
+                format!("Failed to parse metadata value for key: {}", key),
+            )
+        })?;
+
+        // Assign values to the appropriate metadata fields
+        match key {
+            "NCOLS" => ncols = value as usize,
+            "NROWS" => nrows = value as usize,
+            "XLLCORNER" => xllcorner = value as usize,
+            "YLLCORNER" => yllcorner = value as usize,
+            "CELLSIZE" => cellsize = value as f64,
+            "NODATA_value" => nodata_value = value,
+            _ => {
+                return Err(Error::new(
+                    ErrorKind::InvalidData,
+                    format!("Unknown metadata key: {}", key),
+                ));
+            }
+        }
+    }
+
+    // Create and return the metadata struct
+    let metadata = LandscapeMetadata {
+        ncols,
+        nrows,
+        xllcorner,
+        yllcorner,
+        cellsize,
+        nodata_value,
+    };
+
+    Ok(metadata)
 }
 
 fn individuals_setup(grid_size: usize, num_individuals: usize) -> Vec<Individual> {
@@ -129,8 +240,6 @@ fn update_group_memory(individuals: &mut Vec<Individual>) {
         //);
     }
 }
-
-
 
 fn ageing(individuals: &mut Vec<Individual>, age_mortality: &mut u32) {
     for individual in individuals.iter_mut() {
@@ -404,18 +513,24 @@ fn update_counter(n_individuals: &mut usize,individuals: &mut Vec<Individual>){
     *n_individuals = individuals.len();
 }
 
-fn setup(grid_size: usize, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Individual>, u32, usize) {
+fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Individual>, u32, usize) {
     // Setup the landscape (grid)
-    let grid = landscape_setup(grid_size);
-
+    let (grid, metadata) = match landscape_setup_from_ascii(file_path) {
+        Ok((g, m)) => (g, m),
+        Err(e) => {
+            eprintln!("Error setting up landscape: {}", e);
+            // Handle the error, maybe return a default grid or exit the program
+            std::process::exit(1);
+        }
+    };
     // Setup the individuals
-    let individuals = individuals_setup(grid_size, num_individuals);
+    let individuals = individuals_setup(grid.len(), num_individuals);
 
     // Initialize the age_mortality counter to 0
     let age_mortality = 0;
 
     // Initialize the age_mortality counter to the starting individual number num_individuals
-    let n_individuals = individuals.len(); //num_individuals.clone() as u32;
+    let n_individuals = individuals.len();
 
     (grid, individuals, age_mortality, n_individuals)
 }
@@ -425,8 +540,13 @@ fn main() {
     let grid_size = 25;
     let num_individuals = 10;
 
+    let file_path = "input/landscape/redDeer_global_50m.asc";
+   
     // Setup the landscape and individuals
-    let (mut grid, mut individuals, mut age_mortality, mut n_individuals) = setup(grid_size, num_individuals);
+    //let (mut grid, mut individuals, mut age_mortality, mut n_individuals) = setup(grid_size, num_individuals);
+    //let (mut individuals, mut age_mortality, mut n_individuals) = setup(grid_size, num_individuals);
+
+    let (grid, mut individuals,mut age_mortality,mut n_individuals) = setup(file_path, num_individuals);
 
     // Vector to store grid states for all iterations
     let mut all_grid_states: Vec<(usize, Vec<Vec<Cell>>)> = Vec::new();
@@ -438,13 +558,13 @@ fn main() {
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
 
     // Simulate and save the grid state and individual state for each iteration
-    for iteration in 1..= 100 {
+    for iteration in 1..= 1 {
 
         // Simulate movement of individuals
         let mut rng = rand::thread_rng();
         move_individuals(&grid, &mut individuals, &mut rng);
 
-        // Save the grid state for the current iteration
+        // Save the grid state for the current (last) iteration
         all_grid_states.push((iteration, grid.clone()));
 
         // Save the individual state for the current iteration
