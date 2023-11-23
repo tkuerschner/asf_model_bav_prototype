@@ -27,19 +27,16 @@ struct IndividualMemory {
     presence_timer: usize,
 }
 
-
 // Define a struct to represent a grid cell
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Cell {
     quality: f64,
     counter: usize,
-    // Add other fields 
 }
 
 struct GlobalVariables {
     age_mortality: u32,
     n_individuals: usize,
-    // Add more global variables 
 }
 
 //Constants / inputs
@@ -160,7 +157,7 @@ fn ageing(individuals: &mut Vec<Individual>, age_mortality: &mut u32) {
 }
 
 fn calculate_quality_score(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> f64 {
-   // println!("Calculating quality score for ({}, {})", x, y);  
+    // println!("Calculating quality score for ({}, {})", x, y);  
     // logic to calculate the quality score based on the cell's attributes
     // placeholder FIXME
     match &grid[x][y] {
@@ -304,6 +301,8 @@ fn random_known_cell_except_last_three(known_cells: &HashSet<(usize, usize)>,las
     }
 }
 
+// End unused helper functions
+
 fn save_individuals_as_csv(filename: &str, individuals_states: &[(usize, Vec<Individual>)]) -> io::Result<()> {
     // Create or open the CSV file
     let mut file = File::create(filename)?;
@@ -312,50 +311,49 @@ fn save_individuals_as_csv(filename: &str, individuals_states: &[(usize, Vec<Ind
     writeln!(file, "iteration,id,group_id,x,y,age,known_cells,group_member_ids, last_three_cells")?;
 
     // Write each individual's data for each iteration
-// Write each individual's data for each iteration
-for (iteration, individuals) in individuals_states {
-    for individual in individuals {
+    for (iteration, individuals) in individuals_states {
+        for individual in individuals {
         // Convert variables to strings for CSV output
-        let known_cells_str: String = individual
-            .memory
-            .known_cells
-            .iter()
-            .map(|&(x, y)| format!("[{}_{}]", x, y))
-            .collect::<Vec<String>>()
-            .join(";");
-        
-            let group_member_ids_str: String = format!(
-                "[{}]",
-                individual
-                    .memory
-                    .group_member_ids
-                    .iter()
-                    .map(|&id| id.to_string())
-                    .collect::<Vec<String>>()
-                    .join(";")
-            );
-        
-        let last_three_cells_str: String = individual
-            .memory
-            .last_visited_cells_order
-            .iter()
-            .map(|&(x, y)| format!("[{}_{}]", x, y))
-            .collect::<Vec<String>>()
-            .join(";");
+            let known_cells_str: String = individual
+                .memory
+                .known_cells
+                .iter()
+                .map(|&(x, y)| format!("[{}_{}]", x, y))
+                .collect::<Vec<String>>()
+                .join(";");
+            
+                let group_member_ids_str: String = format!(
+                    "[{}]",
+                    individual
+                        .memory
+                        .group_member_ids
+                        .iter()
+                        .map(|&id| id.to_string())
+                        .collect::<Vec<String>>()
+                        .join(";")
+                );
+            
+            let last_three_cells_str: String = individual
+                .memory
+                .last_visited_cells_order
+                .iter()
+                .map(|&(x, y)| format!("[{}_{}]", x, y))
+                .collect::<Vec<String>>()
+                .join(";");
 
-        writeln!(
-            file,
-            "{},{},{},{},{},{},{},{},{}",
-            iteration,
-            individual.id,
-            individual.group_id,
-            individual.x,
-            individual.y,
-            individual.age,
-            known_cells_str,
-            group_member_ids_str,
-            last_three_cells_str
-        )?;
+            writeln!(
+                file,
+                "{},{},{},{},{},{},{},{},{}",
+                iteration,
+                individual.id,
+                individual.group_id,
+                individual.x,
+                individual.y,
+                individual.age,
+                known_cells_str,
+                group_member_ids_str,
+                last_three_cells_str
+            )?;
     }
 }
 
@@ -466,8 +464,10 @@ fn main() {
         all_global_variables.push(GlobalVariables {
         age_mortality,
         n_individuals
-        // Add more variables as needed
+        // Add more variables as needed here
         });
+
+        // Stop the sim when all individuals are dead
 
         if n_individuals == 0 {
             println!("Simulation terminated: No individuals remaining.");
