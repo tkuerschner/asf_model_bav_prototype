@@ -422,8 +422,6 @@ fn setup(grid_size: usize, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Indiv
     (grid, individuals, age_mortality, n_individuals)
 }
 
-
-
 fn main() {
     // Define grid dimensions
     let grid_size = 25;
@@ -479,13 +477,13 @@ fn main() {
     }
 
     // Save all grid states to a single CSV file
-    save_grid_as_csv("all_grid_states.csv", &all_grid_states).expect("Failed to save grid states as CSV");
+    save_grid_as_csv("output/all_grid_states.csv", &all_grid_states).expect("Failed to save grid states as CSV");
 
     // Save all individual states to a single CSV file
-    save_individuals_as_csv("all_individuals.csv", &all_individuals_states).expect("Failed to save individuals as CSV");
+    save_individuals_as_csv("output/all_individuals.csv", &all_individuals_states).expect("Failed to save individuals as CSV");
 
     // Save all global variables to a single CSV file
-    save_global_variables_as_csv("all_global_variables.csv", &all_global_variables).expect("Failed to save global variables as CSV");
+    save_global_variables_as_csv("output/all_global_variables.csv", &all_global_variables).expect("Failed to save global variables as CSV");
 
 
 }
