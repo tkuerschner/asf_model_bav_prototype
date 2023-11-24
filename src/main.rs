@@ -1,9 +1,11 @@
 
 use rand::Rng;
 use rand::seq::SliceRandom;
+use std::cell;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Read, Result};
+
 
 // Define a struct to represent an individual
 #[derive(Debug, Clone)]
@@ -36,6 +38,12 @@ struct Cell {
     y_grid: usize,
 }
 
+struct CellInfo {
+    x_grid_o: usize,
+    y_grid_o: usize,
+    quality: f64,
+}
+
 // Define a struct to represent global variables
 struct GlobalVariables {
     age_mortality: u32,
@@ -59,6 +67,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: f64 = 5.0;
 const MAX_KNOWN_CELLS: usize = 20;
 const MAX_LAST_VISITED_CELLS: usize = 3;
+const RUNTIME: usize = 1;//365 * 10;
 
 
 fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>, LandscapeMetadata)> {
@@ -99,6 +108,7 @@ fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>, La
                     x_grid: j,
                     y_grid: i,
                 })
+                //.filter(|cell| cell.quality > 0.0)
                 .collect();
 
             grid.push(row);
@@ -174,23 +184,95 @@ fn extract_metadata(reader: &mut BufReader<File>) -> Result<LandscapeMetadata> {
     Ok(metadata)
 }
 
-fn individuals_setup(grid_size: usize, num_individuals: usize) -> Vec<Individual> {
+fn extract_cell_info(grid: &Vec<Vec<Cell>>) -> Vec<CellInfo> {
+    let mut cell_info_list = Vec::new();
+
+    for (i, row) in grid.iter().enumerate() {
+        for (j, cell) in row.iter().enumerate() {
+            let info = CellInfo {
+                x_grid_o: i,
+                y_grid_o: j,
+                quality: cell.quality,
+            };
+            cell_info_list.push(info);
+        }
+    }
+
+    cell_info_list.retain(|cell_info| cell_info.quality >= 0.0);
+
+      // Print each CellInfo individually
+      //for info in &cell_info_list {
+      //  println!("x_grid_o: {}, y_grid_o: {}, quality: {}", info.x_grid_o, info.y_grid_o, info.quality);
+      //}
+
+    
+    cell_info_list
+}
+
+fn save_cellinfo_as_csv(filename: &str, cell_info_list: &Vec<CellInfo> ) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
+
+    // Write the header line
+    writeln!(file, "x_grid_o,y_grid_o,quality")?;
+
+    // Write each iteration's global variables
+    for (iteration, cellinfo) in cell_info_list.iter().enumerate() {
+        writeln!(file, "{},{},{}",cellinfo.x_grid_o, cellinfo.y_grid_o, cellinfo.quality)?;
+        // Add more variables as needed
+    }
+
+    println!("Global variables saved to: {}", filename);
+    Ok(())
+}
+
+fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, num_individuals: usize) -> Vec<Individual> {
+
     // Create individuals with unique IDs, group IDs, and memory
     let mut individuals: Vec<Individual> = Vec::with_capacity(num_individuals);
+    let grid_size = grid.len();  
+
+   // let tmp_Grid = grid.iter().iter().filter(|cell| cell.quality > 0.0);
+
     for id in 0..num_individuals {
-        let x = rand::thread_rng().gen_range(0..grid_size);
-        let y = rand::thread_rng().gen_range(0..grid_size);
-        let age = 730 + rand::thread_rng().gen_range(1..=1825); // Renamed from capacity to age
-        let group_id = rand::thread_rng().gen_range(1..=2); // Example: 2 groups
-        let presence_timer = 0; 
+      
+        let (x, y) = loop {
+            let x_candidate = rand::thread_rng().gen_range(0..grid_size);
+            let y_candidate = rand::thread_rng().gen_range(0..grid_size);
+
+            if grid[x_candidate][y_candidate].quality > 0.0 {
+                break (x_candidate, y_candidate);
+            }
+        };
+
+        // Generate a random index within the range of the cell_info_list
+       
+        //let mut rng = rand::thread_rng();  
+        //let random_index  = rng.gen_range(0..cell_info_list.len());
+        //println!("randomIndex:{}", random_index);
+
+        // Access the CellInfo at the randomly chosen index
+        
+        //let cell_info = &cell_info_list[random_index];
+
+        //let cell_info = &cell_info_list[94891]; //505,538,0.64791864156723
+
+        //let x = cell_info.x_grid_o;
+        //let y = cell_info.y_grid_o;
+        ////let quality = cell_info.quality;
+
+        let age = 730 + rand::thread_rng().gen_range(1..=1825);
+        let group_id = rand::thread_rng().gen_range(1..=2);
+        let presence_timer = 0;
         let memory = IndividualMemory {
             known_cells: HashSet::new(),
             group_member_ids: Vec::new(),
             last_visited_cells: HashSet::new(),
-            known_cells_order: Vec::new(),  
-            last_visited_cells_order: Vec::new(),  
+            known_cells_order: Vec::new(),
+            last_visited_cells_order: Vec::new(),
             presence_timer,
         };
+
         individuals.push(Individual {
             id,
             group_id,
@@ -200,6 +282,7 @@ fn individuals_setup(grid_size: usize, num_individuals: usize) -> Vec<Individual
             memory,
         });
     }
+
     individuals
 }
 
@@ -280,7 +363,7 @@ fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, individuals: &mut Vec<Individ
     for individual in individuals.iter_mut() {
         // 25% chance to move randomly
         if rng.gen_range(0..100) < 25 {
-            move_to_random_cell(grid.len(), individual, rng);
+            move_to_random_adjacent_cells(grid.len(), individual, rng);
         } else {
             // Move towards the cell with the highest quality
             move_towards_highest_quality(grid, individual, rng);
@@ -292,7 +375,7 @@ fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, individuals: &mut Vec<Individ
             if individual.memory.presence_timer >= PRESENCE_TIME_LIMIT || rng.gen_range(0..100) < 5 {
                 // Reset presence timer and force movement to a random cell
                 individual.memory.presence_timer = 0;
-                move_to_random_cell(grid.len(), individual, rng);
+                move_to_random_adjacent_cells(grid.len(), individual, rng);
             }
         }
     }
@@ -326,7 +409,7 @@ fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, individual: &mut Individu
     individual.y = new_y;
 }
 
-fn move_to_random_cell(grid_size: usize, individual: &mut Individual, rng: &mut impl Rng) {
+fn move_to_random_adjacent_cells(grid_size: usize, individual: &mut Individual, rng: &mut impl Rng) {
     // Get the current position of the individual
     let current_x = individual.x;
     let current_y = individual.y;
@@ -529,6 +612,24 @@ fn flip_grid(grid: &mut Vec<Vec<Cell>>) {
     }
 }
 
+fn filter_grid(grid: &mut Vec<Vec<Cell>>) {
+    for row in grid.iter_mut() {
+        row.retain(|cell| cell.quality > 0.0);
+    }
+}
+
+fn filter_grid2(original_grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
+    original_grid
+        .iter()
+        .cloned()
+        .map(|row| {
+            row.into_iter()
+                .filter(|cell| cell.quality > 0.0)
+                .collect()
+        })
+        .filter(|row: &Vec<Cell>| !row.is_empty())
+        .collect()
+}
 
 fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Individual>, u32, usize) {
     // Setup the landscape (grid)
@@ -541,10 +642,28 @@ fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Indivi
         }
     };
 
+    //extract cell info
+    let cell_info_list = extract_cell_info(&grid);
+
+    // save_cellinfo_as_csv("output/debugCellInfo.csv",&cell_info_list);
+
+    // Flip the grid for northing
     flip_grid(&mut grid);
 
+    // Filter the grid based on the quality
+    //filter_grid(&mut grid);
+
+    //let filtered_grid: Vec<Vec<Cell>> = filter_grid2(&grid);
+
+
+
     // Setup the individuals
-    let individuals = individuals_setup(grid.len(), num_individuals);
+    let individuals = individuals_setup(&cell_info_list, &grid, num_individuals);
+
+      // Check if any individual is outside the bounds
+      if individuals.iter().any(|ind| ind.x >= grid.len() || ind.y >= grid[0].len()) {
+        println!("Some individuals are outside the bounds of the grid.");
+    }
 
     // Initialize the age_mortality counter to 0
     let age_mortality = 0;
@@ -578,17 +697,11 @@ fn main() {
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
 
     // Simulate and save the grid state and individual state for each iteration
-    for iteration in 1..= 1 {
+    for iteration in 1..= RUNTIME {
 
         // Simulate movement of individuals
         let mut rng = rand::thread_rng();
-        move_individuals(&grid, &mut individuals, &mut rng);
-
-        // Save the grid state for the current (last) iteration
-        all_grid_states.push((iteration, grid.clone()));
-
-        // Save the individual state for the current iteration
-        all_individuals_states.push((iteration, individuals.clone()));
+      //  move_individuals(&grid, &mut individuals, &mut rng);
 
         //age individuals by one day
         ageing(&mut individuals, &mut age_mortality);
@@ -599,7 +712,6 @@ fn main() {
         // Update group memory
         update_group_memory(&mut individuals);
 
-
         // Save global variables for the current iteration
         all_global_variables.push(GlobalVariables {
         age_mortality,
@@ -607,10 +719,20 @@ fn main() {
         // Add more variables as needed here
         });
 
+        if iteration == (RUNTIME) {
+            // Save the grid state for the current (last) iteration
+            //println!("its happening");
+            all_grid_states.push((iteration, grid.clone()));
+            }
+    
+            // Save the individual state for the current iteration
+            all_individuals_states.push((iteration, individuals.clone()));
+
         // Stop the sim when all individuals are dead
 
         if n_individuals == 0 {
             println!("Simulation terminated: No individuals remaining.");
+            all_grid_states.push((iteration, grid.clone())); // update gridstates wen simulation finished
             break;
         }
 
