@@ -4,7 +4,6 @@ use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Read, Result};
-use std::path::Path;
 
 // Define a struct to represent an individual
 #[derive(Debug, Clone)]
@@ -33,6 +32,8 @@ struct IndividualMemory {
 struct Cell {
     quality: f64,
     counter: usize,
+    x_grid: usize,
+    y_grid: usize,
 }
 
 // Define a struct to represent global variables
@@ -81,22 +82,22 @@ fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>, La
 
     // Determine grid size from the file
     let nrows = metadata.nrows;
+    let ncols = metadata.ncols;
 
     // Initialize the grid with quality values from the ASCII file
     let mut grid: Vec<Vec<Cell>> = Vec::with_capacity(nrows);
 
     // Read the rows
-    for _ in 0..nrows {
+    for i in 0..nrows {
         if let Some(Ok(line)) = lines.next() {
             let row: Vec<Cell> = line
-                //.chars()
-                //.map(|c| Cell {
-                //    quality: c.to_digit(10).unwrap_or(0) as f64, // Convert ASCII char to digit
-                //    counter: 0,
                 .split_whitespace()
-                .map(|s| Cell {
-                    quality: s.parse().unwrap_or(0.0), // Assume it's a numeric, signed value
+                .enumerate()
+                .map(|(j, s)| Cell {
+                    quality: s.parse().unwrap_or(0.0),
                     counter: 0,
+                    x_grid: j,
+                    y_grid: i,
                 })
                 .collect();
 
@@ -104,7 +105,7 @@ fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>, La
         } else {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
-                "Not enough data rows in the ASCII file",
+                "Not enough data rows in the data file",
             ));
         }
     }
@@ -476,13 +477,13 @@ fn save_grid_as_csv(filename: &str, grid_states: &[(usize, Vec<Vec<Cell>>)]) -> 
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,x,y,quality,counter")?;
+    writeln!(file, "iteration,x,y,quality,counter,x_grid,y_grid")?;
 
     // Write each cell's data for each iteration
     for (iteration, grid) in grid_states {
         for (x, row) in grid.iter().enumerate() {
             for (y, cell) in row.iter().enumerate() {
-                writeln!(file, "{},{},{},{},{}", iteration, x, y, cell.quality, cell.counter)?;
+                writeln!(file, "{},{},{},{},{},{},{}", iteration, x, y, cell.quality, cell.counter, cell.x_grid, cell.y_grid)?;
             }
         }
     }
@@ -513,9 +514,25 @@ fn update_counter(n_individuals: &mut usize,individuals: &mut Vec<Individual>){
     *n_individuals = individuals.len();
 }
 
+fn flip_grid(grid: &mut Vec<Vec<Cell>>) {
+    let nrows = grid.len();
+    let ncols = if nrows > 0 { grid[0].len() } else { 0 };
+
+    for i in 0..nrows {
+        for j in 0..ncols {
+            let new_x = j; // New x gets the column index
+            let new_y = nrows - i - 1; // New y gets the value max(old y) - old y
+
+            grid[i][j].x_grid = new_x;//cols
+            grid[i][j].y_grid = new_y;//rows
+        }
+    }
+}
+
+
 fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Individual>, u32, usize) {
     // Setup the landscape (grid)
-    let (grid, metadata) = match landscape_setup_from_ascii(file_path) {
+    let (mut grid, metadata) = match landscape_setup_from_ascii(file_path) {
         Ok((g, m)) => (g, m),
         Err(e) => {
             eprintln!("Error setting up landscape: {}", e);
@@ -523,6 +540,9 @@ fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Indivi
             std::process::exit(1);
         }
     };
+
+    flip_grid(&mut grid);
+
     // Setup the individuals
     let individuals = individuals_setup(grid.len(), num_individuals);
 
@@ -537,7 +557,7 @@ fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Indivi
 
 fn main() {
     // Define grid dimensions
-    let grid_size = 25;
+    //let grid_size = 25;
     let num_individuals = 10;
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
@@ -666,6 +686,3 @@ fn main() {
 //    println!("Grid state saved to: {}", filename);
 //    Ok(())
 //}
-
-
-
