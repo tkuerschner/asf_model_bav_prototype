@@ -45,9 +45,13 @@ struct CellInfo {
 }
 
 // Define a struct to represent global variables
+#[derive(Clone)] 
 struct GlobalVariables {
     age_mortality: u32,
     n_individuals: usize,
+    day: u32,
+    month: u32,
+    year: u32,
 }
 
 // Landscape metadata i.e. ASCII header
@@ -67,9 +71,9 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: f64 = 5.0;
 const MAX_KNOWN_CELLS: usize = 20;
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 1;//365 * 10;
+const RUNTIME: usize = 366;//365 * 10;
 
-
+// Landscape / grid functions
 fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>, LandscapeMetadata)> {
     // Open the file in read-only mode
     let file = File::open(file_path)?;
@@ -226,6 +230,42 @@ fn save_cellinfo_as_csv(filename: &str, cell_info_list: &Vec<CellInfo> ) -> io::
     Ok(())
 }
 
+fn flip_grid(grid: &mut Vec<Vec<Cell>>) {
+    let nrows = grid.len();
+    let ncols = if nrows > 0 { grid[0].len() } else { 0 };
+
+    for i in 0..nrows {
+        for j in 0..ncols {
+            let new_x = j; // New x gets the column index
+            let new_y = nrows - i - 1; // New y gets the value max(old y) - old y
+
+            grid[i][j].x_grid = new_x;//cols
+            grid[i][j].y_grid = new_y;//rows
+        }
+    }
+}
+
+fn filter_grid(grid: &mut Vec<Vec<Cell>>) {
+    for row in grid.iter_mut() {
+        row.retain(|cell| cell.quality > 0.0);
+    }
+}
+
+fn filter_grid2(original_grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
+    original_grid
+        .iter()
+        .cloned()
+        .map(|row| {
+            row.into_iter()
+                .filter(|cell| cell.quality > 0.0)
+                .collect()
+        })
+        .filter(|row: &Vec<Cell>| !row.is_empty())
+        .collect()
+}
+
+// Individuals related functions
+
 fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, num_individuals: usize) -> Vec<Individual> {
 
     // Create individuals with unique IDs, group IDs, and memory
@@ -286,6 +326,32 @@ fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, num_
     individuals
 }
 
+fn ageing(individuals: &mut Vec<Individual>, age_mortality: &mut u32) {
+    for individual in individuals.iter_mut() {
+        individual.age += 1;
+    }
+
+    // Filter out individuals whose age exceeds the maximum age
+    let retained_individuals: Vec<Individual> = individuals
+        .drain(..)
+        .filter(|individual| {
+            if individual.age > MAX_AGE {
+                // Increment age_mortality counter when an individual is removed
+                *age_mortality += 1;
+                false
+            } else {
+                true
+            }
+        })
+        .collect();
+
+    // Clear the original vector and insert retained individuals
+    individuals.clear();
+    individuals.extend_from_slice(&retained_individuals);
+}
+
+// Memory functions
+
 fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usize, usize)>, new_cell: (usize, usize), max_size: usize) {
     memory.insert(new_cell);
 
@@ -325,29 +391,7 @@ fn update_group_memory(individuals: &mut Vec<Individual>) {
     }
 }
 
-fn ageing(individuals: &mut Vec<Individual>, age_mortality: &mut u32) {
-    for individual in individuals.iter_mut() {
-        individual.age += 1;
-    }
-
-    // Filter out individuals whose age exceeds the maximum age
-    let retained_individuals: Vec<Individual> = individuals
-        .drain(..)
-        .filter(|individual| {
-            if individual.age > MAX_AGE {
-                // Increment age_mortality counter when an individual is removed
-                *age_mortality += 1;
-                false
-            } else {
-                true
-            }
-        })
-        .collect();
-
-    // Clear the original vector and insert retained individuals
-    individuals.clear();
-    individuals.extend_from_slice(&retained_individuals);
-}
+// Movement functions
 
 fn calculate_quality_score(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> f64 {
     // println!("Calculating quality score for ({}, {})", x, y);  
@@ -494,7 +538,7 @@ fn random_known_cell_except_last_three(known_cells: &HashSet<(usize, usize)>,las
     }
 }
 
-// End unused helper functions
+// Saving Output functions
 
 fn save_individuals_as_csv(filename: &str, individuals_states: &[(usize, Vec<Individual>)]) -> io::Result<()> {
     // Create or open the CSV file
@@ -580,11 +624,11 @@ fn save_global_variables_as_csv(filename: &str, global_variables: &[GlobalVariab
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,n_individuals,age_mortality")?;
+    writeln!(file, "iteration,day,month,year,n_individuals,age_mortality")?;
 
     // Write each iteration's global variables
     for (iteration, globals) in global_variables.iter().enumerate() {
-        writeln!(file, "{},{},{}", iteration + 1, globals.n_individuals, globals.age_mortality)?;
+        writeln!(file, "{},{},{},{},{},{}", iteration + 1, globals.day, globals.month, globals.year, globals.n_individuals, globals.age_mortality)?;
         // Add more variables as needed
     }
 
@@ -592,46 +636,33 @@ fn save_global_variables_as_csv(filename: &str, global_variables: &[GlobalVariab
     Ok(())
 }
 
+// Update functions
+
 fn update_counter(n_individuals: &mut usize,individuals: &mut Vec<Individual>){
 
     *n_individuals = individuals.len();
 }
+ 
+fn progress_time(global_variables: &mut GlobalVariables) {
+    // Increment the day
+    global_variables.day += 1;
 
-fn flip_grid(grid: &mut Vec<Vec<Cell>>) {
-    let nrows = grid.len();
-    let ncols = if nrows > 0 { grid[0].len() } else { 0 };
+    // Check if a month has passed (28 days in a month)
+    if global_variables.day > 28 {
+        global_variables.day = 1;
+        global_variables.month += 1;
 
-    for i in 0..nrows {
-        for j in 0..ncols {
-            let new_x = j; // New x gets the column index
-            let new_y = nrows - i - 1; // New y gets the value max(old y) - old y
-
-            grid[i][j].x_grid = new_x;//cols
-            grid[i][j].y_grid = new_y;//rows
+        // Check if a year has passed (12 months in a year)
+        if global_variables.month > 12 {
+            global_variables.month = 1;
+            global_variables.year += 1;
         }
     }
 }
 
-fn filter_grid(grid: &mut Vec<Vec<Cell>>) {
-    for row in grid.iter_mut() {
-        row.retain(|cell| cell.quality > 0.0);
-    }
-}
+// General setup
 
-fn filter_grid2(original_grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
-    original_grid
-        .iter()
-        .cloned()
-        .map(|row| {
-            row.into_iter()
-                .filter(|cell| cell.quality > 0.0)
-                .collect()
-        })
-        .filter(|row: &Vec<Cell>| !row.is_empty())
-        .collect()
-}
-
-fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Individual>, u32, usize) {
+fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Individual>) {
     // Setup the landscape (grid)
     let (mut grid, metadata) = match landscape_setup_from_ascii(file_path) {
         Ok((g, m)) => (g, m),
@@ -650,13 +681,6 @@ fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Indivi
     // Flip the grid for northing
     flip_grid(&mut grid);
 
-    // Filter the grid based on the quality
-    //filter_grid(&mut grid);
-
-    //let filtered_grid: Vec<Vec<Cell>> = filter_grid2(&grid);
-
-
-
     // Setup the individuals
     let individuals = individuals_setup(&cell_info_list, &grid, num_individuals);
 
@@ -665,14 +689,10 @@ fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Indivi
         println!("Some individuals are outside the bounds of the grid.");
     }
 
-    // Initialize the age_mortality counter to 0
-    let age_mortality = 0;
-
-    // Initialize the age_mortality counter to the starting individual number num_individuals
-    let n_individuals = individuals.len();
-
-    (grid, individuals, age_mortality, n_individuals)
+    (grid, individuals)
 }
+
+// Main model
 
 fn main() {
     // Define grid dimensions
@@ -682,10 +702,8 @@ fn main() {
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
     // Setup the landscape and individuals
-    //let (mut grid, mut individuals, mut age_mortality, mut n_individuals) = setup(grid_size, num_individuals);
-    //let (mut individuals, mut age_mortality, mut n_individuals) = setup(grid_size, num_individuals);
 
-    let (grid, mut individuals,mut age_mortality,mut n_individuals) = setup(file_path, num_individuals);
+    let (grid, mut individuals) = setup(file_path, num_individuals);
 
     // Vector to store grid states for all iterations
     let mut all_grid_states: Vec<(usize, Vec<Vec<Cell>>)> = Vec::new();
@@ -696,28 +714,30 @@ fn main() {
     // Vector to store global variables for all iterations
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
 
+       let mut global_variables = GlobalVariables {
+        age_mortality: 0,
+        n_individuals: individuals.len(),
+        day: 1,   // Initialize with 1
+        month: 1, // Initialize with 1
+        year: 1,  // Initialize with 1
+        // Add more variables as needed here
+    };
+
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
 
         // Simulate movement of individuals
         let mut rng = rand::thread_rng();
-      //  move_individuals(&grid, &mut individuals, &mut rng);
+        move_individuals(&grid, &mut individuals, &mut rng);
 
         //age individuals by one day
-        ageing(&mut individuals, &mut age_mortality);
+        ageing(&mut individuals, &mut global_variables.age_mortality);
 
         //Updating various counters such as number of individuals
-        update_counter(&mut n_individuals, &mut individuals);
+        update_counter(&mut global_variables.n_individuals, &mut individuals);
 
         // Update group memory
         update_group_memory(&mut individuals);
-
-        // Save global variables for the current iteration
-        all_global_variables.push(GlobalVariables {
-        age_mortality,
-        n_individuals
-        // Add more variables as needed here
-        });
 
         if iteration == (RUNTIME) {
             // Save the grid state for the current (last) iteration
@@ -730,11 +750,25 @@ fn main() {
 
         // Stop the sim when all individuals are dead
 
-        if n_individuals == 0 {
+        if global_variables.n_individuals == 0 {
             println!("Simulation terminated: No individuals remaining.");
             all_grid_states.push((iteration, grid.clone())); // update gridstates wen simulation finished
             break;
         }
+
+         all_global_variables.push(GlobalVariables {
+            age_mortality: global_variables.age_mortality,
+            n_individuals: global_variables.n_individuals,
+            day: global_variables.day,
+            month: global_variables.month,
+            year: global_variables.year,
+        });
+
+
+        // Progress time 
+        
+        progress_time(&mut global_variables);
+ 
 
     }
 
@@ -807,4 +841,3 @@ fn main() {
 //
 //    println!("Grid state saved to: {}", filename);
 //    Ok(())
-//}
