@@ -5,6 +5,8 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result};
 
+use std::fmt;
+
 // Loading grid from ascii
 mod grid_functions;
 use grid_functions::*;
@@ -17,6 +19,9 @@ use save_functions::*;
 mod ageing;
 use ageing::ageing;
 
+mod reproduction;
+use reproduction::*;
+
 
 // Define a struct to represent an individual
 #[derive(Debug, Clone)]
@@ -25,8 +30,12 @@ pub struct Individual {
     group_id: usize,
     x: usize,
     y: usize,
-    age: u32, 
+    age: u32,
+    sex: Sex,
+    has_reproduced: bool,
+    age_class: AgeClass, 
     memory: IndividualMemory,
+    // add reset for reproduction
 }
 
 // Define a struct to represent an individual's memory
@@ -38,6 +47,45 @@ struct IndividualMemory {
     last_visited_cells_order: Vec<(usize, usize)>,
     group_member_ids: Vec<usize>,
     presence_timer: usize,
+}
+
+// Define a struct to represent an individual's sex
+#[derive(Debug, Clone, PartialEq)]
+//struct Sex {
+//    male: bool,
+//    female: bool,
+//}
+
+enum Sex {
+    male,
+    female,
+}
+
+impl fmt::Display for Sex {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Sex::male => write!(f, "male"),
+            Sex::female => write!(f, "female"),
+        }
+    }
+}
+
+// Define a struct to represent an individual's age class
+#[derive(Debug, Clone, PartialEq)]
+pub enum AgeClass {
+    Piglet,
+    Yearling,
+    Adult,
+}
+
+impl fmt::Display for AgeClass {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AgeClass::Piglet => write!(f, "Piglet"),
+            AgeClass::Yearling => write!(f, "Yearling"),
+            AgeClass::Adult => write!(f, "Adult"),
+        }
+    }
 }
 
 // Define a struct to represent a grid cell
@@ -82,7 +130,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 20;
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 366;//365 * 10;
+const RUNTIME: usize = 365 * 10;
 
 
 // Individuals related functions
@@ -106,25 +154,27 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
             }
         };
 
-        // Generate a random index within the range of the cell_info_list
-       
-        //let mut rng = rand::thread_rng();  
-        //let random_index  = rng.gen_range(0..cell_info_list.len());
-        //println!("randomIndex:{}", random_index);
-
-        // Access the CellInfo at the randomly chosen index
-        
-        //let cell_info = &cell_info_list[random_index];
-
-        //let cell_info = &cell_info_list[94891]; //505,538,0.64791864156723
-
-        //let x = cell_info.x_grid_o;
-        //let y = cell_info.y_grid_o;
-        ////let quality = cell_info.quality;
-
         let age = 730 + rand::thread_rng().gen_range(1..=1825);
         let group_id = rand::thread_rng().gen_range(1..=2);
         let presence_timer = 0;
+        
+        let sex;
+        if rand::thread_rng().gen_bool(0.5) == true {
+             sex = Sex::female;
+        }else{
+             sex = Sex::male;
+        }
+
+        
+       // if rand::thread_rng().gen_bool(0.5) == true { // random check male female 50/50 if bool is true then female else male
+       //      sex = Sex { male: false, female:true };
+       // }else{
+       //      sex = Sex { male: true, female:false };
+       // }
+
+        let age_class = AgeClass::Adult;
+
+        let has_reproduced = false;
         let memory = IndividualMemory {
             known_cells: HashSet::new(),
             group_member_ids: Vec::new(),
@@ -140,6 +190,9 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
             x,
             y,
             age,
+            sex,
+            age_class,
+            has_reproduced,
             memory,
         });
     }
@@ -429,6 +482,13 @@ fn main() {
         let mut rng = rand::thread_rng();
         move_individuals(&grid, &mut individuals, &mut rng);
 
+        if global_variables.month == 5 {
+            //debug print REMOVE ME
+            //print!("reproduction is triggered");
+
+          reproduction(global_variables.month, &mut individuals, 1);  // Adjust num_new_individuals 
+        }
+
         //age individuals by one day
         ageing(&mut individuals, &mut global_variables.age_mortality);
 
@@ -462,6 +522,11 @@ fn main() {
             month: global_variables.month,
             year: global_variables.year,
         });
+
+
+        // Debug print time
+
+        print!("Day:{}, Month:{}, Year:{}, Individuals:{}\n", global_variables.day, global_variables.month, global_variables.year, global_variables.n_individuals);
 
 
         // Progress time 
@@ -539,4 +604,4 @@ fn main() {
 //   }
 //
 //    println!("Grid state saved to: {}", filename);
-//    Ok(())
+//    Ok(())         

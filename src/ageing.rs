@@ -1,9 +1,18 @@
+use crate::AgeClass;
 use crate::Individual;
 use crate::MAX_AGE;
 
 pub fn ageing(individuals: &mut Vec<Individual>, age_mortality: &mut u32) {
     for individual in individuals.iter_mut() {
         individual.age += 1;
+
+        if individual.age < 12 * 28 { // FIX ME
+            individual.age_class = AgeClass::Piglet
+        }else if  individual.age < (12 * 28 * 2) { // FIX ME
+            individual.age_class = AgeClass::Yearling
+        }else {
+            individual.age_class = AgeClass::Adult
+        }
     }
 
     // Filter out individuals whose age exceeds the maximum age

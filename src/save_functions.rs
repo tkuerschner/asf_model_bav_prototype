@@ -7,7 +7,7 @@ pub fn save_individuals_as_csv(filename: &str, individuals_states: &[(usize, Vec
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,id,group_id,x,y,age,known_cells,group_member_ids, last_three_cells")?;
+    writeln!(file, "iteration,id,group_id,x,y,sex,age,age_class,known_cells,group_member_ids, last_three_cells")?;
 
     // Write each individual's data for each iteration
     for (iteration, individuals) in individuals_states {
@@ -40,15 +40,20 @@ pub fn save_individuals_as_csv(filename: &str, individuals_states: &[(usize, Vec
                 .collect::<Vec<String>>()
                 .join(";");
 
+            let age_class_str: String = format!("{}", individual.age_class);
+            let sex_str: String = format!("{}", individual.sex);
+             
             writeln!(
                 file,
-                "{},{},{},{},{},{},{},{},{}",
+                "{},{},{},{},{},{},{},{},{},{},{}",
                 iteration,
                 individual.id,
                 individual.group_id,
                 individual.x,
                 individual.y,
+                sex_str,
                 individual.age,
+                age_class_str,
                 known_cells_str,
                 group_member_ids_str,
                 last_three_cells_str
@@ -66,7 +71,7 @@ pub fn save_grid_as_csv(filename: &str, grid_states: &[(usize, Vec<Vec<Cell>>)])
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,x,y,quality,counter,x_grid,y_grid")?;
+    writeln!(file, "iteration,x,y,quality,counter,x_grid_corrected,y_grid_corrected")?;
 
     // Write each cell's data for each iteration
     for (iteration, grid) in grid_states {
