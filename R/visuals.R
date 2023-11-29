@@ -65,4 +65,16 @@ r1 <- raster("./input/landscape/redDeer_global_50m.asc")
 plot(r1)
 
 
+SurvAA <- 0.65
+SurvAP <- 0.50
 
+1- (SurvAA)^(1/365)
+1- (SurvAP)^(1/365)
+
+1-(SurvAA^(1/12))
+1-(SurvAP^(1/12))
+
+
+(SurvAA^(1/12))
+
+(SurvAP^(1/12))

@@ -33,6 +33,7 @@ pub struct Individual {
     age: u32,
     sex: Sex,
     has_reproduced: bool,
+    time_of_reproduction: usize,
     age_class: AgeClass, 
     memory: IndividualMemory,
     // add reset for reproduction
@@ -88,6 +89,11 @@ impl fmt::Display for AgeClass {
     }
 }
 
+pub struct SurvivalProbability{
+    adult: f64,
+    piglet: f64,
+}
+
 // Define a struct to represent a grid cell
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Cell {
@@ -107,6 +113,7 @@ pub struct CellInfo {
 #[derive(Clone)] 
 pub struct GlobalVariables {
     age_mortality: u32,
+    random_mortality: u32,
     n_individuals: usize,
     day: u32,
     month: u32,
@@ -131,8 +138,10 @@ const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 20;
 const MAX_LAST_VISITED_CELLS: usize = 3;
 const RUNTIME: usize = 365 * 10;
-
-
+const ADULT_SURVIVAL: f64 = 0.65; //annual
+const PIGLET_SURVIVAL: f64 = 0.5; //annual
+const ADULT_SURVIVAL_DAY: f64 =  0.9647; //0.9647381; // monthly
+const PIGLET_SURVIVAL_DAY: f64 = 0.9438; //0.9438743;// monthly
 // Individuals related functions
 
 pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, num_individuals: usize) -> Vec<Individual> {
@@ -165,6 +174,8 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
              sex = Sex::male;
         }
 
+        let time_of_reproduction = 0;
+
         
        // if rand::thread_rng().gen_bool(0.5) == true { // random check male female 50/50 if bool is true then female else male
        //      sex = Sex { male: false, female:true };
@@ -193,12 +204,51 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
             sex,
             age_class,
             has_reproduced,
+            time_of_reproduction,
             memory,
         });
     }
 
     individuals
 }
+
+// Mortality
+
+fn mortality(surv_prob: &SurvivalProbability, individuals: &mut Vec<Individual>, random_mortality: &mut u32){
+
+    let retained_individuals: Vec<Individual> = individuals
+    .drain(..)
+    .filter(|ind| {
+       if ind.age_class != AgeClass::Piglet {
+
+        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
+        let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
+
+        if rounded_number < surv_prob.adult 
+         {true} else {
+            *random_mortality += 1;
+            false
+        }
+       }else{
+
+        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
+        let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
+
+        if rounded_number < surv_prob.piglet
+         {true} else {
+            
+            *random_mortality += 1;
+            false
+        }
+       }
+    })
+    .collect();
+
+    // Clear the original vector and insert retained individuals
+    individuals.clear();
+    individuals.extend_from_slice(&retained_individuals);
+}
+
 
 // Memory functions
 
@@ -425,6 +475,10 @@ pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<In
         }
     };
 
+    //let SurvivalProbability {adult = ADULT_SURVIVAL, piglet = PIGLET_SURVIVAL}
+    //let mut survival_prob: Vec<SurvivalProbability> = Vec::new();
+   
+
     //extract cell info
     let cell_info_list = extract_cell_info(&grid);
 
@@ -449,7 +503,7 @@ pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<In
 fn main() {
     // Define grid dimensions
     //let grid_size = 25;
-    let num_individuals = 10;
+    let num_individuals = 100;
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
@@ -468,12 +522,20 @@ fn main() {
 
        let mut global_variables = GlobalVariables {
         age_mortality: 0,
+        random_mortality: 0,
         n_individuals: individuals.len(),
         day: 1,   // Initialize with 1
         month: 1, // Initialize with 1
         year: 1,  // Initialize with 1
         // Add more variables as needed here
     };
+
+    // Allocate survival probabilities
+    let survival_prob = SurvivalProbability {
+        adult: ADULT_SURVIVAL_DAY,
+        piglet: PIGLET_SURVIVAL_DAY,
+    };
+
 
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
@@ -486,7 +548,12 @@ fn main() {
             //debug print REMOVE ME
             //print!("reproduction is triggered");
 
-          reproduction(global_variables.month, &mut individuals, 1);  // Adjust num_new_individuals 
+          reproduction(global_variables.month, &mut individuals, iteration);  // Adjust num_new_individuals 
+        }
+
+        if global_variables.day == 15 {
+
+            mortality(&survival_prob, &mut individuals, &mut global_variables.random_mortality);
         }
 
         //age individuals by one day
@@ -505,7 +572,7 @@ fn main() {
             }
     
             // Save the individual state for the current iteration
-            all_individuals_states.push((iteration, individuals.clone()));
+          //  all_individuals_states.push((iteration, individuals.clone()));
 
         // Stop the sim when all individuals are dead
 
@@ -517,6 +584,7 @@ fn main() {
 
          all_global_variables.push(GlobalVariables {
             age_mortality: global_variables.age_mortality,
+            random_mortality: global_variables.random_mortality,
             n_individuals: global_variables.n_individuals,
             day: global_variables.day,
             month: global_variables.month,
@@ -526,7 +594,7 @@ fn main() {
 
         // Debug print time
 
-        print!("Day:{}, Month:{}, Year:{}, Individuals:{}\n", global_variables.day, global_variables.month, global_variables.year, global_variables.n_individuals);
+        //print!("Day:{}, Month:{}, Year:{}, Individuals:{}\n", global_variables.day, global_variables.month, global_variables.year, global_variables.n_individuals);
 
 
         // Progress time 
@@ -535,6 +603,7 @@ fn main() {
  
 
     }
+    println!("Simulation complete, saving output\n");
 
     // Save all grid states to a single CSV file
     save_grid_as_csv("output/all_grid_states.csv", &all_grid_states).expect("Failed to save grid states as CSV");
@@ -604,4 +673,4 @@ fn main() {
 //   }
 //
 //    println!("Grid state saved to: {}", filename);
-//    Ok(())         
+//    Ok(())
