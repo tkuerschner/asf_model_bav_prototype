@@ -34,39 +34,56 @@ pub struct Individual {
     sex: Sex,
     has_reproduced: bool,
     time_of_reproduction: usize,
+    //core_cell:Option<(usize,usize)>,
+    //target_cell:Option<(usize,usize)>,
+    //remaining_stay_time: usize,
     age_class: AgeClass, 
     memory: IndividualMemory,
     // add reset for reproduction
 }
+
+//impl Individual {
+//    // Function to set a core cell
+//    fn set_core_cell(&mut self, core_cell: (usize, usize)) {
+//        self.core_cell = Some(core_cell);
+//    }
+//
+//    // Function to set a target cell
+//    fn set_target_cell(&mut self, target_cell: (usize, usize)) {
+//        self.target_cell = Some(target_cell);
+//    }
+//
+//    // Function to update the remaining stay time
+//    fn update_remaining_stay_time(&mut self) {
+//        if self.remaining_stay_time > 0 {
+//            self.remaining_stay_time -= 1;
+//        }
+//    }
+//}
 
 // Define a struct to represent an individual's memory
 #[derive(Debug, Clone)]
 struct IndividualMemory {
     known_cells: HashSet<(usize, usize)>,
     known_cells_order: Vec<(usize, usize)>,
-    last_visited_cells: HashSet<(usize, usize)>,
-    last_visited_cells_order: Vec<(usize, usize)>,
+    //last_visited_cells: HashSet<(usize, usize)>,
+    //last_visited_cells_order: Vec<(usize, usize)>,
     group_member_ids: Vec<usize>,
     presence_timer: usize,
 }
 
 // Define a struct to represent an individual's sex
 #[derive(Debug, Clone, PartialEq)]
-//struct Sex {
-//    male: bool,
-//    female: bool,
-//}
-
 enum Sex {
-    male,
-    female,
+    Male,
+    Female,
 }
 
 impl fmt::Display for Sex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Sex::male => write!(f, "male"),
-            Sex::female => write!(f, "female"),
+            Sex::Male => write!(f, "male"),
+            Sex::Female => write!(f, "Female"),
         }
     }
 }
@@ -101,6 +118,7 @@ pub struct Cell {
     counter: usize,
     x_grid: usize,
     y_grid: usize,
+    is_ap: bool,
 }
 
 pub struct CellInfo {
@@ -140,8 +158,8 @@ const MAX_LAST_VISITED_CELLS: usize = 3;
 const RUNTIME: usize = 365 * 10;
 const ADULT_SURVIVAL: f64 = 0.65; //annual
 const PIGLET_SURVIVAL: f64 = 0.5; //annual
-const ADULT_SURVIVAL_DAY: f64 =  0.9647; //0.9647381; // monthly
-const PIGLET_SURVIVAL_DAY: f64 = 0.9438; //0.9438743;// monthly
+const ADULT_SURVIVAL_DAY: f64 =  0.9647;//daily //0.9647381; // monthly
+const PIGLET_SURVIVAL_DAY: f64 = 0.9438;//daily //0.9438743;// monthly
 // Individuals related functions
 
 pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, num_individuals: usize) -> Vec<Individual> {
@@ -169,18 +187,18 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
         
         let sex;
         if rand::thread_rng().gen_bool(0.5) == true {
-             sex = Sex::female;
+             sex = Sex::Female;
         }else{
-             sex = Sex::male;
+             sex = Sex::Male;
         }
 
         let time_of_reproduction = 0;
 
         
-       // if rand::thread_rng().gen_bool(0.5) == true { // random check male female 50/50 if bool is true then female else male
-       //      sex = Sex { male: false, female:true };
+       // if rand::thread_rng().gen_bool(0.5) == true { // random check male Female 50/50 if bool is true then Female else male
+       //      sex = Sex { male: false, Female:true };
        // }else{
-       //      sex = Sex { male: true, female:false };
+       //      sex = Sex { male: true, Female:false };
        // }
 
         let age_class = AgeClass::Adult;
@@ -189,11 +207,14 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
         let memory = IndividualMemory {
             known_cells: HashSet::new(),
             group_member_ids: Vec::new(),
-            last_visited_cells: HashSet::new(),
+            //last_visited_cells: HashSet::new(),
             known_cells_order: Vec::new(),
-            last_visited_cells_order: Vec::new(),
+            //last_visited_cells_order: Vec::new(),
             presence_timer,
         };
+
+        
+
 
         individuals.push(Individual {
             id,
@@ -205,6 +226,9 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
             age_class,
             has_reproduced,
             time_of_reproduction,
+            //core_cell,
+            //target_cell,
+            //remaining_stay_time,
             memory,
         });
     }
@@ -251,6 +275,19 @@ fn mortality(surv_prob: &SurvivalProbability, individuals: &mut Vec<Individual>,
 
 
 // Memory functions
+
+//pub fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usize, usize)>, new_cell: (usize, usize), max_size: usize) {
+//    memory.insert(new_cell);
+//
+//    order.retain(|&cell| memory.contains(&cell)); // Remove cells that are not in the memory
+//
+//    if order.len() >= max_size {
+//        let oldest_cell = order.remove(0); // Remove the oldest element
+//        memory.remove(&oldest_cell);
+//    }
+//
+//    order.push(new_cell);
+//}
 
 pub fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usize, usize)>, new_cell: (usize, usize), max_size: usize) {
     memory.insert(new_cell);
@@ -307,10 +344,12 @@ pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, individuals: &mut Vec<Ind
     for individual in individuals.iter_mut() {
         // 25% chance to move randomly
         if rng.gen_range(0..100) < 25 {
-            move_to_random_adjacent_cells(grid.len(), individual, rng);
+            //move_to_random_adjacent_cells(grid.len(), individual, rng);
+            move_to_random_adjacent_cells_2(grid, individual, rng);
         } else {
             // Move towards the cell with the highest quality
-            move_towards_highest_quality(grid, individual, rng);
+            //move_towards_highest_quality(grid, individual, rng);
+            move_to_random_adjacent_cells_2(grid, individual, rng);
 
             // Update presence timer
             individual.memory.presence_timer += 1;
@@ -345,13 +384,71 @@ pub fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, individual: &mut Indi
    
 
     // Update known cells and last visited cells
+    //update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, (individual.x, individual.y), MAX_KNOWN_CELLS);
+    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
+
     update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, (individual.x, individual.y), MAX_KNOWN_CELLS);
-    update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
+    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
+
 
     // Update individual's position
     individual.x = new_x;
     individual.y = new_y;
 }
+
+//TEST
+pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, individual: &mut Individual, rng: &mut impl Rng){
+    // Get the current position of the individual
+    let current_x = individual.x;
+    let current_y = individual.y;
+
+      // Generate a list of adjacent cells
+    let mut adjacent_cells = vec![
+      (current_x.saturating_sub(1), current_y),
+      (current_x.saturating_add(1), current_y),
+      (current_x, current_y.saturating_sub(1)),
+      (current_x, current_y.saturating_add(1)),
+    ];
+
+        // Shuffle the list of adjacent cells
+        adjacent_cells.shuffle(rng);
+
+
+          // Select the first cell (randomized) with quality > 0
+     let target_cell = adjacent_cells
+     .into_iter()
+     .filter(|&(x, y)| x < grid.len() && y < grid[0].len() && grid[x][y].quality > 0.0)
+     .next()
+     .unwrap_or_else(|| {
+         // If no valid adjacent cells with quality > 0, move randomly within the grid
+         // TEMP FIX ME 
+         random_cell_with_quality(grid, rng)
+     });
+
+       // Update known cells and last visited cells
+    //update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, target_cell, MAX_KNOWN_CELLS);
+    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, target_cell, MAX_LAST_VISITED_CELLS);
+
+    update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, (individual.x, individual.y), MAX_KNOWN_CELLS);
+    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
+
+    // Update individual's position
+    individual.x = target_cell.0;
+    individual.y = target_cell.1;
+}
+   
+//TEST
+fn random_cell_with_quality(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize, usize) {
+    // Generate a random cell within the grid with quality > 0
+    loop {
+        let x = rng.gen_range(0..grid.len());
+        let y = rng.gen_range(0..grid[0].len());
+        if grid[x][y].quality > 0.0 {
+            return (x, y);
+        }
+    }
+}
+
 
 pub fn move_to_random_adjacent_cells(grid_size: usize, individual: &mut Individual, rng: &mut impl Rng) {
     // Get the current position of the individual
@@ -379,8 +476,11 @@ pub fn move_to_random_adjacent_cells(grid_size: usize, individual: &mut Individu
         });
 
     // Update known cells and last visited cells
-    update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, target_cell, MAX_KNOWN_CELLS);
-    update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, target_cell, MAX_LAST_VISITED_CELLS);
+    //update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, target_cell, MAX_KNOWN_CELLS);
+    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, target_cell, MAX_LAST_VISITED_CELLS);
+
+    update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, (individual.x, individual.y), MAX_KNOWN_CELLS);
+    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
 
     // Update individual's position
     individual.x = target_cell.0;
@@ -503,13 +603,13 @@ pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<In
 fn main() {
     // Define grid dimensions
     //let grid_size = 25;
-    let num_individuals = 100;
+    let num_individuals = 1;
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
     // Setup the landscape and individuals
 
-    let (grid, mut individuals) = setup(file_path, num_individuals);
+    let (mut grid, mut individuals) = setup(file_path, num_individuals);
 
     // Vector to store grid states for all iterations
     let mut all_grid_states: Vec<(usize, Vec<Vec<Cell>>)> = Vec::new();
@@ -536,6 +636,10 @@ fn main() {
         piglet: PIGLET_SURVIVAL_DAY,
     };
 
+    place_attraction_points(&mut grid, 3,6,1600);
+
+    //Debug print:
+    println!("Setup complete -> starting iteration");
 
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
@@ -548,22 +652,22 @@ fn main() {
             //debug print REMOVE ME
             //print!("reproduction is triggered");
 
-          reproduction(global_variables.month, &mut individuals, iteration);  // Adjust num_new_individuals 
+         // reproduction(global_variables.month, &mut individuals, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
         }
 
         if global_variables.day == 15 {
 
-            mortality(&survival_prob, &mut individuals, &mut global_variables.random_mortality);
+        //  mortality(&survival_prob, &mut individuals, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
         }
 
         //age individuals by one day
-        ageing(&mut individuals, &mut global_variables.age_mortality);
+        //ageing(&mut individuals, &mut global_variables.age_mortality);                                         //   <-----------------temp OFF
 
         //Updating various counters such as number of individuals
         update_counter(&mut global_variables.n_individuals, &mut individuals);
 
         // Update group memory
-        update_group_memory(&mut individuals);
+        //update_group_memory(&mut individuals); // turned off for speed
 
         if iteration == (RUNTIME) {
             // Save the grid state for the current (last) iteration
@@ -572,12 +676,13 @@ fn main() {
             }
     
             // Save the individual state for the current iteration
-          //  all_individuals_states.push((iteration, individuals.clone()));
+           all_individuals_states.push((iteration, individuals.clone()));
 
         // Stop the sim when all individuals are dead
 
         if global_variables.n_individuals == 0 {
             println!("Simulation terminated: No individuals remaining.");
+            println!("Simulation terminated at timeindex: {}", iteration);
             all_grid_states.push((iteration, grid.clone())); // update gridstates wen simulation finished
             break;
         }
@@ -595,8 +700,10 @@ fn main() {
         // Debug print time
 
         //print!("Day:{}, Month:{}, Year:{}, Individuals:{}\n", global_variables.day, global_variables.month, global_variables.year, global_variables.n_individuals);
-
-
+        if global_variables.month == 1 && global_variables.day == 1{
+            let perc = (iteration as f64 / RUNTIME as f64 * 100.0).round();
+        println!("Simulation {}% complete!", perc);
+        }
         // Progress time 
         
         progress_time(&mut global_variables);
@@ -606,7 +713,7 @@ fn main() {
     println!("Simulation complete, saving output\n");
 
     // Save all grid states to a single CSV file
-    save_grid_as_csv("output/all_grid_states.csv", &all_grid_states).expect("Failed to save grid states as CSV");
+    save_grid_as_csv("output/all_grid_states.csv", &all_grid_states).expect("Failed to save grid states as CSV");                //   <-----------------temp OFF
 
     // Save all individual states to a single CSV file
     save_individuals_as_csv("output/all_individuals.csv", &all_individuals_states).expect("Failed to save individuals as CSV");

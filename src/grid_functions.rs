@@ -40,6 +40,7 @@ pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>
                     counter: 0,
                     x_grid: j,
                     y_grid: i,
+                    is_ap: false,
                 })
                 //.filter(|cell| cell.quality > 0.0)
                 .collect();
@@ -185,4 +186,52 @@ pub fn filter_grid2(original_grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
         })
         .filter(|row: &Vec<Cell>| !row.is_empty())
         .collect()
+}
+
+
+pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usize, max_ap_per_chunk: usize, chunk_size: usize) {
+
+
+    // chunk the grid in 2x2km blocks and create n ap per chunk
+    // cell is 50x50m >>> 2500m^2
+    // chunk 4000000 meters^2
+    // 1600 cells per chunk
+    // no cell cant be in 2 chunks at a time
+    // place 3-6 randomly positioned attraction points per chunk
+
+
+    // Extract cells with quality > 0
+    let cells_with_quality: Vec<(usize, usize)> = grid
+        .iter()
+        .enumerate()
+        .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.quality > 0.0).map(move |(j, _)| (i, j)))
+        .collect();
+
+    // Determine the number of chunks needed
+    let num_chunks = (cells_with_quality.len() + chunk_size - 1) / chunk_size;
+
+    // Shuffle the cells to randomize chunk distribution
+    let mut rng = rand::thread_rng();
+    let mut shuffled_cells = cells_with_quality.clone();
+    shuffled_cells.shuffle(&mut rng);
+
+    // Divide cells into chunks
+    let chunks: Vec<Vec<(usize, usize)>> = shuffled_cells.chunks(chunk_size).map(|chunk| chunk.to_vec()).collect();
+
+    // Place attraction points in each chunk
+    for chunk in chunks {
+        let num_ap = rng.gen_range(min_ap_per_chunk..=max_ap_per_chunk);
+
+        for _ in 0..num_ap {
+            if let Some(cell) = chunk.choose(&mut rng) {
+                grid[cell.0][cell.1].is_ap = true;
+            }
+        }
+    }
+}
+
+pub fn set_ap_at_individual_position(grid: &mut Vec<Vec<Cell>>, individual: &Individual) {
+    
+        grid[individual.x][individual.y].is_ap = true;
+    
 }

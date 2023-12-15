@@ -1,18 +1,19 @@
 
+
 use crate::*;
 
 pub fn reproduction(month: u32, individuals: &mut Vec<Individual>, current_tick: usize) {
     // Define the probability of reproduction based on the month
     let reproduction_probability = match month {
-        1 => 0.06,  // From SwifColIbm 
-        2 => 0.16,  // From SwifColIbm 
-        3 => 0.39,  // From SwifColIbm 
-        4 => 0.73,  // From SwifColIbm 
-        5 => 0.80,  // From SwifColIbm 
-        6 => 0.88,  // From SwifColIbm 
-        7 => 0.94,  // From SwifColIbm 
-        8 => 0.97,  // From SwifColIbm 
-        9 => 1.00,  // From SwifColIbm 
+        1 => 0.06,  // From SwifCoIbm 
+        2 => 0.16,  // From SwifCoIbm 
+        3 => 0.39,  // From SwifCoIbm 
+        4 => 0.73,  // From SwifCoIbm 
+        5 => 0.80,  // From SwifCoIbm 
+        6 => 0.88,  // From SwifCoIbm 
+        7 => 0.94,  // From SwifCoIbm 
+        8 => 0.97,  // From SwifCoIbm 
+        9 => 1.00,  // From SwifCoIbm 
        
         _ => 0.0,  // Default to 0% probability
     };
@@ -36,7 +37,7 @@ for individual in individuals.iter_mut().filter(|ind| {ind.has_reproduced}){
 
 // Iterate over eligible individuals for reproduction
 for individual in individuals.iter_mut().filter(|ind| {
-    ind.sex == Sex::female && !ind.has_reproduced && ind.age_class == AgeClass::Adult && rand::thread_rng().gen_bool(reproduction_probability)
+    ind.sex == Sex::Female && !ind.has_reproduced && ind.age_class == AgeClass::Adult && rand::thread_rng().gen_bool(reproduction_probability)
 }) {
     // Mark the individual as having reproduced and record time
     individual.has_reproduced = true;
@@ -52,9 +53,9 @@ for individual in individuals.iter_mut().filter(|ind| {
 
         let new_sex;
         if rand::thread_rng().gen_bool(0.5) == true {
-             new_sex = Sex::female;
+             new_sex = Sex::Female;
         }else{
-             new_sex = Sex::male;
+             new_sex = Sex::Male;
         }
         
         // = Sex {
@@ -75,8 +76,8 @@ for individual in individuals.iter_mut().filter(|ind| {
             memory: IndividualMemory {
                 known_cells: HashSet::new(),
                 known_cells_order: Vec::new(),
-                last_visited_cells: HashSet::new(),
-                last_visited_cells_order: Vec::new(),
+                //last_visited_cells: HashSet::new(),
+                //last_visited_cells_order: Vec::new(),
                 group_member_ids: Vec::new(),
                 presence_timer: 0,
             },
