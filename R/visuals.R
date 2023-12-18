@@ -3,6 +3,7 @@
 library(tidyverse)
 library(raster)
 library(scico)
+library(ggnewscale)
 
 
 setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
@@ -16,7 +17,7 @@ globals <- read.csv("./output/all_global_variables.csv", header = T)
 
 g1 <- grid #%>% filter(iteration == 1)
 
-i1 <- individuals %>% filter(iteration == 2500)
+i1 <- individuals %>% filter(iteration == 1)
 
 g2 <- g1 %>% mutate(quality = case_when(quality == -9999 ~ 0))
 
@@ -31,16 +32,31 @@ g2 <- g1 %>% mutate(quality = replace(quality, quality<0, NA))
 )
 
 
-g3 <- g2 %>% filter(ap == "true") #mutate(is_ap =case_when(ap == "true" ~ 1, FALSE ~ 0)) 
+g3 <- g2 %>% filter(is_ap == "true") #mutate(is_ap =case_when(ap == "true" ~ 1, FALSE ~ 0)) 
+
+g4 <- g2 %>% filter(is_territory == "true")
 
 (ggplot()+
   geom_tile(data = g2, aes(x=x, y=y, fill = quality))+
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  new_scale_fill()+
+  geom_tile(data = g4, aes(x=x, y=y, fill = quality), alpha = .5)+
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
   geom_point(data=g3,aes(x=x, y=y), color = "#003cff")+
   geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+#, position=position_dodge(width=1))+
   scale_x_reverse()+
   coord_flip()
 )
+
+(ggplot(g2)+
+  geom_tile(data = g4, aes(x=x, y=y, fill = quality))+
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  geom_point(data=g4 %>% filter(is_ap == "true"),aes(x=x, y=y), color = "#003cff")+
+  geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 3)+#, position=position_dodge(width=1))+
+  scale_x_reverse()+
+  coord_flip()
+)
+
 
 ggplot(globals)+
 geom_line(aes(iteration, n_individuals))

@@ -71,13 +71,13 @@ pub fn save_grid_as_csv(filename: &str, grid_states: &[(usize, Vec<Vec<Cell>>)])
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,x,y,quality,counter,x_grid_corrected,y_grid_corrected,ap")?;
+    writeln!(file, "iteration,x,y,quality,counter,x_grid_corrected,y_grid_corrected,is_ap,is_territory,territory_of_group")?;
 
     // Write each cell's data for each iteration
     for (iteration, grid) in grid_states {
         for (x, row) in grid.iter().enumerate() {
             for (y, cell) in row.iter().enumerate() {
-                writeln!(file, "{},{},{},{},{},{},{},{}", iteration, x, y, cell.quality, cell.counter, cell.x_grid, cell.y_grid, cell.is_ap)?;
+                writeln!(file, "{},{},{},{},{},{},{},{},{},{}", iteration, x, y, cell.quality, cell.counter, cell.x_grid, cell.y_grid, cell.territory.is_ap, cell.territory.is_taken, cell.territory.taken_by_group)?;
             }
         }
     }

@@ -40,7 +40,11 @@ pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>
                     counter: 0,
                     x_grid: j,
                     y_grid: i,
-                    is_ap: false,
+                    territory: AreaSeparation{
+                        is_ap:false,
+                        is_taken:false,
+                        taken_by_group:0,
+                    },
                 })
                 //.filter(|cell| cell.quality > 0.0)
                 .collect();
@@ -224,7 +228,7 @@ pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usiz
 
         for _ in 0..num_ap {
             if let Some(cell) = chunk.choose(&mut rng) {
-                grid[cell.0][cell.1].is_ap = true;
+                grid[cell.0][cell.1].territory.is_ap = true;
             }
         }
     }
@@ -232,6 +236,95 @@ pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usiz
 
 pub fn set_ap_at_individual_position(grid: &mut Vec<Vec<Cell>>, individual: &Individual) {
     
-        grid[individual.x][individual.y].is_ap = true;
+        grid[individual.x][individual.y].territory.is_ap = true;
     
+}
+
+// Get a list of all existing attraction points
+pub fn get_attraction_points(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)>{
+    let all_ap: Vec<(usize, usize)> = grid
+    .iter()
+    .enumerate()
+    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.is_ap == true).map(move |(j, _)| (i, j)))
+    .collect();
+
+    all_ap
+
+}
+
+// Get a list of all existing free attraction points
+pub fn get_free_attraction_points(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)>{
+    let all_ap: Vec<(usize, usize)> = grid
+    .iter()
+    .enumerate()
+    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.is_ap == true && cell.territory.is_taken == false).map(move |(j, _)| (i, j)))
+    .collect();
+
+    all_ap
+
+}
+
+
+pub fn get_attraction_points2(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)> { // Test which function is faster
+    let mut attraction_points = Vec::new();
+
+    for (i, row) in grid.iter().enumerate() {
+        for (j, cell) in row.iter().enumerate() {
+            if cell.territory.is_ap {
+                attraction_points.push((i, j));
+            }
+        }
+    }
+
+    attraction_points
+}
+
+// Occupy an attraction point as core cell and claim the surrounding ap
+pub fn occupy_cell_here(grid: &mut Vec<Vec<Cell>>, individual: &Individual) {
+
+    grid[individual.x][individual.y].territory.is_taken = true;
+    grid[individual.x][individual.y].territory.taken_by_group = individual.group_id;
+
+}
+
+//pub fn occupy_this_cell(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize) {
+//
+//    grid[x][y].territory.is_taken = true;
+//    grid[x][y].territory.taken_by_group = group_id;
+//
+//}
+
+pub fn occupy_this_cell(cell: &mut Cell, group_id: usize) {
+    cell.territory.is_taken = true;
+    cell.territory.taken_by_group = group_id;
+}
+
+// Use cells around individuals with radius 1600 to create a full territory
+pub fn occupy_territory(grid: &mut Vec<Vec<Cell>>, positions: Vec<(usize, usize)>, id:usize){
+
+    for (x, y) in positions {
+        if x < grid.len() && y < grid[0].len() {
+            
+            grid[x][y].territory.is_taken = true;
+            grid[x][y].territory.taken_by_group = id;
+            
+        }
+    }
+}
+
+// Returns all cells within a given radius around an individual
+pub fn get_cells_around_individual(individual: &Individual, grid: &Vec<Vec<Cell>>, range: usize) -> Vec<(usize, usize)> {
+    let mut cells_around = Vec::new();
+    let current_x = individual.x;
+    let current_y = individual.y;
+
+    for i in (current_x.saturating_sub(range))..=(current_x + range) {
+        for j in (current_y.saturating_sub(range))..=(current_y + range) {
+            if i < grid.len() && j < grid[0].len() {
+                cells_around.push((i, j));
+            }
+        }
+    }
+
+    cells_around
 }

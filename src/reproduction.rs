@@ -81,6 +81,9 @@ for individual in individuals.iter_mut().filter(|ind| {
                 group_member_ids: Vec::new(),
                 presence_timer: 0,
             },
+            core_cell: None,
+            target_cell: None,
+            remaining_stay_time: 0,
         };
 
         // Add the new individual to the separate vector

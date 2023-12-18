@@ -34,32 +34,33 @@ pub struct Individual {
     sex: Sex,
     has_reproduced: bool,
     time_of_reproduction: usize,
-    //core_cell:Option<(usize,usize)>,
-    //target_cell:Option<(usize,usize)>,
-    //remaining_stay_time: usize,
+    core_cell:Option<(usize,usize)>,
+    target_cell:Option<(usize,usize)>,
+    remaining_stay_time: usize,
     age_class: AgeClass, 
     memory: IndividualMemory,
+    //group_members: GroupMembers,
     // add reset for reproduction
 }
 
-//impl Individual {
-//    // Function to set a core cell
-//    fn set_core_cell(&mut self, core_cell: (usize, usize)) {
-//        self.core_cell = Some(core_cell);
-//    }
-//
-//    // Function to set a target cell
-//    fn set_target_cell(&mut self, target_cell: (usize, usize)) {
-//        self.target_cell = Some(target_cell);
-//    }
-//
-//    // Function to update the remaining stay time
-//    fn update_remaining_stay_time(&mut self) {
-//        if self.remaining_stay_time > 0 {
-//            self.remaining_stay_time -= 1;
-//        }
-//    }
-//}
+impl Individual {
+    // Function to set a core cell
+    fn set_core_cell(&mut self, core_cell: (usize, usize)) {
+        self.core_cell = Some(core_cell);
+    }
+
+    // Function to set a target cell
+    fn set_target_cell(&mut self, target_cell: (usize, usize)) {
+        self.target_cell = Some(target_cell);
+    }
+
+    // Function to update the remaining stay time
+    fn update_remaining_stay_time(&mut self) {
+        if self.remaining_stay_time > 0 {
+            self.remaining_stay_time -= 1;
+        }
+    }
+}
 
 // Define a struct to represent an individual's memory
 #[derive(Debug, Clone)]
@@ -79,6 +80,7 @@ enum Sex {
     Female,
 }
 
+
 impl fmt::Display for Sex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -96,6 +98,9 @@ pub enum AgeClass {
     Adult,
 }
 
+
+
+
 impl fmt::Display for AgeClass {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -112,13 +117,20 @@ pub struct SurvivalProbability{
 }
 
 // Define a struct to represent a grid cell
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Cell {
     quality: f64,
     counter: usize,
     x_grid: usize,
     y_grid: usize,
+    territory: AreaSeparation
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct AreaSeparation {
     is_ap: bool,
+    is_taken:bool,
+    taken_by_group: usize,
 }
 
 pub struct CellInfo {
@@ -162,7 +174,7 @@ const ADULT_SURVIVAL_DAY: f64 =  0.9647;//daily //0.9647381; // monthly
 const PIGLET_SURVIVAL_DAY: f64 = 0.9438;//daily //0.9438743;// monthly
 // Individuals related functions
 
-pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, num_individuals: usize) -> Vec<Individual> {
+pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, num_individuals: usize) -> Vec<Individual> {
 
     // Create individuals with unique IDs, group IDs, and memory
     let mut individuals: Vec<Individual> = Vec::with_capacity(num_individuals);
@@ -171,18 +183,60 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
    // let tmp_Grid = grid.iter().iter().filter(|cell| cell.quality > 0.0);
 
     for id in 0..num_individuals {
-      
-        let (x, y) = loop {
-            let x_candidate = rand::thread_rng().gen_range(0..grid_size);
-            let y_candidate = rand::thread_rng().gen_range(0..grid_size);
 
-            if grid[x_candidate][y_candidate].quality > 0.0 {
-                break (x_candidate, y_candidate);
+        // Select an free attraction point as territory coe cell
+        let free_ap = get_free_attraction_points(&grid);
+        let mut rng = rand::thread_rng();
+        let random_index = rng.gen_range(0..free_ap.len());
+        let random_ap = free_ap[random_index];
+        
+        let x = random_ap.0;
+        let y = random_ap.1;
+
+        let group_id = rand::thread_rng().gen_range(1..=2);
+
+        // Make this cell the core cell / the core Ap
+        occupy_this_cell(&mut grid[x][y], group_id);
+        //occupy_this_cell(&mut grid, x, y, group_id);
+        let core_cell = (x, y);
+
+        // Take the surrounding cells as territory
+        // Total Cells=Width×Height
+        //
+
+        let desired_total_cells = 1600;
+        let range = ((desired_total_cells as f64).sqrt() - 1.0) / 2.0;
+
+        for i in (x.saturating_sub(range as usize))..=(x + range as usize) {
+            for j in (y.saturating_sub(range as usize))..=(y + range as usize) {
+                if i < grid.len() && j < grid[0].len() {
+                    if grid[i][j].quality > 0.0 {
+
+                       // occupy_this_cell(&mut grid, x, y, group_id);
+                        occupy_this_cell(&mut grid[i][j], group_id);
+
+                    }
+                }
             }
-        };
+        }
+
+
+    // Random position
+       // let (x, y) = loop {
+       //     let x_candidate = rand::thread_rng().gen_range(0..grid_size);
+       //     let y_candidate = rand::thread_rng().gen_range(0..grid_size);
+
+       //     if grid[x_candidate][y_candidate].quality > 0.0 {
+       //         break (x_candidate, y_candidate);
+       //     }
+       // };
+
+
+
+
 
         let age = 730 + rand::thread_rng().gen_range(1..=1825);
-        let group_id = rand::thread_rng().gen_range(1..=2);
+        
         let presence_timer = 0;
         
         let sex;
@@ -193,13 +247,6 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
         }
 
         let time_of_reproduction = 0;
-
-        
-       // if rand::thread_rng().gen_bool(0.5) == true { // random check male Female 50/50 if bool is true then Female else male
-       //      sex = Sex { male: false, Female:true };
-       // }else{
-       //      sex = Sex { male: true, Female:false };
-       // }
 
         let age_class = AgeClass::Adult;
 
@@ -213,8 +260,9 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
             presence_timer,
         };
 
-        
-
+        //let core_cell = None;
+        let target_cell = None;
+        let remaining_stay_time = 0;
 
         individuals.push(Individual {
             id,
@@ -226,15 +274,71 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>, grid: &Vec<Vec<Cell>>, 
             age_class,
             has_reproduced,
             time_of_reproduction,
-            //core_cell,
-            //target_cell,
-            //remaining_stay_time,
+            core_cell: Some(core_cell),
+            target_cell,
+            remaining_stay_time,
             memory,
         });
+
+
     }
 
     individuals
 }
+
+//EXPERMINETS
+
+// Function to choose a core cell (within 1600 cells)
+fn choose_core_cell(grid: &Vec<Vec<Cell>>, individual: &Individual, rng: &mut impl Rng) -> (usize, usize) {
+    // Get the position of the individual as the core cell
+    (individual.x, individual.y)
+}
+
+//// Function to choose a target cell (90% within 1600 cells, 10% within 3200 cells)
+//fn choose_target_cell(grid: &Vec<Vec<Cell>>, individual: &Individual, rng: &mut impl Rng) -> (usize, usize) {
+//    let core_cell = individual.core_cell.unwrap_or((0, 0));
+//    if rng.gen_bool(0.9) {
+//        // Choose a target cell within 1600 cells
+//        let target_cell = find_cell_within_range(grid, core_cell, 1600, rng);
+//        target_cell.unwrap_or_else(|| random_cell_within_range(grid.len(), grid[0].len(), core_cell, 1600, rng))
+//    } else {
+//        // Choose a target cell within 3200 cells (avoiding other individuals)
+//        let target_cell = find_cell_within_range(grid, core_cell, 3200, rng);
+//        target_cell.unwrap_or_else(|| random_cell_within_range(grid.len(), grid[0].len(), core_cell, 3200, rng))
+//    }
+//}
+//
+//// Function to find a random cell within a specified range (avoiding other individuals)
+//fn find_cell_within_range(grid: &Vec<Vec<Cell>>, center_cell: (usize, usize), range: usize, rng: &mut impl Rng) -> Option<(usize, usize)> {
+//    // Your logic to find a random cell within the specified range (avoiding other individuals)
+//    // ...
+//    // Example: Replace this line with your implementation
+//    random_cell_within_range(grid.len(), grid[0].len(), center_cell, range, rng)
+//}
+//
+//// Function to find a random cell within a specified range (excluding the center cell)
+//fn random_cell_within_range(
+//    grid_size_x: usize,
+//    grid_size_y: usize,
+//    center_cell: (usize, usize),
+//    range: usize,
+//    rng: &mut impl Rng,
+//) -> (usize, usize) {
+//    // Your logic to find a random cell within the specified range (excluding the center cell)
+//    // ...
+//    // Example: Replace this line with your implementation
+//    random_cell(grid_size_x, grid_size_y)
+//}
+//
+//
+////
+
+
+
+
+
+
+
 
 // Mortality
 
@@ -575,6 +679,8 @@ pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<In
         }
     };
 
+    place_attraction_points(&mut grid, 3,6,1600);
+
     //let SurvivalProbability {adult = ADULT_SURVIVAL, piglet = PIGLET_SURVIVAL}
     //let mut survival_prob: Vec<SurvivalProbability> = Vec::new();
    
@@ -588,7 +694,7 @@ pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<In
     flip_grid(&mut grid);
 
     // Setup the individuals
-    let individuals = individuals_setup(&cell_info_list, &grid, num_individuals);
+    let individuals = individuals_setup(&cell_info_list, &mut grid, num_individuals);
 
       // Check if any individual is outside the bounds
       if individuals.iter().any(|ind| ind.x >= grid.len() || ind.y >= grid[0].len()) {
@@ -603,7 +709,7 @@ pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<In
 fn main() {
     // Define grid dimensions
     //let grid_size = 25;
-    let num_individuals = 1;
+    let num_individuals = 10;
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
@@ -636,7 +742,7 @@ fn main() {
         piglet: PIGLET_SURVIVAL_DAY,
     };
 
-    place_attraction_points(&mut grid, 3,6,1600);
+   // place_attraction_points(&mut grid, 3,6,1600);
 
     //Debug print:
     println!("Setup complete -> starting iteration");
