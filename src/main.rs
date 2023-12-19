@@ -4,6 +4,7 @@ use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result};
+use std::collections::VecDeque;
 
 use std::fmt;
 
@@ -174,6 +175,46 @@ const ADULT_SURVIVAL_DAY: f64 =  0.9647;//daily //0.9647381; // monthly
 const PIGLET_SURVIVAL_DAY: f64 = 0.9438;//daily //0.9438743;// monthly
 // Individuals related functions
 
+// Function to perform circular BFS from the core cell
+
+fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, desired_total_cells: usize) {
+    let mut queue = VecDeque::new();
+    let mut visited = vec![vec![false; grid[0].len()]; grid.len()];
+
+    queue.push_back((x, y));
+    visited[x][y] = true;
+
+    let mut count = 0;
+
+    while let Some((cx, cy)) = queue.pop_front() {
+        occupy_this_cell(&mut grid[cx][cy], group_id);
+        count += 1;
+
+        if count >= desired_total_cells {
+            break;
+        }
+
+        // Explore neighbors in a more circular fashion
+        let radius = 5.0; // You can adjust the radius as needed
+        let mut angle = 0.0;
+
+        while angle <= 2.0 * std::f64::consts::PI {
+            let nx = (cx as f64 + (radius * angle.cos()).round()) as usize;
+            let ny = (cy as f64 + (radius * angle.sin()).round()) as usize;
+
+
+            if nx < grid.len() && ny < grid[0].len() && !visited[nx][ny] {
+                if grid[nx][ny].quality > 0.0 && !grid[nx][ny].territory.is_taken { // changed quality check
+                    queue.push_back((nx, ny));
+                    visited[nx][ny] = true;
+                }
+            }
+
+            angle += std::f64::consts::PI / 180.0; //12.0; // Adjust the angle step as needed
+        }
+    }
+}
+
 pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, num_individuals: usize) -> Vec<Individual> {
 
     // Create individuals with unique IDs, group IDs, and memory
@@ -186,6 +227,11 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
 
         // Select an free attraction point as territory coe cell
         let free_ap = get_free_attraction_points(&grid);
+        if free_ap.is_empty(){
+
+        println!("No more free space for additional groups, group creation halted at {}/{} groups!", id,num_individuals);
+        break;
+        }else{
         let mut rng = rand::thread_rng();
         let random_index = rng.gen_range(0..free_ap.len());
         let random_ap = free_ap[random_index];
@@ -193,7 +239,7 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
         let x = random_ap.0;
         let y = random_ap.1;
 
-        let group_id = rand::thread_rng().gen_range(1..=2);
+        let group_id = id; //rand::thread_rng().gen_range(1..=2);
 
         // Make this cell the core cell / the core Ap
         occupy_this_cell(&mut grid[x][y], group_id);
@@ -207,19 +253,26 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
         let desired_total_cells = 1600;
         let range = ((desired_total_cells as f64).sqrt() - 1.0) / 2.0;
 
-        for i in (x.saturating_sub(range as usize))..=(x + range as usize) {
-            for j in (y.saturating_sub(range as usize))..=(y + range as usize) {
-                if i < grid.len() && j < grid[0].len() {
-                    if grid[i][j].quality > 0.0 {
+       // for i in (x.saturating_sub(range as usize))..=(x + range as usize) {
+       //     for j in (y.saturating_sub(range as usize))..=(y + range as usize) {
+       //         if i < grid.len() && j < grid[0].len() {
+       //             if grid[i][j].quality > 0.0 && grid[i][j].territory.is_taken == false {
+//
+       //                // occupy_this_cell(&mut grid, x, y, group_id);
+       //                 occupy_this_cell(&mut grid[i][j], group_id);
+//
+       //             }
+       //         }
+       //     }
+       // }
 
-                       // occupy_this_cell(&mut grid, x, y, group_id);
-                        occupy_this_cell(&mut grid[i][j], group_id);
+       circular_bfs(grid, x, y, group_id, desired_total_cells);
 
-                    }
-                }
-            }
-        }
-
+        //if my_vector.is_empty() {
+        //    println!("The vector is empty!");
+        //} else {
+        //    println!("The vector is not empty!");
+        //}
 
     // Random position
        // let (x, y) = loop {
@@ -230,10 +283,6 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
        //         break (x_candidate, y_candidate);
        //     }
        // };
-
-
-
-
 
         let age = 730 + rand::thread_rng().gen_range(1..=1825);
         
@@ -280,7 +329,7 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
             memory,
         });
 
-
+     }
     }
 
     individuals
@@ -333,13 +382,6 @@ fn choose_core_cell(grid: &Vec<Vec<Cell>>, individual: &Individual, rng: &mut im
 //
 ////
 
-
-
-
-
-
-
-
 // Mortality
 
 fn mortality(surv_prob: &SurvivalProbability, individuals: &mut Vec<Individual>, random_mortality: &mut u32){
@@ -376,7 +418,6 @@ fn mortality(surv_prob: &SurvivalProbability, individuals: &mut Vec<Individual>,
     individuals.clear();
     individuals.extend_from_slice(&retained_individuals);
 }
-
 
 // Memory functions
 
@@ -709,7 +750,7 @@ pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<In
 fn main() {
     // Define grid dimensions
     //let grid_size = 25;
-    let num_individuals = 10;
+    let num_individuals = 100;
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    

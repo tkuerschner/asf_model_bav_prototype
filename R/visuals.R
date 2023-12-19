@@ -32,21 +32,44 @@ g2 <- g1 %>% mutate(quality = replace(quality, quality<0, NA))
 )
 
 
-g3 <- g2 %>% filter(is_ap == "true") #mutate(is_ap =case_when(ap == "true" ~ 1, FALSE ~ 0)) 
+g3 <- g2 %>% filter(is_ap == "true") 
+
+#mutate(is_ap =case_when(ap == "true" ~ 1, FALSE ~ 0)) 
 
 g4 <- g2 %>% filter(is_territory == "true")
 
 (ggplot()+
-  geom_tile(data = g2, aes(x=x, y=y, fill = quality))+
+  geom_tile(data = g2, aes(x=x, y=y, fill =quality))+
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
   new_scale_fill()+
   geom_tile(data = g4, aes(x=x, y=y, fill = quality), alpha = .5)+
   scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
   geom_point(data=g3,aes(x=x, y=y), color = "#003cff")+
-  geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+#, position=position_dodge(width=1))+
+  geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+
   scale_x_reverse()+
   coord_flip()
 )
+
+ 
+g5 <- g2 %>% filter(territory_of_group > 0)
+
+(op1<-ggplot()+
+ geom_tile(data = g2, aes(x=x, y=y, fill =quality, width = 1))+
+ scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  new_scale_fill()+
+  geom_tile(data = g5, aes(x=x, y=y, fill = as.factor(territory_of_group), width = 1))+
+  scale_fill_scico_d(palette = "lajolla")+
+  #scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  geom_point(data=g3,aes(x=x, y=y), color = "#003cff")+
+  geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+#, position=position_dodge(width=1))+
+  coord_equal()#+
+  #scale_x_reverse() +
+  #coord_flip()
+)
+
+ggsave("test2.png", op1)
+
+
 
 (ggplot(g2)+
   geom_tile(data = g4, aes(x=x, y=y, fill = quality))+
