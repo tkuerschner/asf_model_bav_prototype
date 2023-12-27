@@ -26,7 +26,7 @@ use reproduction::*;
 
 // Define a struct to represent an individual
 #[derive(Debug, Clone)]
-pub struct Individual {
+pub struct Groups {
     id: usize,
     group_id: usize,
     x: usize,
@@ -39,12 +39,12 @@ pub struct Individual {
     target_cell:Option<(usize,usize)>,
     remaining_stay_time: usize,
     age_class: AgeClass, 
-    memory: IndividualMemory,
-    //group_members: GroupMembers,
+    memory: GroupMemory,
+    group_members: Vec<GroupMember>,
     // add reset for reproduction
 }
 
-impl Individual {
+impl Groups {
     // Function to set a core cell
     fn set_core_cell(&mut self, core_cell: (usize, usize)) {
         self.core_cell = Some(core_cell);
@@ -61,11 +61,41 @@ impl Individual {
             self.remaining_stay_time -= 1;
         }
     }
+
+    pub fn add_group_member(&mut self, member_info: GroupMember) {
+        self.group_members.push(member_info);
+    }
+
+    // Method to get a reference to a specific group member
+    pub fn get_group_member(&self, index: usize) -> Option<&GroupMember> {
+        self.group_members.get(index)
+    }
+
+    // Method to perform logic on each group member
+    pub fn process_group_members(&self) {
+        for member in &self.group_members {
+            // Perform logic on each group member
+            // Example: println!("{:?}", member);
+        }
+    }
 }
+
+
+#[derive(Debug, Clone)]
+pub struct GroupMember {
+    individual_id: u32,
+    age: u32,
+    age_class: AgeClass,
+    sex: Sex,
+    health_status: HealthStatus, 
+    time_of_birth: usize,
+}
+
+
 
 // Define a struct to represent an individual's memory
 #[derive(Debug, Clone)]
-struct IndividualMemory {
+struct GroupMemory {
     known_cells: HashSet<(usize, usize)>,
     known_cells_order: Vec<(usize, usize)>,
     //last_visited_cells: HashSet<(usize, usize)>,
@@ -74,13 +104,32 @@ struct IndividualMemory {
     presence_timer: usize,
 }
 
+
+// Define a struct to represent an individual's sex
+#[derive(Debug, Clone, PartialEq)]
+enum HealthStatus {
+    Susceptible,
+    Infected,
+    Immune,
+}
+
+impl fmt::Display for HealthStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            HealthStatus::Susceptible => write!(f, "Susceptible"),
+            HealthStatus::Infected => write!(f, "Infected"),
+            HealthStatus::Immune => write!(f, "Immune"),
+        }
+    }
+}
+
+
 // Define a struct to represent an individual's sex
 #[derive(Debug, Clone, PartialEq)]
 enum Sex {
     Male,
     Female,
 }
-
 
 impl fmt::Display for Sex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -98,8 +147,6 @@ pub enum AgeClass {
     Yearling,
     Adult,
 }
-
-
 
 
 impl fmt::Display for AgeClass {
@@ -177,6 +224,8 @@ const PIGLET_SURVIVAL_DAY: f64 = 0.9438;//daily //0.9438743;// monthly
 
 // Function to perform circular BFS from the core cell
 
+// how to refine the following rust function to look more organic?
+
 fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, desired_total_cells: usize) {
     let mut queue = VecDeque::new();
     let mut visited = vec![vec![false; grid[0].len()]; grid.len()];
@@ -194,9 +243,9 @@ fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, 
             break;
         }
 
-        // Explore neighbors in a more circular fashion
-        let radius = 5.0; // You can adjust the radius as needed
-        let mut angle = 0.0;
+        // Explore neighbors in a circular fashion
+        let radius = 5.0;          //change as needed        
+        let mut angle = 0.0;       //change as needed    
 
         while angle <= 2.0 * std::f64::consts::PI {
             let nx = (cx as f64 + (radius * angle.cos()).round()) as usize;
@@ -210,26 +259,26 @@ fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, 
                 }
             }
 
-            angle += std::f64::consts::PI / 180.0; //12.0; // Adjust the angle step as needed
+            angle += std::f64::consts::PI / 180.0; //12.0;  //change as needed    
         }
     }
 }
 
-pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, num_individuals: usize) -> Vec<Individual> {
+pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, num_groups: usize) -> Vec<Groups> {
 
     // Create individuals with unique IDs, group IDs, and memory
-    let mut individuals: Vec<Individual> = Vec::with_capacity(num_individuals);
+    let mut group: Vec<Groups> = Vec::with_capacity(num_groups);
     let grid_size = grid.len();  
 
    // let tmp_Grid = grid.iter().iter().filter(|cell| cell.quality > 0.0);
 
-    for id in 0..num_individuals {
+    for id in 0..num_groups {
 
         // Select an free attraction point as territory coe cell
         let free_ap = get_free_attraction_points(&grid);
         if free_ap.is_empty(){
 
-        println!("No more free space for additional groups, group creation halted at {}/{} groups!", id,num_individuals);
+        println!("No more free space for additional groups, group creation halted at {}/{} groups!", id,num_groups);
         break;
         }else{
         let mut rng = rand::thread_rng();
@@ -300,7 +349,7 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
         let age_class = AgeClass::Adult;
 
         let has_reproduced = false;
-        let memory = IndividualMemory {
+        let memory = GroupMemory {
             known_cells: HashSet::new(),
             group_member_ids: Vec::new(),
             //last_visited_cells: HashSet::new(),
@@ -313,7 +362,7 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
         let target_cell = None;
         let remaining_stay_time = 0;
 
-        individuals.push(Individual {
+        group.push(Groups {
             id,
             group_id,
             x,
@@ -332,15 +381,15 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
      }
     }
 
-    individuals
+    group
 }
 
 //EXPERMINETS
 
 // Function to choose a core cell (within 1600 cells)
-fn choose_core_cell(grid: &Vec<Vec<Cell>>, individual: &Individual, rng: &mut impl Rng) -> (usize, usize) {
+fn choose_core_cell(grid: &Vec<Vec<Cell>>, group: &Groups, rng: &mut impl Rng) -> (usize, usize) {
     // Get the position of the individual as the core cell
-    (individual.x, individual.y)
+    (group.x, group.y)
 }
 
 //// Function to choose a target cell (90% within 1600 cells, 10% within 3200 cells)
@@ -384,9 +433,9 @@ fn choose_core_cell(grid: &Vec<Vec<Cell>>, individual: &Individual, rng: &mut im
 
 // Mortality
 
-fn mortality(surv_prob: &SurvivalProbability, individuals: &mut Vec<Individual>, random_mortality: &mut u32){
+fn mortality(surv_prob: &SurvivalProbability, group: &mut Vec<Groups>, random_mortality: &mut u32){
 
-    let retained_individuals: Vec<Individual> = individuals
+    let retained_groups: Vec<Groups> = group
     .drain(..)
     .filter(|ind| {
        if ind.age_class != AgeClass::Piglet {
@@ -415,8 +464,8 @@ fn mortality(surv_prob: &SurvivalProbability, individuals: &mut Vec<Individual>,
     .collect();
 
     // Clear the original vector and insert retained individuals
-    individuals.clear();
-    individuals.extend_from_slice(&retained_individuals);
+    group.clear();
+    group.extend_from_slice(&retained_groups);
 }
 
 // Memory functions
@@ -447,23 +496,23 @@ pub fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usiz
     order.push(new_cell);
 }
 
-pub fn update_group_memory(individuals: &mut Vec<Individual>) {
+pub fn update_group_memory(group: &mut Vec<Groups>) {
     // Get the indices of individuals
-    let indices: Vec<usize> = (0..individuals.len()).collect();
+    let indices: Vec<usize> = (0..group.len()).collect();
 
     // Iterate through indices to update group memory
     for &index in &indices {
-        let group_id = individuals[index].group_id;
+        let group_id = group[index].group_id;
 
         // Find indices of group members with the same group_id
         let group_members_ids: Vec<usize> = indices
             .iter()
-            .filter(|&&i| individuals[i].group_id == group_id)
-            .map(|&i| individuals[i].id)
+            .filter(|&&i| group[i].group_id == group_id)
+            .map(|&i| group[i].id)
             .collect();
 
         // Update group memory with the IDs of group members
-        individuals[index].memory.group_member_ids = group_members_ids;
+        group[index].memory.group_member_ids = group_members_ids;
 
         // Print debug information
         //println!(
@@ -485,37 +534,37 @@ pub fn calculate_quality_score(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> f64
     }
 }
 
-pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, individuals: &mut Vec<Individual>, rng: &mut R) {
-    for individual in individuals.iter_mut() {
+pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R) {
+    for group in group.iter_mut() {
         // 25% chance to move randomly
         if rng.gen_range(0..100) < 25 {
             //move_to_random_adjacent_cells(grid.len(), individual, rng);
-            move_to_random_adjacent_cells_2(grid, individual, rng);
+            move_to_random_adjacent_cells_2(grid, group, rng);
         } else {
             // Move towards the cell with the highest quality
             //move_towards_highest_quality(grid, individual, rng);
-            move_to_random_adjacent_cells_2(grid, individual, rng);
+            move_to_random_adjacent_cells_2(grid, group, rng);
 
             // Update presence timer
-            individual.memory.presence_timer += 1;
+            group.memory.presence_timer += 1;
 
             // Check if presence time limit is reached or 5% chance to move
-            if individual.memory.presence_timer >= PRESENCE_TIME_LIMIT || rng.gen_range(0..100) < MOVE_CHANCE_PERCENTAGE {
+            if group.memory.presence_timer >= PRESENCE_TIME_LIMIT || rng.gen_range(0..100) < MOVE_CHANCE_PERCENTAGE {
                 // Reset presence timer and force movement to a random cell
-                individual.memory.presence_timer = 0;
-                move_to_random_adjacent_cells(grid.len(), individual, rng);
+                group.memory.presence_timer = 0;
+                move_to_random_adjacent_cells(grid.len(), group, rng);
             }
         }
     }
 }
 
-pub fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, individual: &mut Individual, rng: &mut impl Rng) {
+pub fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng) {
     // Generate a list of adjacent cells
     let adjacent_cells = vec![
-        (individual.x.saturating_sub(1), individual.y),
-        (individual.x.saturating_add(1), individual.y),
-        (individual.x, individual.y.saturating_sub(1)),
-        (individual.x, individual.y.saturating_add(1)),
+        (group.x.saturating_sub(1), group.y),
+        (group.x.saturating_add(1), group.y),
+        (group.x, group.y.saturating_sub(1)),
+        (group.x, group.y.saturating_add(1)),
     ];
 
     // Calculate the quality score for each adjacent cell and find the cell with the highest quality
@@ -532,20 +581,20 @@ pub fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, individual: &mut Indi
     //update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, (individual.x, individual.y), MAX_KNOWN_CELLS);
     //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
 
-    update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, (individual.x, individual.y), MAX_KNOWN_CELLS);
+    update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), MAX_KNOWN_CELLS);
     //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
 
 
     // Update individual's position
-    individual.x = new_x;
-    individual.y = new_y;
+    group.x = new_x;
+    group.y = new_y;
 }
 
 //TEST
-pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, individual: &mut Individual, rng: &mut impl Rng){
+pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng){
     // Get the current position of the individual
-    let current_x = individual.x;
-    let current_y = individual.y;
+    let current_x = group.x;
+    let current_y = group.y;
 
       // Generate a list of adjacent cells
     let mut adjacent_cells = vec![
@@ -574,12 +623,12 @@ pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, individual: &mut I
     //update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, target_cell, MAX_KNOWN_CELLS);
     //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, target_cell, MAX_LAST_VISITED_CELLS);
 
-    update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, (individual.x, individual.y), MAX_KNOWN_CELLS);
+    update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), MAX_KNOWN_CELLS);
     //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
 
     // Update individual's position
-    individual.x = target_cell.0;
-    individual.y = target_cell.1;
+    group.x = target_cell.0;
+    group.y = target_cell.1;
 }
    
 //TEST
@@ -595,10 +644,10 @@ fn random_cell_with_quality(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize
 }
 
 
-pub fn move_to_random_adjacent_cells(grid_size: usize, individual: &mut Individual, rng: &mut impl Rng) {
+pub fn move_to_random_adjacent_cells(grid_size: usize, group: &mut Groups, rng: &mut impl Rng) {
     // Get the current position of the individual
-    let current_x = individual.x;
-    let current_y = individual.y;
+    let current_x = group.x;
+    let current_y = group.y;
 
     // Generate a list of adjacent cells
     let mut adjacent_cells = vec![
@@ -624,12 +673,12 @@ pub fn move_to_random_adjacent_cells(grid_size: usize, individual: &mut Individu
     //update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, target_cell, MAX_KNOWN_CELLS);
     //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, target_cell, MAX_LAST_VISITED_CELLS);
 
-    update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, (individual.x, individual.y), MAX_KNOWN_CELLS);
+    update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), MAX_KNOWN_CELLS);
     //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
 
     // Update individual's position
-    individual.x = target_cell.0;
-    individual.y = target_cell.1;
+    group.x = target_cell.0;
+    group.y = target_cell.1;
 }
 
 pub fn random_cell(grid_size: usize, rng: &mut impl Rng) -> (usize, usize) {
@@ -685,9 +734,9 @@ pub fn random_known_cell_except_last_three(known_cells: &HashSet<(usize, usize)>
  
 // Update functions
 
-pub fn update_counter(n_individuals: &mut usize,individuals: &mut Vec<Individual>){
+pub fn update_counter(n_groups: &mut usize,group: &mut Vec<Groups>){
 
-    *n_individuals = individuals.len();
+    *n_groups = group.len();
 }
  
 pub fn progress_time(global_variables: &mut GlobalVariables) {
@@ -709,7 +758,7 @@ pub fn progress_time(global_variables: &mut GlobalVariables) {
 
 // General setup
 
-pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<Individual>) {
+pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>) {
     // Setup the landscape (grid)
     let (mut grid, metadata) = match landscape_setup_from_ascii(file_path) {
         Ok((g, m)) => (g, m),
@@ -735,14 +784,14 @@ pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<In
     flip_grid(&mut grid);
 
     // Setup the individuals
-    let individuals = individuals_setup(&cell_info_list, &mut grid, num_individuals);
+    let groups = individuals_setup(&cell_info_list, &mut grid, num_groups);
 
       // Check if any individual is outside the bounds
-      if individuals.iter().any(|ind| ind.x >= grid.len() || ind.y >= grid[0].len()) {
+      if groups.iter().any(|ind| ind.x >= grid.len() || ind.y >= grid[0].len()) {
         println!("Some individuals are outside the bounds of the grid.");
     }
 
-    (grid, individuals)
+    (grid, groups)
 }
 
 // Main model
@@ -750,19 +799,19 @@ pub fn setup(file_path: &str, num_individuals: usize) -> (Vec<Vec<Cell>>, Vec<In
 fn main() {
     // Define grid dimensions
     //let grid_size = 25;
-    let num_individuals = 100;
+    let num_groups = 100;
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
     // Setup the landscape and individuals
 
-    let (mut grid, mut individuals) = setup(file_path, num_individuals);
+    let (mut grid, mut groups) = setup(file_path, num_groups);
 
     // Vector to store grid states for all iterations
     let mut all_grid_states: Vec<(usize, Vec<Vec<Cell>>)> = Vec::new();
 
     // Vector to store individual states for all iterations
-    let mut all_individuals_states: Vec<(usize, Vec<Individual>)> = Vec::new();
+    let mut all_individuals_states: Vec<(usize, Vec<Groups>)> = Vec::new();
 
     // Vector to store global variables for all iterations
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
@@ -770,7 +819,7 @@ fn main() {
        let mut global_variables = GlobalVariables {
         age_mortality: 0,
         random_mortality: 0,
-        n_individuals: individuals.len(),
+        n_individuals: groups.len(), // FIX ME
         day: 1,   // Initialize with 1
         month: 1, // Initialize with 1
         year: 1,  // Initialize with 1
@@ -793,7 +842,7 @@ fn main() {
 
         // Simulate movement of individuals
         let mut rng = rand::thread_rng();
-        move_individuals(&grid, &mut individuals, &mut rng);
+        move_individuals(&grid, &mut groups, &mut rng);
 
         if global_variables.month == 5 {
             //debug print REMOVE ME
@@ -811,7 +860,7 @@ fn main() {
         //ageing(&mut individuals, &mut global_variables.age_mortality);                                         //   <-----------------temp OFF
 
         //Updating various counters such as number of individuals
-        update_counter(&mut global_variables.n_individuals, &mut individuals);
+        update_counter(&mut global_variables.n_individuals, &mut groups);
 
         // Update group memory
         //update_group_memory(&mut individuals); // turned off for speed
@@ -823,7 +872,7 @@ fn main() {
             }
     
             // Save the individual state for the current iteration
-           all_individuals_states.push((iteration, individuals.clone()));
+           all_individuals_states.push((iteration, groups.clone()));
 
         // Stop the sim when all individuals are dead
 

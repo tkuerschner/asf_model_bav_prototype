@@ -234,9 +234,9 @@ pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usiz
     }
 }
 
-pub fn set_ap_at_individual_position(grid: &mut Vec<Vec<Cell>>, individual: &Individual) {
+pub fn set_ap_at_individual_position(grid: &mut Vec<Vec<Cell>>, group: &Groups) {
     
-        grid[individual.x][individual.y].territory.is_ap = true;
+        grid[group.x][group.y].territory.is_ap = true;
     
 }
 
@@ -280,10 +280,10 @@ pub fn get_attraction_points2(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)> { //
 }
 
 // Occupy an attraction point as core cell and claim the surrounding ap
-pub fn occupy_cell_here(grid: &mut Vec<Vec<Cell>>, individual: &Individual) {
+pub fn occupy_cell_here(grid: &mut Vec<Vec<Cell>>, group: &Groups) {
 
-    grid[individual.x][individual.y].territory.is_taken = true;
-    grid[individual.x][individual.y].territory.taken_by_group = individual.group_id;
+    grid[group.x][group.y].territory.is_taken = true;
+    grid[group.x][group.y].territory.taken_by_group = group.group_id;
 
 }
 
@@ -313,10 +313,10 @@ pub fn occupy_territory(grid: &mut Vec<Vec<Cell>>, positions: Vec<(usize, usize)
 }
 
 // Returns all cells within a given radius around an individual
-pub fn get_cells_around_individual(individual: &Individual, grid: &Vec<Vec<Cell>>, range: usize) -> Vec<(usize, usize)> {
+pub fn get_cells_around_individual(group: &Groups, grid: &Vec<Vec<Cell>>, range: usize) -> Vec<(usize, usize)> {
     let mut cells_around = Vec::new();
-    let current_x = individual.x;
-    let current_y = individual.y;
+    let current_x = group.x;
+    let current_y = group.y;
 
     for i in (current_x.saturating_sub(range))..=(current_x + range) {
         for j in (current_y.saturating_sub(range))..=(current_y + range) {

@@ -1,8 +1,11 @@
 use crate::AgeClass;
-use crate::Individual;
+use crate::Groups;
 use crate::MAX_AGE;
 
-pub fn ageing(individuals: &mut Vec<Individual>, age_mortality: &mut u32) {
+//FIX ME to change the age of the group members
+
+
+pub fn ageing(individuals: &mut Vec<Groups>, age_mortality: &mut u32) {
     for individual in individuals.iter_mut() {
         individual.age += 1;
 
@@ -16,7 +19,7 @@ pub fn ageing(individuals: &mut Vec<Individual>, age_mortality: &mut u32) {
     }
 
     // Filter out individuals whose age exceeds the maximum age
-    let retained_individuals: Vec<Individual> = individuals
+    let retained_individuals: Vec<Groups> = individuals
         .drain(..)
         .filter(|individual| {
             if individual.age > MAX_AGE {

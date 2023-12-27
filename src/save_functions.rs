@@ -2,7 +2,10 @@
 
 use crate::*;
 
-pub fn save_individuals_as_csv(filename: &str, individuals_states: &[(usize, Vec<Individual>)]) -> io::Result<()> {
+
+// Fix me to work with groups
+
+pub fn save_individuals_as_csv(filename: &str, individuals_states: &[(usize, Vec<Groups>)]) -> io::Result<()> {
     // Create or open the CSV file
     let mut file = File::create(filename)?;
 

@@ -2,7 +2,11 @@
 
 use crate::*;
 
-pub fn reproduction(month: u32, individuals: &mut Vec<Individual>, current_tick: usize) {
+
+// FIX ME: complete rewrite for groups
+
+
+pub fn reproduction(month: u32, individuals: &mut Vec<Groups>, current_tick: usize) {
     // Define the probability of reproduction based on the month
     let reproduction_probability = match month {
         1 => 0.06,  // From SwifCoIbm 
@@ -19,7 +23,7 @@ pub fn reproduction(month: u32, individuals: &mut Vec<Individual>, current_tick:
     };
 
 // Create a separate vector for new individuals
-let mut new_individuals: Vec<Individual> = Vec::new();
+let mut new_individuals: Vec<Groups> = Vec::new();
 
 // Calculate the new ID outside the loop
 let new_id = individuals.len();
@@ -63,7 +67,7 @@ for individual in individuals.iter_mut().filter(|ind| {
         //    female: rand::thread_rng().gen_bool(0.5),
         //};
 
-        let new_individual = Individual {
+        let new_individual = Groups {
             id: new_id + new_individuals.len(),  // Use the pre-calculated new ID
             group_id: individual.group_id,  // Inherit group ID
             x: individual.x,  // Inherit current location
@@ -73,7 +77,7 @@ for individual in individuals.iter_mut().filter(|ind| {
             has_reproduced: false,  // New individual hasn't reproduced yet
             time_of_reproduction: 0,
             age_class: AgeClass::Piglet,
-            memory: IndividualMemory {
+            memory: GroupMemory {
                 known_cells: HashSet::new(),
                 known_cells_order: Vec::new(),
                 //last_visited_cells: HashSet::new(),
