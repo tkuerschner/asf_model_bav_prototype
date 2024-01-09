@@ -18,27 +18,27 @@ use save_functions::*;
 
 // Some individual related functions
 mod ageing;
-use ageing::ageing;
+//use ageing::ageing;
 
 mod reproduction;
 use reproduction::*;
 
 
-// Define a struct to represent an individual
+// Define a struct to represent a group
 #[derive(Debug, Clone)]
 pub struct Groups {
     id: usize,
     group_id: usize,
     x: usize,
     y: usize,
-    age: u32,
-    sex: Sex,
-    has_reproduced: bool,
+   // age: u32,
+   // sex: Sex,
+   // has_reproduced: bool,
     time_of_reproduction: usize,
     core_cell:Option<(usize,usize)>,
     target_cell:Option<(usize,usize)>,
     remaining_stay_time: usize,
-    age_class: AgeClass, 
+   // age_class: AgeClass, 
     memory: GroupMemory,
     group_members: Vec<GroupMember>,
     // add reset for reproduction
@@ -78,6 +78,61 @@ impl Groups {
             // Example: println!("{:?}", member);
         }
     }
+
+   pub fn create_new_initial_group_member(&mut self) -> Result<GroupMember> {
+    let mut rng = rand::thread_rng();
+    let rand: f64 = rng.gen_range(0.0..1.0);
+
+    let var_value = 0; // FIX me add age blur variance
+
+    let individual_id = 1; // FIX ME rolling ID
+
+    let tmp_age = match rand {
+         r if r <= 0.38 => 52 + var_value,
+         r if r <= 0.62 => 104 + var_value,
+         r if r <= 0.77 => 156 + var_value,
+         r if r <= 0.86 => 208 + var_value,
+         r if r <= 0.92 => 260 + var_value,
+         r if r <= 0.95 => 312 + var_value,
+         r if r <= 0.97 => 364 + var_value,
+         r if r <= 0.98 => 416 + var_value,
+         r if r <= 0.99 => 468 + var_value,
+         _ => 520 + var_value,
+    }; // from Kramer-Schadt et al. 2009 - age in weeks
+
+    let age = tmp_age * 7; // age in days
+
+    //set age class according to age in weeks (SwifCoIBMove)
+    let age_class = if tmp_age <= 21 {
+        AgeClass::Piglet
+    } else if tmp_age <= 104 {
+        AgeClass::Yearling
+    } else {
+        AgeClass::Adult
+    };
+
+    let sex = if rand::thread_rng().gen_bool(0.5) {
+        Sex::Female
+    } else {
+        Sex::Male
+    };
+
+    let health_status = HealthStatus::Susceptible;
+    let time_of_birth = 0;
+
+    let new_member = GroupMember {
+        individual_id,
+        age,
+        age_class,
+        sex,
+        health_status,
+        time_of_birth,
+    };
+
+    self.group_members.push(new_member.clone());
+    Ok(new_member)
+}
+
 }
 
 
@@ -93,7 +148,7 @@ pub struct GroupMember {
 
 
 
-// Define a struct to represent an individual's memory
+// Define a struct to represent a groups's memory
 #[derive(Debug, Clone)]
 struct GroupMemory {
     known_cells: HashSet<(usize, usize)>,
@@ -105,7 +160,7 @@ struct GroupMemory {
 }
 
 
-// Define a struct to represent an individual's sex
+// Define a struct to represent an individual's health status
 #[derive(Debug, Clone, PartialEq)]
 enum HealthStatus {
     Susceptible,
@@ -135,7 +190,7 @@ impl fmt::Display for Sex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Sex::Male => write!(f, "male"),
-            Sex::Female => write!(f, "Female"),
+            Sex::Female => write!(f, "female"),
         }
     }
 }
@@ -147,7 +202,6 @@ pub enum AgeClass {
     Yearling,
     Adult,
 }
-
 
 impl fmt::Display for AgeClass {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -180,7 +234,6 @@ pub struct AreaSeparation {
     is_taken:bool,
     taken_by_group: usize,
 }
-
 pub struct CellInfo {
     x_grid_o: usize,
     y_grid_o: usize,
@@ -208,6 +261,8 @@ pub struct LandscapeMetadata {
     cellsize: f64,
     nodata_value: i32,
 }
+
+
 
 //Constants / inputs
 const MAX_AGE: u32 = 365 * 12;
@@ -264,7 +319,7 @@ fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, 
     }
 }
 
-pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, num_groups: usize) -> Vec<Groups> {
+pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, num_groups: usize) -> Vec<Groups> {
 
     // Create individuals with unique IDs, group IDs, and memory
     let mut group: Vec<Groups> = Vec::with_capacity(num_groups);
@@ -362,20 +417,23 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
         let target_cell = None;
         let remaining_stay_time = 0;
 
+        let group_members = vec![];
+
         group.push(Groups {
             id,
             group_id,
             x,
             y,
-            age,
-            sex,
-            age_class,
-            has_reproduced,
+           //age,
+           //sex,
+           //age_class,
+           //has_reproduced,
             time_of_reproduction,
             core_cell: Some(core_cell),
             target_cell,
             remaining_stay_time,
             memory,
+            group_members,
         });
 
      }
@@ -383,6 +441,65 @@ pub fn individuals_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cel
 
     group
 }
+
+
+
+// use the mean habitat suitability of the surrounding cells (territory) to calculate number of breeding females and create groups accordingly
+//fn fill_initial_groups(group: &mut Vec<Groups> , grid: &Vec<Vec<Cell>>){
+//
+//
+// for group in group.iter_mut() {
+//
+//    let breed_cap = calculate_mean_quality_for_group(grid, group.group_id).round();
+//
+//    // group size estimator from SwiCoIBMove 4.5
+//
+//    let tmp_size = (4.5 * breed_cap - 1.0).round() as u32; 
+//
+//    for i in 0..tmp_size {
+//
+//        group.create_new_initial_group_member();
+//
+//    }
+//
+//
+// }
+//}
+
+fn fill_initial_groups(groups: &mut Vec<Groups>, grid: &Vec<Vec<Cell>>) {
+    for group in groups.iter_mut() {
+        let breed_cap = calculate_mean_quality_for_group(grid, group.group_id).round();
+
+        // group size estimator from SwiCoIBMove 4.5
+        let tmp_size = (4.5 * breed_cap - 1.0).round() as u32;
+
+        for _ in 0..tmp_size {
+            group.create_new_initial_group_member();
+        }
+    }
+}
+
+
+fn calculate_mean_quality_for_group(grid: &Vec<Vec<Cell>>, group_id: usize) -> f64 {
+    let mut total_quality = 0.0;
+    let mut num_cells = 0;
+
+    for row in grid {
+        for cell in row {
+            if cell.territory.is_taken && cell.territory.taken_by_group == group_id {
+                total_quality += cell.quality;
+                num_cells += 1;
+            }
+        }
+    }
+
+    if num_cells == 0 {
+        return 0.0; // Avoid division by zero
+    }
+
+    total_quality / (num_cells as f64)
+}
+
 
 //EXPERMINETS
 
@@ -433,40 +550,40 @@ fn choose_core_cell(grid: &Vec<Vec<Cell>>, group: &Groups, rng: &mut impl Rng) -
 
 // Mortality
 
-fn mortality(surv_prob: &SurvivalProbability, group: &mut Vec<Groups>, random_mortality: &mut u32){
-
-    let retained_groups: Vec<Groups> = group
-    .drain(..)
-    .filter(|ind| {
-       if ind.age_class != AgeClass::Piglet {
-
-        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
-        let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
-
-        if rounded_number < surv_prob.adult 
-         {true} else {
-            *random_mortality += 1;
-            false
-        }
-       }else{
-
-        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
-        let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
-
-        if rounded_number < surv_prob.piglet
-         {true} else {
-            
-            *random_mortality += 1;
-            false
-        }
-       }
-    })
-    .collect();
-
-    // Clear the original vector and insert retained individuals
-    group.clear();
-    group.extend_from_slice(&retained_groups);
-}
+//fn mortality(surv_prob: &SurvivalProbability, group: &mut Vec<Groups>, random_mortality: &mut u32){
+//
+//    let retained_groups: Vec<Groups> = group
+//    .drain(..)
+//    .filter(|ind| {
+//       if ind.age_class != AgeClass::Piglet {
+//
+//        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
+//        let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
+//
+//        if rounded_number < surv_prob.adult 
+//         {true} else {
+//            *random_mortality += 1;
+//            false
+//        }
+//       }else{
+//
+//        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
+//        let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
+//
+//        if rounded_number < surv_prob.piglet
+//         {true} else {
+//            
+//            *random_mortality += 1;
+//            false
+//        }
+//       }
+//    })
+//    .collect();
+//
+//    // Clear the original vector and insert retained individuals
+//    group.clear();
+//    group.extend_from_slice(&retained_groups);
+//}
 
 // Memory functions
 
@@ -784,12 +901,14 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
     flip_grid(&mut grid);
 
     // Setup the individuals
-    let groups = individuals_setup(&cell_info_list, &mut grid, num_groups);
+    let mut groups = group_setup(&cell_info_list, &mut grid, num_groups);
 
       // Check if any individual is outside the bounds
       if groups.iter().any(|ind| ind.x >= grid.len() || ind.y >= grid[0].len()) {
         println!("Some individuals are outside the bounds of the grid.");
     }
+
+    fill_initial_groups(&mut groups, &grid);
 
     (grid, groups)
 }
@@ -811,7 +930,7 @@ fn main() {
     let mut all_grid_states: Vec<(usize, Vec<Vec<Cell>>)> = Vec::new();
 
     // Vector to store individual states for all iterations
-    let mut all_individuals_states: Vec<(usize, Vec<Groups>)> = Vec::new();
+    let mut all_group_states: Vec<(usize, Vec<Groups>)> = Vec::new();
 
     // Vector to store global variables for all iterations
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
@@ -872,7 +991,7 @@ fn main() {
             }
     
             // Save the individual state for the current iteration
-           all_individuals_states.push((iteration, groups.clone()));
+            all_group_states.push((iteration, groups.clone()));
 
         // Stop the sim when all individuals are dead
 
@@ -912,13 +1031,15 @@ fn main() {
     save_grid_as_csv("output/all_grid_states.csv", &all_grid_states).expect("Failed to save grid states as CSV");                //   <-----------------temp OFF
 
     // Save all individual states to a single CSV file
-    save_individuals_as_csv("output/all_individuals.csv", &all_individuals_states).expect("Failed to save individuals as CSV");
+    save_groups_as_csv("output/all_groups.csv", &all_group_states).expect("Failed to save groups as CSV");
 
     // Save all global variables to a single CSV file
     save_global_variables_as_csv("output/all_global_variables.csv", &all_global_variables).expect("Failed to save global variables as CSV");
 
 
 }
+
+
 
 
 

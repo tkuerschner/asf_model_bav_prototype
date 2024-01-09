@@ -15,6 +15,9 @@ individuals <- read.csv("./output/all_individuals.csv", header = T)
 globals <- read.csv("./output/all_global_variables.csv", header = T)
 
 
+groups <- read.csv("./output/all_groups.csv", header = T)
+
+
 g1 <- grid #%>% filter(iteration == 1)
 
 i1 <- individuals %>% filter(iteration == 1)
@@ -67,7 +70,7 @@ g5 <- g2 %>% filter(territory_of_group > 0)
   #coord_flip()
 )
 
-ggsave("test2.png", op1)
+#ggsave("test2.png", op1)
 
 
 
