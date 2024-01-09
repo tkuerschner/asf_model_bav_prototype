@@ -3,3 +3,6 @@ multi_dimensional_vector.zip
 all_individuals.csv
 Hr_experiment.nlogo
 *.png
+output/all_global_variables.csv
+output/all_grid_states.csv
+output/all_groups.csv
