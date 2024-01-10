@@ -27,7 +27,7 @@ use reproduction::*;
 // Define a struct to represent a group
 #[derive(Debug, Clone)]
 pub struct Groups {
-    id: usize,
+    //id: usize,
     group_id: usize,
     x: usize,
     y: usize,
@@ -85,7 +85,7 @@ impl Groups {
 
     let var_value = 0; // FIX me add age blur variance
 
-    let individual_id = 1; // FIX ME rolling ID
+    let individual_id = generate_individual_id(); // 1; // FIX ME rolling ID
 
     let tmp_age = match rand {
          r if r <= 0.38 => 52 + var_value,
@@ -135,10 +135,31 @@ impl Groups {
 
 }
 
+// Static counter for individual_id
+static mut INDIVIDUAL_COUNTER: usize = 0;
+
+// Function to generate a unique individual_id
+fn generate_individual_id() -> usize {
+    unsafe {
+        INDIVIDUAL_COUNTER += 1;
+        INDIVIDUAL_COUNTER
+    }
+}
+
+// Static counter for group_id
+static mut GROUP_COUNTER: usize = 0;
+
+// Function to generate a unique individual_id
+fn generate_group_id() -> usize {
+    unsafe {
+        GROUP_COUNTER += 1;
+        GROUP_COUNTER
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct GroupMember {
-    individual_id: u32,
+    individual_id: usize,
     age: u32,
     age_class: AgeClass,
     sex: Sex,
@@ -279,8 +300,6 @@ const PIGLET_SURVIVAL_DAY: f64 = 0.9438;//daily //0.9438743;// monthly
 
 // Function to perform circular BFS from the core cell
 
-// how to refine the following rust function to look more organic?
-
 fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, desired_total_cells: usize) {
     let mut queue = VecDeque::new();
     let mut visited = vec![vec![false; grid[0].len()]; grid.len()];
@@ -327,13 +346,13 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
 
    // let tmp_Grid = grid.iter().iter().filter(|cell| cell.quality > 0.0);
 
-    for id in 0..num_groups {
+    for group_id in 0..num_groups {
 
         // Select an free attraction point as territory coe cell
         let free_ap = get_free_attraction_points(&grid);
         if free_ap.is_empty(){
 
-        println!("No more free space for additional groups, group creation halted at {}/{} groups!", id,num_groups);
+        println!("No more free space for additional groups, group creation halted at {}/{} groups!", group_id,num_groups);
         break;
         }else{
         let mut rng = rand::thread_rng();
@@ -343,7 +362,7 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
         let x = random_ap.0;
         let y = random_ap.1;
 
-        let group_id = id; //rand::thread_rng().gen_range(1..=2);
+        let group_id = generate_group_id(); // id; //rand::thread_rng().gen_range(1..=2);
 
         // Make this cell the core cell / the core Ap
         occupy_this_cell(&mut grid[x][y], group_id);
@@ -355,7 +374,7 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
         //
 
         let desired_total_cells = 1600;
-        let range = ((desired_total_cells as f64).sqrt() - 1.0) / 2.0;
+       // let range = ((desired_total_cells as f64).sqrt() - 1.0) / 2.0;
 
        // for i in (x.saturating_sub(range as usize))..=(x + range as usize) {
        //     for j in (y.saturating_sub(range as usize))..=(y + range as usize) {
@@ -388,22 +407,22 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
        //     }
        // };
 
-        let age = 730 + rand::thread_rng().gen_range(1..=1825);
+        //let age = 730 + rand::thread_rng().gen_range(1..=1825);
         
         let presence_timer = 0;
         
-        let sex;
-        if rand::thread_rng().gen_bool(0.5) == true {
-             sex = Sex::Female;
-        }else{
-             sex = Sex::Male;
-        }
+        //let sex;
+        //if rand::thread_rng().gen_bool(0.5) == true {
+        //     sex = Sex::Female;
+        //}else{
+        //     sex = Sex::Male;
+        //}
 
         let time_of_reproduction = 0;
 
-        let age_class = AgeClass::Adult;
+       // let age_class = AgeClass::Adult;
 
-        let has_reproduced = false;
+       // let has_reproduced = false;
         let memory = GroupMemory {
             known_cells: HashSet::new(),
             group_member_ids: Vec::new(),
@@ -420,7 +439,6 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
         let group_members = vec![];
 
         group.push(Groups {
-            id,
             group_id,
             x,
             y,
@@ -472,6 +490,7 @@ fn fill_initial_groups(groups: &mut Vec<Groups>, grid: &Vec<Vec<Cell>>) {
 
         // group size estimator from SwiCoIBMove 4.5
         let tmp_size = (4.5 * breed_cap - 1.0).round() as u32;
+        println!("grpsize {}", tmp_size);
 
         for _ in 0..tmp_size {
             group.create_new_initial_group_member();
@@ -487,7 +506,7 @@ fn calculate_mean_quality_for_group(grid: &Vec<Vec<Cell>>, group_id: usize) -> f
     for row in grid {
         for cell in row {
             if cell.territory.is_taken && cell.territory.taken_by_group == group_id {
-                total_quality += cell.quality;
+                total_quality += cell.quality * 10.0; //FIX ME adjust for the raster
                 num_cells += 1;
             }
         }
@@ -496,6 +515,8 @@ fn calculate_mean_quality_for_group(grid: &Vec<Vec<Cell>>, group_id: usize) -> f
     if num_cells == 0 {
         return 0.0; // Avoid division by zero
     }
+
+    println!("qual: {}, ncell: {}", total_quality, num_cells );
 
     total_quality / (num_cells as f64)
 }
@@ -615,28 +636,28 @@ pub fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usiz
 
 pub fn update_group_memory(group: &mut Vec<Groups>) {
     // Get the indices of individuals
-    let indices: Vec<usize> = (0..group.len()).collect();
-
-    // Iterate through indices to update group memory
-    for &index in &indices {
-        let group_id = group[index].group_id;
-
-        // Find indices of group members with the same group_id
-        let group_members_ids: Vec<usize> = indices
-            .iter()
-            .filter(|&&i| group[i].group_id == group_id)
-            .map(|&i| group[i].id)
-            .collect();
-
-        // Update group memory with the IDs of group members
-        group[index].memory.group_member_ids = group_members_ids;
-
-        // Print debug information
-        //println!(
-        //    "Individual {}: Group ID: {}, Group members: {:?}",
-        //    index, group_id, individuals[index].memory.group_member_ids
-        //);
-    }
+   // let indices: Vec<usize> = (0..group.len()).collect();
+//
+   // // Iterate through indices to update group memory
+   // for &index in &indices {
+   //     let group_id = group[index].group_id;
+//
+   //     // Find indices of group members with the same group_id
+   //     let group_members_ids: Vec<usize> = indices
+   //         .iter()
+   //         .filter(|&&i| group[i].group_id == group_id)
+   //         .map(|&i| group[i].id)
+   //         .collect();
+//
+   //     // Update group memory with the IDs of group members
+   //     group[index].memory.group_member_ids = group_members_ids;
+//
+   //     // Print debug information
+   //     //println!(
+   //     //    "Individual {}: Group ID: {}, Group members: {:?}",
+   //     //    index, group_id, individuals[index].memory.group_member_ids
+   //     //);
+   // }
 }
 
 // Movement functions
@@ -659,8 +680,8 @@ pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, 
             move_to_random_adjacent_cells_2(grid, group, rng);
         } else {
             // Move towards the cell with the highest quality
-            //move_towards_highest_quality(grid, individual, rng);
-            move_to_random_adjacent_cells_2(grid, group, rng);
+            move_towards_highest_quality(grid, group, rng);
+           // move_to_random_adjacent_cells_2(grid, group, rng);
 
             // Update presence timer
             group.memory.presence_timer += 1;
