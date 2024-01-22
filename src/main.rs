@@ -18,7 +18,7 @@ use save_functions::*;
 
 // Some individual related functions
 mod ageing;
-//use ageing::ageing;
+use ageing::ageing;
 
 mod reproduction;
 use reproduction::*;
@@ -119,6 +119,8 @@ impl Groups {
 
     let health_status = HealthStatus::Susceptible;
     let time_of_birth = 0;
+    let  has_reproduced = false;
+    let  time_of_reproduction = 0;
 
     let new_member = GroupMember {
         individual_id,
@@ -127,6 +129,8 @@ impl Groups {
         sex,
         health_status,
         time_of_birth,
+        has_reproduced,
+        time_of_reproduction,
     };
 
     self.group_members.push(new_member.clone());
@@ -165,6 +169,8 @@ pub struct GroupMember {
     sex: Sex,
     health_status: HealthStatus, 
     time_of_birth: usize,
+    has_reproduced: bool,
+    time_of_reproduction: usize,
 }
 
 
@@ -291,7 +297,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 20;
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 10;
+const RUNTIME: usize = 365;// 365 * 10; //<---------------------------FIX ME DEBUG TO 1 year
 const ADULT_SURVIVAL: f64 = 0.65; //annual
 const PIGLET_SURVIVAL: f64 = 0.5; //annual
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;//daily //0.9647381; // monthly
@@ -318,8 +324,8 @@ fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, 
         }
 
         // Explore neighbors in a circular fashion
-        let radius = 5.0;          //change as needed        
-        let mut angle = 0.0;       //change as needed    
+        let radius = 5.0;                  
+        let mut angle = 0.0;           
 
         while angle <= 2.0 * std::f64::consts::PI {
             let nx = (cx as f64 + (radius * angle.cos()).round()) as usize;
@@ -333,7 +339,7 @@ fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, 
                 }
             }
 
-            angle += std::f64::consts::PI / 180.0; //12.0;  //change as needed    
+            angle += std::f64::consts::PI / 180.0; //12.0;      
         }
     }
 }
@@ -490,7 +496,7 @@ fn fill_initial_groups(groups: &mut Vec<Groups>, grid: &Vec<Vec<Cell>>) {
 
         // group size estimator from SwiCoIBMove 4.5
         let tmp_size = (4.5 * breed_cap - 1.0).round() as u32;
-        println!("grpsize {}", tmp_size);
+        //println!("grpsize {}", tmp_size); FIX ME  DEBUG PRINT
 
         for _ in 0..tmp_size {
             group.create_new_initial_group_member();
@@ -516,7 +522,7 @@ fn calculate_mean_quality_for_group(grid: &Vec<Vec<Cell>>, group_id: usize) -> f
         return 0.0; // Avoid division by zero
     }
 
-    println!("qual: {}, ncell: {}", total_quality, num_cells );
+    //println!("qual: {}, ncell: {}", total_quality, num_cells );
 
     total_quality / (num_cells as f64)
 }
@@ -939,7 +945,7 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
 fn main() {
     // Define grid dimensions
     //let grid_size = 25;
-    let num_groups = 100;
+    let num_groups = 1; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
@@ -988,7 +994,7 @@ fn main() {
             //debug print REMOVE ME
             //print!("reproduction is triggered");
 
-         // reproduction(global_variables.month, &mut individuals, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
+          reproduction(global_variables.month, &mut groups, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
         }
 
         if global_variables.day == 15 {
@@ -997,7 +1003,7 @@ fn main() {
         }
 
         //age individuals by one day
-        //ageing(&mut individuals, &mut global_variables.age_mortality);                                         //   <-----------------temp OFF
+        ageing(&mut groups, &mut global_variables.age_mortality);                                         //   <-----------------temp OFF
 
         //Updating various counters such as number of individuals
         update_counter(&mut global_variables.n_individuals, &mut groups);
