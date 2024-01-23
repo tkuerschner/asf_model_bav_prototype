@@ -6,3 +6,10 @@ Hr_experiment.nlogo
 output/all_global_variables.csv
 output/all_grid_states.csv
 output/all_groups.csv
+.Rproj.user
+R/.radian_profile
+R/asf_bavaria_analysis/.lintr
+R/asf_bavaria_analysis/.radian_profile
+R/asf_bavaria_analysis/.Rhistory
+R/asf_bavaria_analysis/asf_bavaria_analysis.Rproj
+example_movement.gif

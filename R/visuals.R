@@ -10,7 +10,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 grid <- read.csv("./output/all_grid_states.csv", header = T)
 
-individuals <- read.csv("./output/all_individuals.csv", header = T)
+#individuals <- read.csv("./output/all_individuals.csv", header = T)
 
 globals <- read.csv("./output/all_global_variables.csv", header = T)
 
@@ -20,7 +20,7 @@ groups <- read.csv("./output/all_groups.csv", header = T)
 
 g1 <- grid #%>% filter(iteration == 1)
 
-i1 <- individuals %>% filter(iteration == 1)
+i1 <- groups %>% filter(iteration == 1)
 
 g2 <- g1 %>% mutate(quality = case_when(quality == -9999 ~ 0))
 
@@ -48,7 +48,7 @@ g4 <- g2 %>% filter(is_territory == "true")
   geom_tile(data = g4, aes(x=x, y=y, fill = quality), alpha = .5)+
   scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
   geom_point(data=g3,aes(x=x, y=y), color = "#003cff")+
-  geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+
+  #geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+
   scale_x_reverse()+
   coord_flip()
 )
@@ -221,3 +221,25 @@ SurvAP <- 0.50
 (SurvAA^(1/12))
 
 (SurvAP^(1/12))
+
+
+
+
+#### extracting spatial memory
+head(groups)
+testInd <- groups[333,]
+
+df <- testInd$known_cells
+df <- data.frame(mem1 = testInd$known_cells)
+
+
+
+# getting a list of coordinates from memory
+
+new_df <- df %>%
+  mutate(mem1 = gsub("\\[|\\]", "", mem1)) %>%
+  separate_rows(mem1, sep = ";") %>%
+  separate(mem1, into = c("x", "y"), sep = "_", convert = TRUE)
+
+
+

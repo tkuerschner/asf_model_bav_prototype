@@ -1,0 +1,217 @@
+---
+title: "experinentals"
+author: "Tobias Kuerschner"
+date: "2023-11-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+
+for (pckg in
+     c
+     (
+       'tidyverse',
+       'raster',
+       'scico',
+       'ggnewscale',
+       'gganimate'
+     ))
+{
+  if (!require(pckg, character.only = T))
+    install.packages(pckg, dependencies = TRUE)
+  require(pckg, character.only = T)
+}
+
+
+```
+
+
+```{r raw data}
+grid <- read.csv("./output/all_grid_states.csv", header = T)
+
+globals <- read.csv("./output/all_global_variables.csv", header = T)
+
+groups <- read.csv("./output/all_groups.csv", header = T)
+
+```
+
+
+
+```{r data prep}
+
+g1 <- grid #%>% filter(iteration == 1)
+
+g2 <- g1 %>% mutate(quality = case_when(quality == -9999 ~ 0))
+
+g2 <- g1 %>% mutate(quality = replace(quality, quality<0, NA))
+
+g3 <- g2 %>% filter(is_ap == "true") 
+
+g4 <- g2 %>% filter(is_territory == "true")
+
+i1 <- groups %>% filter(iteration == 1)
+
+
+```
+
+
+
+```{r landscape, ap and groups}
+
+
+(ggplot()+
+  geom_tile(data = g2, aes(x=x, y=y, fill =quality))+
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  new_scale_fill()+
+  geom_tile(data = g4, aes(x=x, y=y, fill = quality), alpha = .5)+
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  geom_point(data=g3,aes(x=x, y=y), color = "#003cff")+
+  geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+
+  scale_x_reverse()+
+  coord_flip()
+)
+
+```
+
+
+
+```{r extract spatial memory}
+
+##test case
+head(groups)
+testInd <- groups[333,]
+
+df <- testInd$known_cells
+df <- data.frame(mem1 = testInd$known_cells)
+
+
+
+# getting a list of coordinates from memory
+
+new_df <- df %>%
+  mutate(mem1 = gsub("\\[|\\]", "", mem1)) %>%
+  separate_rows(mem1, sep = ";") %>%
+  separate(mem1, into = c("x", "y"), sep = "_", convert = TRUE)
+
+
+
+
+```
+
+
+
+```{r animate memory}
+
+
+ed1 <- new_df %>% 
+#mutate(step = as.numeric(row.names(new_df)), x = (x-500)*-1 , y = (y-500)*-1)
+mutate(step = as.numeric(row.names(new_df)))
+
+buffer_size <- 5
+
+mpz_data <- g2  %>%
+  filter(
+    x >= min(ed1$x) - buffer_size & 
+    x <= max(ed1$x) + buffer_size &
+    y >= min(ed1$y) - buffer_size &
+    y <= max(ed1$y) + buffer_size
+  )
+
+
+
+# Create the base plot
+#base_plot <- ggplot(data, aes(x, y)) +
+#  geom_tile(color = "white", fill = "lightgrey", width = 1, height = 1) +
+#  geom_point(size = 3, color = "blue") +
+#  #xlim(min(data$x) - 1, max(data$x) + 1) +
+#  #ylim(min(data$y) - 1, max(data$y) + 1) +
+#  labs(title = "Step: {frame_time}")
+
+
+
+bp <- ggplot()+
+        geom_tile(data = mpz_data, aes(x=x, y=y, fill =quality))+
+        scale_fill_gradient(low = "#c2e9cf", high = "#046104")+
+        geom_point(data = ed1, aes(x, y),size = 3, color = "blue")+
+         labs(title = "Step: {frame_time}")
+
+# draw_path_segments <- function(data) {
+# segments <- data.frame(
+#   x = c(data$x[-1], tail(data$x, 1)),
+#   y = c(data$y[-1], tail(data$y, 1)),
+#   xend = data$x,
+#   yend = data$y
+# )
+# return(segments)
+#
+
+#animated_plot <- base_plot +
+#  geom_segment(aes(xend = xend, yend = yend), data = draw_path_segments(data),
+#               color = "darkblue", alpha = 0.5) +
+#  transition_states(step, transition_length = 0.5, state_length = 0.5) +
+#  enter_fade() +
+#  exit_fade()
+
+  # Animate the plot
+animated_plot <- bp +
+#geom_path(aes(group = 1), color = "darkblue", alpha = 0.5) +
+  transition_states(step, transition_length = 0.5, state_length = 0.5) +
+  enter_fade() +
+  exit_fade()
+
+# Save the animation
+anim_save("example_movement.gif", animate(animated_plot))
+
+
+```
+
+```{r animate path of group}
+
+
+gr1 <- groups %>% group_by(iteration) %>% sample_n(1)
+
+gr2 <- gr1 %>% ungroup() %>% dplyr::select(iteration,x,y)
+
+buffer_size <- 5
+
+mpz_data <- g2  %>%
+  filter(
+    x >= min(gr2$x) - buffer_size & 
+    x <= max(gr2$x) + buffer_size &
+    y >= min(gr2$y) - buffer_size &
+    y <= max(gr2$y) + buffer_size
+  ) %>% dplyr::select(x,y, quality)
+
+  ap_data <- g3 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size & 
+    x <= max(gr2$x) + buffer_size &
+    y >= min(gr2$y) - buffer_size &
+    y <= max(gr2$y) + buffer_size
+  ) %>% dplyr::select(x,y)
+
+grp_path_bp <- ggplot()+
+       geom_tile(data = mpz_data, aes(x=x, y=y, fill =quality))+
+       scale_fill_gradient(low = "#c2e9cf", high = "#046104")+
+        geom_point(data = gr2, aes(x, y),size = 3, color = "#dd4367")+
+        geom_point(data = ap_data ,aes(x=x, y=y), size = 4, color = "#003cff")+
+         #labs(title = "iteration: {frame_time}")
+         labs(title = "iteration: {next_step}")
+
+#summary(mpz_data)
+#summary(gr2)
+
+animated_plot <- grp_path_bp +
+  transition_states(iteration, transition_length = 0.2, state_length = 0.2) +
+  enter_fade() +
+  exit_fade()
+
+
+anim_save("example_movement.gif", animate(animated_plot))
+
+```
