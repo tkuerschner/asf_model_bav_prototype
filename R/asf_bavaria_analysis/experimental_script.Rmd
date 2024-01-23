@@ -3,6 +3,8 @@ title: "experinentals"
 author: "Tobias Kuerschner"
 date: "2023-11-01"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -26,6 +28,12 @@ for (pckg in
     install.packages(pckg, dependencies = TRUE)
   require(pckg, character.only = T)
 }
+
+
+
+
+#pak::pak('thomasp85/gganimate')
+
 
 
 ```
@@ -105,6 +113,61 @@ new_df <- df %>%
 
 
 
+
+```{r animate path of group}
+
+
+gr1 <- groups %>% group_by(iteration) %>% sample_n(1)
+
+gr2 <- gr1 %>% ungroup() %>% dplyr::select(iteration,x,y)
+
+buffer_size <- 5
+
+mpz_data <- g2  %>%
+  filter(
+    x >= min(gr2$x) - buffer_size & 
+    x <= max(gr2$x) + buffer_size &
+    y >= min(gr2$y) - buffer_size &
+    y <= max(gr2$y) + buffer_size
+  ) %>% dplyr::select(x,y, quality)
+
+  ap_data <- g3 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size & 
+    x <= max(gr2$x) + buffer_size &
+    y >= min(gr2$y) - buffer_size &
+    y <= max(gr2$y) + buffer_size
+  ) %>% dplyr::select(x,y)
+
+  gr2$group <- 1
+
+grp_path_bp <- ggplot()+
+        geom_tile(data = mpz_data, aes(x=x, y=y, fill =quality))+
+        scale_fill_gradient(low = "#c2e9cf", high = "#046104")+
+        geom_point(data = gr2, aes(x, y, group = seq_along(iteration)),size = 3, color = "#dd4367")+
+        geom_point(data = ap_data ,aes(x=x, y=y), size = 4, color = "#003cff")+
+       # new_scale_fill()+
+        geom_path(data = gr2, aes(x = x, y = y), color = "#c74ec9", linewidth = 1) +
+        #geom_tile(data = gr2, aes(x, y), fill = "#c74ec9")+
+         #labs(title = "iteration: {frame_time}")
+         labs(title = "Day: {frame_along}" )
+
+  animated_plot <- grp_path_bp +
+  #transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
+  transition_reveal(iteration)+
+  enter_fade() +
+  exit_fade()
+
+#summary(mpz_data)
+#summary(gr2)
+anim_save("example_movement.gif", animate(animated_plot))
+
+
+```
+
+
+
+
 ```{r animate memory}
 
 
@@ -138,7 +201,8 @@ bp <- ggplot()+
         geom_tile(data = mpz_data, aes(x=x, y=y, fill =quality))+
         scale_fill_gradient(low = "#c2e9cf", high = "#046104")+
         geom_point(data = ed1, aes(x, y),size = 3, color = "blue")+
-         labs(title = "Step: {frame_time}")
+        geom_path(data = ed1, aes(x, y), color = "blue")+
+         labs(title = "Step: {next_step}")
 
 # draw_path_segments <- function(data) {
 # segments <- data.frame(
@@ -170,48 +234,22 @@ anim_save("example_movement.gif", animate(animated_plot))
 
 ```
 
-```{r animate path of group}
 
 
-gr1 <- groups %>% group_by(iteration) %>% sample_n(1)
 
-gr2 <- gr1 %>% ungroup() %>% dplyr::select(iteration,x,y)
-
-buffer_size <- 5
-
-mpz_data <- g2  %>%
-  filter(
-    x >= min(gr2$x) - buffer_size & 
-    x <= max(gr2$x) + buffer_size &
-    y >= min(gr2$y) - buffer_size &
-    y <= max(gr2$y) + buffer_size
-  ) %>% dplyr::select(x,y, quality)
-
-  ap_data <- g3 %>%
-  filter(
-    x >= min(gr2$x) - buffer_size & 
-    x <= max(gr2$x) + buffer_size &
-    y >= min(gr2$y) - buffer_size &
-    y <= max(gr2$y) + buffer_size
-  ) %>% dplyr::select(x,y)
-
-grp_path_bp <- ggplot()+
-       geom_tile(data = mpz_data, aes(x=x, y=y, fill =quality))+
-       scale_fill_gradient(low = "#c2e9cf", high = "#046104")+
-        geom_point(data = gr2, aes(x, y),size = 3, color = "#dd4367")+
-        geom_point(data = ap_data ,aes(x=x, y=y), size = 4, color = "#003cff")+
-         #labs(title = "iteration: {frame_time}")
-         labs(title = "iteration: {next_step}")
-
-#summary(mpz_data)
-#summary(gr2)
-
-animated_plot <- grp_path_bp +
-  transition_states(iteration, transition_length = 0.2, state_length = 0.2) +
-  enter_fade() +
-  exit_fade()
+```{r}
+p <- ggplot(
+  airquality,
+  aes(Day, Temp, group = Month, color = factor(Month))
+  ) +
+  geom_line() +
+  scale_color_viridis_d() +
+  labs(x = "Day of Month", y = "Temperature") +
+  theme(legend.position = "top")
 
 
-anim_save("example_movement.gif", animate(animated_plot))
+p
 
+p + transition_reveal(Day)
 ```
+

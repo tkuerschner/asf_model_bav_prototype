@@ -42,6 +42,8 @@ pub struct Groups {
     memory: GroupMemory,
     group_members: Vec<GroupMember>,
     // add reset for reproduction
+    movement: MovementMode,
+    daily_movement_distance: usize,
 }
 
 impl Groups {
@@ -138,6 +140,24 @@ impl Groups {
 }
 
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum MovementMode{
+    ApTransition,
+    Foraging,
+    NotSet,
+}
+
+impl fmt::Display for MovementMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MovementMode::ApTransition => write!(f, "apTransition"),
+            MovementMode::Foraging => write!(f, "foraging"),
+            MovementMode::NotSet => write!(f, "not set"),
+        }
+    }
+}
+
 
 // Static counter for individual_id
 static mut INDIVIDUAL_COUNTER: usize = 0;
@@ -302,6 +322,9 @@ const ADULT_SURVIVAL: f64 = 0.65; //annual
 const PIGLET_SURVIVAL: f64 = 0.5; //annual
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;//daily //0.9647381; // monthly
 const PIGLET_SURVIVAL_DAY: f64 = 0.9438;//daily //0.9438743;// monthly
+const MIN_STAY_TIME: usize = 1; // days //<---------------------------------------------FIX ME randomly selected
+const MAX_STAY_TIME: usize = 14; // days
+const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
 // Individuals related functions
 
 // Function to perform circular BFS from the core cell
@@ -441,8 +464,10 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
         //let core_cell = None;
         let target_cell = None;
         let remaining_stay_time = 0;
-
+        let movement = MovementMode::Foraging;
         let group_members = vec![];
+        let daily_movement_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE; //<--------------------DEBUG FIX ME with actual values
+        
 
         group.push(Groups {
             group_id,
@@ -457,7 +482,9 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
             target_cell,
             remaining_stay_time,
             memory,
+            movement,
             group_members,
+            daily_movement_distance,
         });
 
      }
@@ -680,27 +707,134 @@ pub fn calculate_quality_score(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> f64
 
 pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R) {
     for group in group.iter_mut() {
-        // 25% chance to move randomly
-        if rng.gen_range(0..100) < 25 {
-            //move_to_random_adjacent_cells(grid.len(), individual, rng);
-            move_to_random_adjacent_cells_2(grid, group, rng);
-        } else {
-            // Move towards the cell with the highest quality
-            move_towards_highest_quality(grid, group, rng);
-           // move_to_random_adjacent_cells_2(grid, group, rng);
 
-            // Update presence timer
-            group.memory.presence_timer += 1;
+        while group.daily_movement_distance > 0  {
 
-            // Check if presence time limit is reached or 5% chance to move
-            if group.memory.presence_timer >= PRESENCE_TIME_LIMIT || rng.gen_range(0..100) < MOVE_CHANCE_PERCENTAGE {
-                // Reset presence timer and force movement to a random cell
-                group.memory.presence_timer = 0;
-                move_to_random_adjacent_cells(grid.len(), group, rng);
+
+            //check if a target cell is needed and assign a stay time for the ap
+            if group.target_cell.is_none() {
+                let territory_ap = get_attraction_points_in_territory(grid, group.group_id);
+                let new_target_cell = territory_ap
+                    .choose(rng)
+                    .cloned()
+                    .expect("No attraction points in territory");
+            
+                group.set_target_cell(new_target_cell);
+                group.remaining_stay_time = rng.gen_range(MIN_STAY_TIME..MAX_STAY_TIME);
+            }
+
+            // Steps
+            // 25% chance to move randomly
+            if rng.gen_range(0..100) < 25 {
+                //move_to_random_adjacent_cells(grid.len(), individual, rng);
+                move_to_random_adjacent_cells_2(grid, group, rng);
+                group.daily_movement_distance -= 1;
+            } else {
+                // Move towards the cell with the highest quality
+               // move_towards_highest_quality(grid, group, rng);
+               //move_within_territory(grid, group, rng);
+
+               // move_to_random_adjacent_cells_2(grid, group, rng);
+                if group.movement == MovementMode::ApTransition {
+
+                    if group.x == group.target_cell.unwrap().0 && group.y == group.target_cell.unwrap().1 {
+                        group.movement = MovementMode::Foraging;
+
+                        break; // if target location reached flit to foraging
+                    }
+
+                    correlated_random_walk_towards_target(grid, group, rng);
+
+                    group.daily_movement_distance -= 1;
+
+                } else if group.movement == MovementMode::Foraging {
+                    
+                    if group.remaining_stay_time <= 0 { //if stay time around ap is used up get a new ap to move towards
+
+                        let territory_ap = get_attraction_points_in_territory(grid, group.group_id);
+                        let closest_ap = get_closest_attraction_point(group, &territory_ap);
+                        let other_aps: Vec<(usize, usize)> = territory_ap
+                            .into_iter()
+                            .filter(|&ap| ap != closest_ap)
+                            .collect();
+
+                        // Choose a random target cell from the remaining attraction points
+                        let new_target_cell = other_aps
+                            .choose(rng)
+                            .cloned()
+                            .expect("No other attraction points in territory");
+
+                        group.set_target_cell(new_target_cell);
+                        group.remaining_stay_time = rng.gen_range(MIN_STAY_TIME..MAX_STAY_TIME);
+
+                        group.movement = MovementMode::ApTransition;
+                       // group.target_cell = None;
+                        
+                        break;
+                    }
+
+                    
+                    // if distance to current ap is more than 3 cells individuals more back towards the ap
+                    if ((group.x as isize) - (group.target_cell.unwrap().0 as isize)).abs() <= 3
+                    && ((group.y as isize) - (group.target_cell.unwrap().1 as isize)).abs() <= 3
+                    {
+                        move_towards_highest_quality(grid, group, rng);
+                        group.daily_movement_distance -= 1;
+                    }else {
+                        
+                        correlated_random_walk_towards_target(grid, group, rng);
+                        group.daily_movement_distance -= 1;
+                    }
+                    
+                    
+
+                      // Update presence timer
+                    //group.memory.presence_timer += 1;
+                    //
+                    //// Check if presence time limit is reached or 5% chance to move
+                    //if group.memory.presence_timer >= PRESENCE_TIME_LIMIT || rng.gen_range(0..100) < MOVE_CHANCE_PERCENTAGE {
+                    //    // Reset presence timer and force movement to a random cell
+                    //    group.memory.presence_timer = 0;
+                    //    //move_to_random_adjacent_cells(grid.len(), group, rng);
+                    //
+                    //    group.movement = MovementMode::ApTransition;
+                    //}
+                }
             }
         }
+        // Reset movement distance
+        group.daily_movement_distance =  DEFAULT_DAILY_MOVEMENT_DISTANCE;
+
+        // update the stay time around the ap
+        group.update_remaining_stay_time();
     }
+
 }
+
+pub fn move_to_new_ap(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng) {
+    // If remaining_stay_time is 0 or there is no target_cell, select a new target_cell from attraction points
+    if group.remaining_stay_time == 0 || group.target_cell.is_none() {
+        let territory_ap = get_attraction_points_in_territory(grid, group.group_id);
+        let new_target_cell = territory_ap
+            .choose(rng)
+            .cloned()
+            .expect("No attraction points in territory");
+
+        group.set_target_cell(new_target_cell);
+        group.remaining_stay_time = rng.gen_range(MIN_STAY_TIME..MAX_STAY_TIME);
+    }
+
+    // Move towards the target_cell using move_towards_highest_quality
+    //move_towards_highest_quality(grid, group, rng);
+
+    // Use CRW to move to target
+    correlated_random_walk_towards_target(grid, group, rng);
+
+
+    // Decrement remaining_stay_time
+    group.update_remaining_stay_time();
+}
+
 
 pub fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng) {
     // Generate a list of adjacent cells
@@ -732,6 +866,69 @@ pub fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, group: &mut Groups, r
     // Update individual's position
     group.x = new_x;
     group.y = new_y;
+}
+
+
+// Function for correlated random walk towards the target
+fn correlated_random_walk_towards_target(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng) {
+    // Autoregressive parameters 
+    let alpha = 0.8; // Persistence parameter
+
+    // Placeholder for storing the last movement direction
+    let mut last_direction = (0, 0);
+
+    // Generate a list of adjacent cells
+    let adjacent_cells = vec![
+        (group.x.saturating_sub(1), group.y),
+        (group.x.saturating_add(1), group.y),
+        (group.x, group.y.saturating_sub(1)),
+        (group.x, group.y.saturating_add(1)),
+    ];
+
+    // Calculate the quality score for each adjacent cell
+    let quality_scores: Vec<_> = adjacent_cells.iter()
+        .filter(|&&(x, y)| x < grid.len() && y < grid[0].len())
+        .map(|&(x, y)| (x, y, calculate_quality_score(grid, x, y)))
+        .collect();
+
+    // Sort cells by quality in descending order
+    let sorted_cells: Vec<_> = quality_scores.iter()
+        .cloned()
+        .filter(|&(x, y, _)| x < grid.len() && y < grid[0].len())
+        .collect();
+    let sorted_cells: Vec<_> = sorted_cells.iter()
+        .cloned()
+        .filter(|&(x, y, _)| x < grid.len() && y < grid[0].len())
+        .collect();
+    let sorted_cells: Vec<_> = sorted_cells.iter()
+        .cloned()
+        .filter(|&(x, y, _)| x < grid.len() && y < grid[0].len())
+        .collect();
+
+    // Select the first cell with quality > 0
+    let target_cell = sorted_cells
+        .first()
+        .map(|&(x, y, _)| (x, y))
+        .unwrap_or_else(|| random_cell(grid.len(), rng));
+
+    // Update known cells
+    update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), MAX_KNOWN_CELLS);
+
+    // Calculate the movement direction towards the target cell
+    let direction = (target_cell.0.saturating_sub(group.x), target_cell.1.saturating_sub(group.y));
+
+    // Update the movement direction using autoregressive model
+    let correlated_direction = (
+        (alpha * direction.0 as f64 + (1.0 - alpha) * last_direction.0 as f64).round() as isize,
+        (alpha * direction.1 as f64 + (1.0 - alpha) * last_direction.1 as f64).round() as isize,
+    );
+
+    // Update individual's position
+    group.x = (group.x as isize + correlated_direction.0).max(0) as usize;
+    group.y = (group.y as isize + correlated_direction.1).max(0) as usize;
+
+    // Update last_direction for the next iteration
+    last_direction = correlated_direction;
 }
 
 //TEST
@@ -989,6 +1186,8 @@ fn main() {
         // Simulate movement of individuals
         let mut rng = rand::thread_rng();
         move_individuals(&grid, &mut groups, &mut rng);
+
+   
 
         if global_variables.month == 5 {
             //debug print REMOVE ME

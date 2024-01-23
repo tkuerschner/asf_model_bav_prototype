@@ -264,19 +264,30 @@ pub fn get_free_attraction_points(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)>{
 
 }
 
-
+//TESTER
 pub fn get_attraction_points2(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)> { // Test which function is faster
-    let mut attraction_points = Vec::new();
+   let mut attraction_points = Vec::new();
+   for (i, row) in grid.iter().enumerate() {
+       for (j, cell) in row.iter().enumerate() {
+           if cell.territory.is_ap {
+               attraction_points.push((i, j));
+           }
+       }
+   }
+   attraction_points
+}
 
-    for (i, row) in grid.iter().enumerate() {
-        for (j, cell) in row.iter().enumerate() {
-            if cell.territory.is_ap {
-                attraction_points.push((i, j));
-            }
-        }
-    }
+pub fn get_closest_attraction_point(group: &Groups, ap_list: &[(usize, usize)]) -> (usize, usize) {
+    ap_list
+        .iter()
+        .cloned()
+        .min_by_key(|&ap| distance_squared(group.x, group.y, ap.0, ap.1))
+        .expect("No attraction points in territory")
+}
 
-    attraction_points
+// Helper function to calculate squared distance between two points
+fn distance_squared(x1: usize, y1: usize, x2: usize, y2: usize) -> usize {
+    ((x1 as isize - x2 as isize).pow(2) + (y1 as isize - y2 as isize).pow(2)) as usize
 }
 
 // Occupy an attraction point as core cell and claim the surrounding ap
@@ -310,6 +321,14 @@ pub fn occupy_territory(grid: &mut Vec<Vec<Cell>>, positions: Vec<(usize, usize)
             
         }
     }
+}
+
+pub fn get_attraction_points_in_territory(grid: &Vec<Vec<Cell>>, group_id: usize) -> Vec<(usize, usize)> {
+    // Assuming that get_free_attraction_points returns all attraction points, filter by group_id
+    get_attraction_points(grid)
+        .into_iter()
+        .filter(|&(x, y)| grid[x][y].territory.taken_by_group == group_id)
+        .collect()
 }
 
 // Returns all cells within a given radius around an individual
