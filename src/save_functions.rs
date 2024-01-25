@@ -10,7 +10,7 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,id,group_id,x,y,sex,age,age_class,known_cells")?;//,group_member_ids")?;
+    writeln!(file, "iteration,id,group_id,x,y,sex,age,age_class,known_cells,target_cell,core_cell,movement_type")?;//,group_member_ids")?;
 
     // Write each individual's data for each iteration
     for (iteration, groups) in group_states {
@@ -44,12 +44,28 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
                 //    .collect::<Vec<String>>()
                 //    .join(";");
 
+                let target_cell_str: String = group
+                    .target_cell
+                    .iter()
+                    .map(|&(x, y)| format!("[{}_{}]", x, y))
+                    .collect::<Vec<String>>()
+                    .join(";");
+
+                let core_cell_str: String = group
+                    .core_cell
+                    .iter()
+                    .map(|&(x, y)| format!("[{}_{}]", x, y))
+                    .collect::<Vec<String>>()
+                    .join(";");
+
                 let age_class_str: String = format!("{}", group_members.age_class);
                 let sex_str: String = format!("{}", group_members.sex);
-
+                //let target_cell_str: String = format!("[{:?}]", group.target_cell);
+                //let core_cell_str: String = format!("[{:?}]", group.core_cell);
+                
                 writeln!(
                     file,
-                    "{},{},{},{},{},{},{},{},{}",
+                    "{},{},{},{},{},{},{},{},{},{},{},{}",
                     iteration,
                     group_members.individual_id,
                     group.group_id,
@@ -59,6 +75,9 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
                     group_members.age,
                     age_class_str,
                     known_cells_str,
+                    target_cell_str,
+                    core_cell_str,
+                    group.movement,
                     //group_member_ids_str,
                     //last_three_cells_str
                 )?;

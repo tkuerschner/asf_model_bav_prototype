@@ -30,7 +30,7 @@ for (pckg in
 }
 
 
-
+setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 #pak::pak('thomasp85/gganimate')
 
@@ -45,7 +45,7 @@ grid <- read.csv("./output/all_grid_states.csv", header = T)
 globals <- read.csv("./output/all_global_variables.csv", header = T)
 
 groups <- read.csv("./output/all_groups.csv", header = T)
-
+#head((groups))
 ```
 
 
@@ -69,29 +69,13 @@ i1 <- groups %>% filter(iteration == 1)
 
 
 
-```{r landscape, ap and groups}
-
-
-(ggplot()+
-  geom_tile(data = g2, aes(x=x, y=y, fill =quality))+
-  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
-  new_scale_fill()+
-  geom_tile(data = g4, aes(x=x, y=y, fill = quality), alpha = .5)+
-  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
-  geom_point(data=g3,aes(x=x, y=y), color = "#003cff")+
-  geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+
-  scale_x_reverse()+
-  coord_flip()
-)
-
-```
-
 
 
 ```{r extract spatial memory}
 
 ##test case
-head(groups)
+#head(groups)
+
 testInd <- groups[333,]
 
 df <- testInd$known_cells
@@ -114,14 +98,25 @@ new_df <- df %>%
 
 
 
+
+
 ```{r animate path of group}
 
 
 gr1 <- groups %>% group_by(iteration) %>% sample_n(1)
 
-gr2 <- gr1 %>% ungroup() %>% dplyr::select(iteration,x,y)
+#head(gr1)
 
-buffer_size <- 5
+#gr1$target_cell
+
+gr1 <- gr1 %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)
+
+gr2 <- gr1 %>% ungroup() %>% dplyr::select(iteration, x, y, movement_type, tx, ty)
+
+buffer_size <- 20
 
 mpz_data <- g2  %>%
   filter(
@@ -139,15 +134,27 @@ mpz_data <- g2  %>%
     y <= max(gr2$y) + buffer_size
   ) %>% dplyr::select(x,y)
 
+  terr_data <- g4 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size & 
+    x <= max(gr2$x) + buffer_size &
+    y >= min(gr2$y) - buffer_size &
+    y <= max(gr2$y) + buffer_size
+  ) %>% dplyr::select(x,y, quality)
+
   gr2$group <- 1
 
 grp_path_bp <- ggplot()+
         geom_tile(data = mpz_data, aes(x=x, y=y, fill =quality))+
         scale_fill_gradient(low = "#c2e9cf", high = "#046104")+
-        geom_point(data = gr2, aes(x, y, group = seq_along(iteration)),size = 3, color = "#dd4367")+
+        new_scale_fill()+
+        geom_tile(data = terr_data, aes(x=x, y=y, fill = quality), alpha = .5)+
+        scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+        geom_path(data = gr2, aes(x = x, y = y, color = movement_type),  linewidth = 1) +
+        geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type),size = 3)+
         geom_point(data = ap_data ,aes(x=x, y=y), size = 4, color = "#003cff")+
+        geom_point(data = gr2, aes(tx, ty), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8)+
        # new_scale_fill()+
-        geom_path(data = gr2, aes(x = x, y = y), color = "#c74ec9", linewidth = 1) +
         #geom_tile(data = gr2, aes(x, y), fill = "#c74ec9")+
          #labs(title = "iteration: {frame_time}")
          labs(title = "Day: {frame_along}" )
@@ -160,11 +167,28 @@ grp_path_bp <- ggplot()+
 
 #summary(mpz_data)
 #summary(gr2)
-anim_save("example_movement.gif", animate(animated_plot))
+anim_save("example_movement6.gif", animate(animated_plot))
 
 
 ```
 
+
+```{r landscape, ap and groups}
+
+
+(ggplot()+
+  geom_tile(data = g2, aes(x=x, y=y, fill =quality))+
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  new_scale_fill()+
+  geom_tile(data = g4, aes(x=x, y=y, fill = quality), alpha = .5)+
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  geom_point(data=g3,aes(x=x, y=y), color = "#003cff")+
+  geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+
+  scale_x_reverse()+
+  coord_flip()
+)
+
+```
 
 
 

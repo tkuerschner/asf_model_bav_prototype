@@ -81,6 +81,13 @@ impl Groups {
         }
     }
 
+    pub fn distance_to_target (&self) -> i32 {
+        (self.x as i32 - self.target_cell.unwrap().0 as i32).abs() + (self.y as i32 - self.target_cell.unwrap().1 as i32).abs() // manhattan distance
+    }
+
+
+
+
    pub fn create_new_initial_group_member(&mut self) -> Result<GroupMember> {
     let mut rng = rand::thread_rng();
     let rand: f64 = rng.gen_range(0.0..1.0);
@@ -579,9 +586,7 @@ fn choose_core_cell(grid: &Vec<Vec<Cell>>, group: &Groups, rng: &mut impl Rng) -
 //
 //// Function to find a random cell within a specified range (avoiding other individuals)
 //fn find_cell_within_range(grid: &Vec<Vec<Cell>>, center_cell: (usize, usize), range: usize, rng: &mut impl Rng) -> Option<(usize, usize)> {
-//    // Your logic to find a random cell within the specified range (avoiding other individuals)
-//    // ...
-//    // Example: Replace this line with your implementation
+
 //    random_cell_within_range(grid.len(), grid[0].len(), center_cell, range, rng)
 //}
 //
@@ -593,9 +598,7 @@ fn choose_core_cell(grid: &Vec<Vec<Cell>>, group: &Groups, rng: &mut impl Rng) -
 //    range: usize,
 //    rng: &mut impl Rng,
 //) -> (usize, usize) {
-//    // Your logic to find a random cell within the specified range (excluding the center cell)
-//    // ...
-//    // Example: Replace this line with your implementation
+
 //    random_cell(grid_size_x, grid_size_y)
 //}
 //
@@ -705,11 +708,52 @@ pub fn calculate_quality_score(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> f64
     }
 }
 
+pub fn find_closest_adjacent_cell_to_target(group: &Groups) -> Option<(usize, usize)> {
+    // Define the adjacent cells
+    let adjacent_cells = vec![
+        (group.x.saturating_sub(1), group.y),
+        (group.x.saturating_add(1), group.y),
+        (group.x, group.y.saturating_sub(1)),
+        (group.x, group.y.saturating_add(1)),
+    ];
+
+    // Calculate the distance to the target for each adjacent cell
+    let distances: Vec<_> = adjacent_cells
+        .iter()
+        .map(|&(x, y)| (x, y, group.distance_to_target()))
+        .collect();
+
+    // Find the adjacent cell with the minimum distance
+    distances
+        .into_iter()
+        .min_by_key(|&(_, _, distance)| distance)
+        .map(|(x, y, _)| (x, y))
+}
+
+pub fn move_to_closest_adjacent_cell_to_target(grid: &Vec<Vec<Cell>>, group: &mut Groups) {
+    // Find the closest adjacent cell to the target
+    if let Some((new_x, new_y)) = find_closest_adjacent_cell_to_target(group) {
+        // Update known cells
+        update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), MAX_KNOWN_CELLS);
+
+        // Update individual's position
+        group.x = new_x;
+        group.y = new_y;
+    }
+}
+
+
+
 pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R) {
     for group in group.iter_mut() {
 
+        //println!("Movement called"); //<------ DEBUG print
+
+        let mut realign_time = 3; //number of steps before realigning towards the target
+
         while group.daily_movement_distance > 0  {
 
+            
 
             //check if a target cell is needed and assign a stay time for the ap
             if group.target_cell.is_none() {
@@ -725,7 +769,7 @@ pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, 
 
             // Steps
             // 25% chance to move randomly
-            if rng.gen_range(0..100) < 25 {
+            if rng.gen_range(0..100) < 25 { // <-----------------------------------------------DEBUG FIX ME percentage
                 //move_to_random_adjacent_cells(grid.len(), individual, rng);
                 move_to_random_adjacent_cells_2(grid, group, rng);
                 group.daily_movement_distance -= 1;
@@ -742,10 +786,31 @@ pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, 
 
                         break; // if target location reached flit to foraging
                     }
+                    
+                   // if realign_time > 0 { // every 3rd step we realign to the target
+                   // correlated_random_walk_towards_target(grid, group, rng);
+                   // realign_time -= 1;
+                   // }
+                   // if realign_time == 0 {
+                   //     move_to_closest_adjacent_cell_to_target(grid, group);
+                   //     realign_time = 3;
+                   // }
 
-                    correlated_random_walk_towards_target(grid, group, rng);
+                  // move_to_closest_adjacent_cell_to_target(grid, group);
+
+                  //move_towards_target_cell(group);
+
+                  //move_one_step_towards_target_cell(group);
+                  move_one_step_towards_target_cell_with_random(group,rng,grid);
 
                     group.daily_movement_distance -= 1;
+
+                    if group.distance_to_target() <= 3 {
+
+                        group.movement = MovementMode::Foraging;
+                        //print!("Engage forage mode"); // DEBUG
+
+                    }
 
                 } else if group.movement == MovementMode::Foraging {
                     
@@ -782,11 +847,14 @@ pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, 
                         group.daily_movement_distance -= 1;
                     }else {
                         
-                        correlated_random_walk_towards_target(grid, group, rng);
+                       // correlated_random_walk_towards_target(grid, group, rng);
+                        //move_one_step_towards_target_cell(group);
+                        move_one_step_towards_target_cell_with_random(group,rng,grid);
                         group.daily_movement_distance -= 1;
                     }
                     
                     
+                   // println!("Movement left: {}", group.daily_movement_distance); // DEBUG PRINT
 
                       // Update presence timer
                     //group.memory.presence_timer += 1;
@@ -811,7 +879,7 @@ pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, 
 
 }
 
-pub fn move_to_new_ap(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng) {
+pub fn move_to_new_ap(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng) { // UNSUSED
     // If remaining_stay_time is 0 or there is no target_cell, select a new target_cell from attraction points
     if group.remaining_stay_time == 0 || group.target_cell.is_none() {
         let territory_ap = get_attraction_points_in_territory(grid, group.group_id);
@@ -868,11 +936,91 @@ pub fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, group: &mut Groups, r
     group.y = new_y;
 }
 
+//pub fn move_towards_target_cell(group: &mut Groups) {
+//    // Check if there is a target cell set
+//    if let Some(target_cell) = group.target_cell {
+//        // Calculate the movement direction towards the target cell
+//        let direction = (
+//            target_cell.0 as isize - group.x as isize,
+//            target_cell.1 as isize - group.y as isize,
+//        );
+//
+//        // Update individual's position
+//        group.x = (group.x as isize + direction.0).max(0) as usize;
+//        group.y = (group.y as isize + direction.1).max(0) as usize;
+//
+//        // Update known cells
+//        update_memory(
+//            &mut group.memory.known_cells,
+//            &mut group.memory.known_cells_order,
+//            (group.x, group.y),
+//            MAX_KNOWN_CELLS,
+//        );
+//    }
+//}
 
-// Function for correlated random walk towards the target
+pub fn move_one_step_towards_target_cell(group: &mut Groups) {
+    // Check if there is a target cell set
+    if let Some(target_cell) = group.target_cell {
+        // Calculate the movement direction towards the target cell
+        let direction = (
+            target_cell.0 as isize - group.x as isize,
+            target_cell.1 as isize - group.y as isize,
+        );
+
+        // Update individual's position by one step
+        group.x = (group.x as isize + direction.0.signum()).max(0) as usize;
+        group.y = (group.y as isize + direction.1.signum()).max(0) as usize;
+
+        // Update known cells
+        update_memory(
+            &mut group.memory.known_cells,
+            &mut group.memory.known_cells_order,
+            (group.x, group.y),
+            MAX_KNOWN_CELLS,
+        );
+    }
+}
+
+
+pub fn move_one_step_towards_target_cell_with_random(
+    group: &mut Groups,
+    rng: &mut impl Rng,
+    grid: &Vec<Vec<Cell>>,
+) {
+    // Check if there is a target cell set
+    if let Some(target_cell) = group.target_cell {
+        // Randomly decide whether to move towards the target or move randomly
+        if rng.gen_range(0..100) < 90 {
+            // Calculate the movement direction towards the target cell
+            let direction = (
+                target_cell.0 as isize - group.x as isize,
+                target_cell.1 as isize - group.y as isize,
+            );
+
+            // Update individual's position by one step
+            group.x = (group.x as isize + direction.0.signum()).max(0) as usize;
+            group.y = (group.y as isize + direction.1.signum()).max(0) as usize;
+
+            // Update known cells
+            update_memory(
+                &mut group.memory.known_cells,
+                &mut group.memory.known_cells_order,
+                (group.x, group.y),
+                MAX_KNOWN_CELLS,
+            );
+        } else {
+            // Move randomly
+            move_to_random_adjacent_cell(group, rng, grid);
+        }
+    }
+}
+
+
+// Function for correlated random walk towards the target // NOT WORKING
 fn correlated_random_walk_towards_target(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng) {
     // Autoregressive parameters 
-    let alpha = 0.8; // Persistence parameter
+    let alpha = 0.5; // Persistence parameter
 
     // Placeholder for storing the last movement direction
     let mut last_direction = (0, 0);
@@ -931,6 +1079,8 @@ fn correlated_random_walk_towards_target(grid: &Vec<Vec<Cell>>, group: &mut Grou
     last_direction = correlated_direction;
 }
 
+
+
 //TEST
 pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng){
     // Get the current position of the individual
@@ -985,7 +1135,40 @@ fn random_cell_with_quality(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize
 }
 
 
-pub fn move_to_random_adjacent_cells(grid_size: usize, group: &mut Groups, rng: &mut impl Rng) {
+// Function to move to a random adjacent cell
+fn move_to_random_adjacent_cell(group: &mut Groups, rng: &mut impl Rng, grid: &Vec<Vec<Cell>>) {
+    let adjacent_cells = vec![
+        (group.x.saturating_sub(1), group.y),
+        (group.x.saturating_add(1), group.y),
+        (group.x, group.y.saturating_sub(1)),
+        (group.x, group.y.saturating_add(1)),
+    ];
+
+    // Shuffle the list of adjacent cells
+    let mut shuffled_cells = adjacent_cells.clone();
+    shuffled_cells.shuffle(rng);
+
+    // Select the first cell (randomized) with quality > 0
+    if let Some(target_cell) = shuffled_cells
+        .into_iter()
+        .filter(|&(x, y)| x < grid.len() && y < grid[0].len() && grid[x][y].quality > 0.0)
+        .next()
+    {
+        // Update individual's position
+        group.x = target_cell.0;
+        group.y = target_cell.1;
+
+        // Update known cells
+        update_memory(
+            &mut group.memory.known_cells,
+            &mut group.memory.known_cells_order,
+            (group.x, group.y),
+            MAX_KNOWN_CELLS,
+        );
+    }
+}
+
+pub fn move_to_random_adjacent_cells3(grid_size: usize, group: &mut Groups, rng: &mut impl Rng) {
     // Get the current position of the individual
     let current_x = group.x;
     let current_y = group.y;
