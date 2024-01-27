@@ -10,7 +10,7 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,id,group_id,x,y,sex,age,age_class,known_cells,target_cell,core_cell,movement_type")?;//,group_member_ids")?;
+    writeln!(file, "iteration,id,group_id,x,y,sex,age,age_class,known_cells,target_cell,core_cell,movement_type, remaining_stay_time")?;//,group_member_ids")?;
 
     // Write each individual's data for each iteration
     for (iteration, groups) in group_states {
@@ -62,10 +62,11 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
                 let sex_str: String = format!("{}", group_members.sex);
                 //let target_cell_str: String = format!("[{:?}]", group.target_cell);
                 //let core_cell_str: String = format!("[{:?}]", group.core_cell);
+                //let remaining_stay_stime_str: String = format!("{}", group.remaining_stay_time);
                 
                 writeln!(
                     file,
-                    "{},{},{},{},{},{},{},{},{},{},{},{}",
+                    "{},{},{},{},{},{},{},{},{},{},{},{},{}",
                     iteration,
                     group_members.individual_id,
                     group.group_id,
@@ -78,6 +79,8 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
                     target_cell_str,
                     core_cell_str,
                     group.movement,
+                    group.remaining_stay_time,
+                    //remaining_stay_stime_str,
                     //group_member_ids_str,
                     //last_three_cells_str
                 )?;
@@ -90,6 +93,43 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
 }
 
 
+
+pub fn save_grid_as_csv(filename: &str, grid_states: &[(usize, Vec<Vec<Cell>>)]) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
+
+    // Write the header line
+    writeln!(file, "iteration,x,y,quality,counter,x_grid_corrected,y_grid_corrected,is_ap,is_territory,territory_of_group")?;
+
+    // Write each cell's data for each iteration
+    for (iteration, grid) in grid_states {
+        for (x, row) in grid.iter().enumerate() {
+            for (y, cell) in row.iter().enumerate() {
+                writeln!(file, "{},{},{},{},{},{},{},{},{},{}", iteration, x, y, cell.quality, cell.counter, cell.x_grid, cell.y_grid, cell.territory.is_ap, cell.territory.is_taken, cell.territory.taken_by_group)?;
+            }
+        }
+    }
+
+    println!("Grid states saved to: {}", filename);
+    Ok(())
+}
+
+pub fn save_global_variables_as_csv(filename: &str, global_variables: &[GlobalVariables]) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
+
+    // Write the header line
+    writeln!(file, "iteration,day,month,year,n_individuals,age_mortality, random_mortality")?;
+
+    // Write each iteration's global variables
+    for (iteration, globals) in global_variables.iter().enumerate() {
+        writeln!(file, "{},{},{},{},{},{},{}", iteration + 1, globals.day, globals.month, globals.year, globals.n_individuals, globals.age_mortality, globals.random_mortality)?;
+        // Add more variables as needed
+    }
+
+    println!("Global variables saved to: {}", filename);
+    Ok(())
+}
 
 
 
@@ -158,42 +198,3 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
 //    println!("Individuals saved to: {}", filename);
 //    Ok(())
 //}
-
-pub fn save_grid_as_csv(filename: &str, grid_states: &[(usize, Vec<Vec<Cell>>)]) -> io::Result<()> {
-    // Create or open the CSV file
-    let mut file = File::create(filename)?;
-
-    // Write the header line
-    writeln!(file, "iteration,x,y,quality,counter,x_grid_corrected,y_grid_corrected,is_ap,is_territory,territory_of_group")?;
-
-    // Write each cell's data for each iteration
-    for (iteration, grid) in grid_states {
-        for (x, row) in grid.iter().enumerate() {
-            for (y, cell) in row.iter().enumerate() {
-                writeln!(file, "{},{},{},{},{},{},{},{},{},{}", iteration, x, y, cell.quality, cell.counter, cell.x_grid, cell.y_grid, cell.territory.is_ap, cell.territory.is_taken, cell.territory.taken_by_group)?;
-            }
-        }
-    }
-
-    println!("Grid states saved to: {}", filename);
-    Ok(())
-}
-
-pub fn save_global_variables_as_csv(filename: &str, global_variables: &[GlobalVariables]) -> io::Result<()> {
-    // Create or open the CSV file
-    let mut file = File::create(filename)?;
-
-    // Write the header line
-    writeln!(file, "iteration,day,month,year,n_individuals,age_mortality, random_mortality")?;
-
-    // Write each iteration's global variables
-    for (iteration, globals) in global_variables.iter().enumerate() {
-        writeln!(file, "{},{},{},{},{},{},{}", iteration + 1, globals.day, globals.month, globals.year, globals.n_individuals, globals.age_mortality, globals.random_mortality)?;
-        // Add more variables as needed
-    }
-
-    println!("Global variables saved to: {}", filename);
-    Ok(())
-}
-
-

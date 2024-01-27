@@ -167,7 +167,7 @@ grp_path_bp <- ggplot()+
 
 #summary(mpz_data)
 #summary(gr2)
-anim_save("example_movement6.gif", animate(animated_plot))
+anim_save("example_movement10.gif", animate(animated_plot))
 
 
 ```

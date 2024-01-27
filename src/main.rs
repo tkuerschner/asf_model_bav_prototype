@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result};
 use std::collections::VecDeque;
+use serde::{Serialize, Deserialize};
 
 use std::fmt;
 
@@ -316,6 +317,81 @@ pub struct LandscapeMetadata {
     nodata_value: i32,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Output {
+    iteration: usize,
+    id: usize,
+    group_id: usize,
+    x: usize,
+    y: usize,
+    sex: String,
+    age: u32,
+    age_class: String,
+    known_cells: Vec<(usize, usize)>,
+    target_cell: Option<(usize, usize)>,
+    core_cell: Option<(usize, usize)>,
+    movement_type: String,
+    remaining_stay_time: usize,
+}
+
+
+struct Input {
+
+max_age: u32,
+resence_time_limit: usize,
+//move_chance_percentage: usize,
+max_known_cells: usize,
+runtime: usize,
+adult_survival: f64,
+piglet_survival: f64,
+adult_survival_day: f64,
+piglet_survival_day: f64,
+min_stay_time:usize,
+max_stay_time:usize,
+default_daily_movement_distance:usize,
+
+}
+
+
+
+
+
+//const MAX_AGE: u32 = 365 * 12;
+//const PRESENCE_TIME_LIMIT: usize = 5;
+//const MOVE_CHANCE_PERCENTAGE: usize = 5;
+//const MAX_KNOWN_CELLS: usize = 20;
+//const MAX_LAST_VISITED_CELLS: usize = 3;
+//const RUNTIME: usize = 365;
+//const ADULT_SURVIVAL: f64 = 0.65;
+//const PIGLET_SURVIVAL: f64 = 0.5;
+//const ADULT_SURVIVAL_DAY: f64 =  0.9647;
+//const PIGLET_SURVIVAL_DAY: f64 = 0.9438;
+//const MIN_STAY_TIME: usize = 1;
+//const MAX_STAY_TIME: usize = 14;
+//const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
+
+fn assign_to_constants(input_struct: &Input) {
+    // Assign values to constants
+
+    //static MAX_AGE: u32 = input_struct.max_age;
+    static PRESENCE_TIME_LIMIT1: usize = 5;
+    static MOVE_CHANCE_PERCENTAGE: usize = 5;
+    static MAX_KNOWN_CELLS: usize = 20;
+    static MAX_LAST_VISITED_CELLS: usize = 3;
+    static RUNTIME: usize = 365;
+    static ADULT_SURVIVAL: f64 = 0.65;
+    static PIGLET_SURVIVAL: f64 = 0.5;
+    static ADULT_SURVIVAL_DAY: f64 =  0.9647;
+    static PIGLET_SURVIVAL_DAY: f64 = 0.9438;
+    static MIN_STAY_TIME: usize = 1;
+    static MAX_STAY_TIME: usize = 14;
+    static DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
+
+    // Print the assigned values for control
+    //println!("Constant 1: {}", CONSTANT1);
+    //println!("Constant 2: {}", CONSTANT2);
+    //println!("Constant 3: {}", CONSTANT3);
+}
 
 
 //Constants / inputs
@@ -1325,6 +1401,9 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
 fn main() {
     // Define grid dimensions
     //let grid_size = 25;
+
+    //assign_to_constants(&Input);
+
     let num_groups = 1; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";

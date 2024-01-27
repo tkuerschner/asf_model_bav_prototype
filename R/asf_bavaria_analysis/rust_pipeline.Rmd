@@ -1,0 +1,42 @@
+---
+title: "rust_pipeline"
+author: "Tobias Kürschner"
+date: '2024-01-26'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r}
+
+# R code to send input to Rust and receive output from Rust
+
+library(jsonlite)
+
+# Example input data
+input_data <- list(
+  ....
+)
+
+# Serialize and send input to Rust
+input_json <- toJSON(input_data, auto_unbox = TRUE)
+cat(input_json, file = "stdin")
+
+# Call Rust executable 
+rust_output <- system2("path", stdout = TRUE)
+
+# Deserialize and process output in R
+output_data <- fromJSON(rust_output)
+
+#test
+print(output_data)
+
+
+
+```
+
