@@ -13,29 +13,32 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
-
 for (pckg in
-     c
-     (
-       'tidyverse',
-       'raster',
-       'scico',
-       'ggnewscale',
-       'gganimate'
-     ))
+  c
+  (
+    "tidyverse",
+    "raster",
+    "scico",
+    "ggnewscale",
+    "gganimate"
+))
 {
-  if (!require(pckg, character.only = T))
+  if (!require(pckg, character.only = T)) {
     install.packages(pckg, dependencies = TRUE)
+  }
   require(pckg, character.only = T)
 }
 
 
 setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
-#pak::pak('thomasp85/gganimate')
+# pak::pak('thomasp85/gganimate')
+```
 
 
 
+```{r data prep}
+it <- 12 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -45,174 +48,236 @@ grid <- read.csv("./output/all_grid_states.csv", header = T)
 globals <- read.csv("./output/all_global_variables.csv", header = T)
 
 groups <- read.csv("./output/all_groups.csv", header = T)
-#head((groups))
+# head((groups))
 ```
 
-
-
 ```{r data prep}
-
-g1 <- grid #%>% filter(iteration == 1)
+g1 <- grid # %>% filter(iteration == 1)
 
 g2 <- g1 %>% mutate(quality = case_when(quality == -9999 ~ 0))
 
-g2 <- g1 %>% mutate(quality = replace(quality, quality<0, NA))
+g2 <- g1 %>% mutate(quality = replace(quality, quality < 0, NA))
 
-g3 <- g2 %>% filter(is_ap == "true") 
+g3 <- g2 %>% filter(is_ap == "true")
 
 g4 <- g2 %>% filter(is_territory == "true")
 
 i1 <- groups %>% filter(iteration == 1)
-
-
 ```
-
-
-
-
-
-```{r extract spatial memory}
-
-##test case
-#head(groups)
-
-testInd <- groups[333,]
-
-df <- testInd$known_cells
-df <- data.frame(mem1 = testInd$known_cells)
-
-
-
-# getting a list of coordinates from memory
-
-new_df <- df %>%
-  mutate(mem1 = gsub("\\[|\\]", "", mem1)) %>%
-  separate_rows(mem1, sep = ";") %>%
-  separate(mem1, into = c("x", "y"), sep = "_", convert = TRUE)
-
-
-
-
-```
-
-
-
-
-
 
 ```{r animate path of group}
+gr1 <- groups %>%
+  group_by(iteration) %>%
+  sample_n(1)
 
+# head(gr1)
 
-gr1 <- groups %>% group_by(iteration) %>% sample_n(1)
-
-#head(gr1)
-
-#gr1$target_cell
+# gr1$target_cell
 
 gr1 <- gr1 %>%
   mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
   separate_rows(target, sep = ";") %>%
   separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)
 
-gr2 <- gr1 %>% ungroup() %>% dplyr::select(iteration, x, y, movement_type, tx, ty)
+gr2 <- gr1 %>%
+  ungroup() %>%
+  dplyr::select(iteration, x, y, movement_type, tx, ty)
 
 buffer_size <- 20
 
-mpz_data <- g2  %>%
+mpz_data <- g2 %>%
   filter(
-    x >= min(gr2$x) - buffer_size & 
-    x <= max(gr2$x) + buffer_size &
-    y >= min(gr2$y) - buffer_size &
-    y <= max(gr2$y) + buffer_size
-  ) %>% dplyr::select(x,y, quality)
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
 
-  ap_data <- g3 %>%
+ap_data <- g3 %>%
   filter(
-    x >= min(gr2$x) - buffer_size & 
-    x <= max(gr2$x) + buffer_size &
-    y >= min(gr2$y) - buffer_size &
-    y <= max(gr2$y) + buffer_size
-  ) %>% dplyr::select(x,y)
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y)
 
-  terr_data <- g4 %>%
+terr_data <- g4 %>%
   filter(
-    x >= min(gr2$x) - buffer_size & 
-    x <= max(gr2$x) + buffer_size &
-    y >= min(gr2$y) - buffer_size &
-    y <= max(gr2$y) + buffer_size
-  ) %>% dplyr::select(x,y, quality)
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
 
-  gr2$group <- 1
+gr2$group <- 1
 
-grp_path_bp <- ggplot()+
-        geom_tile(data = mpz_data, aes(x=x, y=y, fill =quality))+
-        scale_fill_gradient(low = "#c2e9cf", high = "#046104")+
-        new_scale_fill()+
-        geom_tile(data = terr_data, aes(x=x, y=y, fill = quality), alpha = .5)+
-        scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
-        geom_path(data = gr2, aes(x = x, y = y, color = movement_type),  linewidth = 1) +
-        geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type),size = 3)+
-        geom_point(data = ap_data ,aes(x=x, y=y), size = 4, color = "#003cff")+
-        geom_point(data = gr2, aes(tx, ty), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8)+
-       # new_scale_fill()+
-        #geom_tile(data = gr2, aes(x, y), fill = "#c74ec9")+
-         #labs(title = "iteration: {frame_time}")
-         labs(title = "Day: {frame_along}" )
+grp_path_bp <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  guides(fill = "none") +
+  geom_path(data = gr2, aes(x = x, y = y), linewidth = 1, , color = "black", linetype = "dashed") +
+  geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 2) +
+  geom_point(data = gr2, aes(tx, ty), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8) +
+  new_scale_fill() +
+  geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  labs(title = "Day: {frame_along}", color = "Movement") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
 
-  animated_plot <- grp_path_bp +
-  #transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
-  transition_reveal(iteration)+
+
+
+# ggsave("example_movement.png", grp_path_bp, width = 10, height = 10, units = "cm", dpi = 300)
+animated_plot <- grp_path_bp +
+  # transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
+  transition_reveal(iteration) +
   enter_fade() +
   exit_fade()
 
-#summary(mpz_data)
-#summary(gr2)
-anim_save("example_movement10.gif", animate(animated_plot))
-
-
+# summary(mpz_data)
+# summary(gr2)
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, ".gif"), animate(animated_plot))
 ```
 
 
-```{r landscape, ap and groups}
+```{r extract spatial memory}
+## test case
+# head(groups)
+
+# testInd <- groups[333,]
 
 
-(ggplot()+
-  geom_tile(data = g2, aes(x=x, y=y, fill =quality))+
+grp1 <- groups %>%
+  group_by(iteration) %>%
+  sample_n(1)
+
+# Create a new dataframe with multiple rows per iteration
+
+detailed_path_df <- grp1 %>%
+  group_by(iteration) %>%
+  mutate(known_cells = gsub("\\[|\\]", "", known_cells)) %>%
+  mutate(x = strsplit(as.character(known_cells), ";")) %>%
+  unnest(x) %>%
+  separate(x, into = c("x", "y"), sep = "_", convert = TRUE) %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE) %>%
+  dplyr::select(-known_cells)
+
+```
+
+```{r space use}
+# calculate space use from the x y coords in detailed_path_df
+
+# Calculate space use
+space_use <- detailed_path_df %>%
+  count(x, y)
+
+#space_use
+```
+
+```{r space use and path}
+spuseplot <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
-  new_scale_fill()+
-  geom_tile(data = g4, aes(x=x, y=y, fill = quality), alpha = .5)+
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
   scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
-  geom_point(data=g3,aes(x=x, y=y), color = "#003cff")+
-  geom_point(data= i1,aes(x=x, y=y, color = 'red'), size = 1)+
-  scale_x_reverse()+
-  coord_flip()
+  guides(fill = "none") +
+  new_scale_fill() +
+  geom_tile(data = space_use, aes(x = x, y = y, fill = log(n)), alpha = .5) +
+  scale_fill_scico(palette = "berlin") +
+  #labs(fill = "Space use", title = "Day: {current_frame}") #+
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+# geom_path(data = gr2, aes(x = x, y = y),  linewidth = .5, , color = "black", linetype = "dashed") +
+# geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 1) +
+# geom_point(data = gr2, aes(tx, ty), fill = "#c02ad3", colour = "#c02ad3", size = 3, shape = 8) +
+# new_scale_fill() +
+# geom_point(data = ap_data, aes(x = x, y = y), size = 1, color = "#003cff", fill = "blue", shape = 22) +
+# labs(title = "Day: {frame_time}", fill = "Space use", color = "Attraction point")
+
+
+animated_plot2 <- spuseplot +
+  # transition_reveal(iteration)+
+  transition_manual(iteration, cumulative = TRUE) +
+   labs(fill = "Space use", title = "Day: {current_frame}") +
+  # transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
+  # transition_time(iteration)+
+  enter_fade() +
+  exit_fade()
+
+#animated_plot2 <- spuseplot +
+#  transition_states(iteration, transition_length = 1, state_length = 1) +
+#  #transition_reveal(iteration) +
+#  enter_fade() +
+#  exit_fade()
+
+
+# summary(mpz_data)
+# summary(gr2)
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, "_spaceUse.gif"), animate(animated_plot2))
+```
+
+```{r landscape, ap and groups}
+(ggplot() +
+  geom_tile(data = g2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  new_scale_fill() +
+  geom_tile(data = g4, aes(x = x, y = y, fill = quality), alpha = .5) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  geom_point(data = g3, aes(x = x, y = y), color = "#003cff") +
+  geom_point(data = i1, aes(x = x, y = y, color = "red"), size = 1)# +
+  #scale_x_reverse() +
+  #coord_flip()
 )
+
+
+g2 %>% filter(is_ap == "true")
 
 ```
 
 
 
 ```{r animate memory}
-
-
-ed1 <- new_df %>% 
-#mutate(step = as.numeric(row.names(new_df)), x = (x-500)*-1 , y = (y-500)*-1)
-mutate(step = as.numeric(row.names(new_df)))
+ed1 <- new_df %>%
+  # mutate(step = as.numeric(row.names(new_df)), x = (x-500)*-1 , y = (y-500)*-1)
+  mutate(step = as.numeric(row.names(new_df)))
 
 buffer_size <- 5
 
-mpz_data <- g2  %>%
+mpz_data <- g2 %>%
   filter(
-    x >= min(ed1$x) - buffer_size & 
-    x <= max(ed1$x) + buffer_size &
-    y >= min(ed1$y) - buffer_size &
-    y <= max(ed1$y) + buffer_size
+    x >= min(ed1$x) - buffer_size &
+      x <= max(ed1$x) + buffer_size &
+      y >= min(ed1$y) - buffer_size &
+      y <= max(ed1$y) + buffer_size
   )
 
 
 
 # Create the base plot
-#base_plot <- ggplot(data, aes(x, y)) +
+# base_plot <- ggplot(data, aes(x, y)) +
 #  geom_tile(color = "white", fill = "lightgrey", width = 1, height = 1) +
 #  geom_point(size = 3, color = "blue") +
 #  #xlim(min(data$x) - 1, max(data$x) + 1) +
@@ -221,12 +286,12 @@ mpz_data <- g2  %>%
 
 
 
-bp <- ggplot()+
-        geom_tile(data = mpz_data, aes(x=x, y=y, fill =quality))+
-        scale_fill_gradient(low = "#c2e9cf", high = "#046104")+
-        geom_point(data = ed1, aes(x, y),size = 3, color = "blue")+
-        geom_path(data = ed1, aes(x, y), color = "blue")+
-         labs(title = "Step: {next_step}")
+bp <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  geom_point(data = ed1, aes(x, y), size = 3, color = "blue") +
+  geom_path(data = ed1, aes(x, y), color = "blue") +
+  labs(title = "Step: {next_step}")
 
 # draw_path_segments <- function(data) {
 # segments <- data.frame(
@@ -238,24 +303,22 @@ bp <- ggplot()+
 # return(segments)
 #
 
-#animated_plot <- base_plot +
+# animated_plot <- base_plot +
 #  geom_segment(aes(xend = xend, yend = yend), data = draw_path_segments(data),
 #               color = "darkblue", alpha = 0.5) +
 #  transition_states(step, transition_length = 0.5, state_length = 0.5) +
 #  enter_fade() +
 #  exit_fade()
 
-  # Animate the plot
+# Animate the plot
 animated_plot <- bp +
-#geom_path(aes(group = 1), color = "darkblue", alpha = 0.5) +
+  # geom_path(aes(group = 1), color = "darkblue", alpha = 0.5) +
   transition_states(step, transition_length = 0.5, state_length = 0.5) +
   enter_fade() +
   exit_fade()
 
 # Save the animation
 anim_save("example_movement.gif", animate(animated_plot))
-
-
 ```
 
 
@@ -265,7 +328,7 @@ anim_save("example_movement.gif", animate(animated_plot))
 p <- ggplot(
   airquality,
   aes(Day, Temp, group = Month, color = factor(Month))
-  ) +
+) +
   geom_line() +
   scale_color_viridis_d() +
   labs(x = "Day of Month", y = "Temperature") +
@@ -277,3 +340,35 @@ p
 p + transition_reveal(Day)
 ```
 
+```{r}
+grt <- gr2
+grt %>% filter(iteration > 79)
+
+grt1 <- grt %>% filter(iteration > 0, iteration < 99999999)
+
+
+tt1 <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  new_scale_fill() +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  geom_path(data = grt1, aes(x = x, y = y), linewidth = 1, , color = "black", linetype = "dotted") +
+  geom_point(data = grt1, aes(x, y, group = seq_along(iteration), color = movement_type), size = 3) +
+  geom_point(data = ap_data, aes(x = x, y = y), size = 4, color = "#003cff") +
+  geom_point(data = grt1, aes(tx, ty), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8) +
+  # new_scale_fill()+
+  # geom_tile(data = gr2, aes(x, y), fill = "#c74ec9")+
+  # labs(title = "iteration: {frame_time}")
+  labs(title = "Day: {frame_along}")
+
+animated_plot <- tt1 +
+  # transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
+  transition_reveal(iteration) +
+  enter_fade() +
+  exit_fade()
+
+# summary(mpz_data)
+# summary(gr2)
+anim_save("example_movementTEST.gif", animate(animated_plot))
+```

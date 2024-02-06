@@ -3,9 +3,12 @@ use rand::Rng;
 use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result};
+use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result, Read};
 use std::collections::VecDeque;
 use serde::{Serialize, Deserialize};
+use lazy_static::lazy_static;
+use std::sync::Mutex;
+use std::f64::consts::PI;
 
 use std::fmt;
 
@@ -87,15 +90,13 @@ impl Groups {
     }
 
 
-
-
    pub fn create_new_initial_group_member(&mut self) -> Result<GroupMember> {
     let mut rng = rand::thread_rng();
     let rand: f64 = rng.gen_range(0.0..1.0);
 
     let var_value = 0; // FIX me add age blur variance
 
-    let individual_id = generate_individual_id(); // 1; // FIX ME rolling ID
+    let individual_id = generate_individual_id(); 
 
     let tmp_age = match rand {
          r if r <= 0.38 => 52 + var_value,
@@ -288,6 +289,7 @@ pub struct AreaSeparation {
     is_ap: bool,
     is_taken:bool,
     taken_by_group: usize,
+    core_cell_of_group: usize,
 }
 pub struct CellInfo {
     x_grid_o: usize,
@@ -334,12 +336,12 @@ struct Output {
     remaining_stay_time: usize,
 }
 
-
+#[derive(Debug, Serialize, Deserialize)]
 struct Input {
 
 max_age: u32,
-resence_time_limit: usize,
-//move_chance_percentage: usize,
+presence_time_limit: usize,
+move_chance_percentage: usize,
 max_known_cells: usize,
 runtime: usize,
 adult_survival: f64,
@@ -352,62 +354,55 @@ default_daily_movement_distance:usize,
 
 }
 
+//lazy_static! { //Default values
+//    static ref MAX_AGE: Mutex<u32> = Mutex::new(365 * 12);
+//    static ref PRESENCE_TIME_LIMIT: Mutex<usize> = Mutex::new(5);
+//    static ref PRESENCE_TIME_LIMIT1: Mutex<usize> = Mutex::new(5);
+//    static ref MOVE_CHANCE_PERCENTAGE: Mutex<usize> = Mutex::new(5);
+//    static ref MAX_KNOWN_CELLS: Mutex<usize> = Mutex::new(20);
+//    static ref MAX_LAST_VISITED_CELLS: Mutex<usize> = Mutex::new(3);
+//    static ref RUNTIME: Mutex<usize> = Mutex::new(365);
+//    static ref ADULT_SURVIVAL: Mutex<f64> = Mutex::new(0.65);
+//    static ref PIGLET_SURVIVAL: Mutex<f64> = Mutex::new(0.5);
+//    static ref ADULT_SURVIVAL_DAY: Mutex<f64> = Mutex::new(0.9647);
+//    static ref PIGLET_SURVIVAL_DAY: Mutex<f64> = Mutex::new(0.9438);
+//    static ref MIN_STAY_TIME: Mutex<usize> = Mutex::new(1);
+//    static ref MAX_STAY_TIME: Mutex<usize> = Mutex::new(14);
+//    static ref DEFAULT_DAILY_MOVEMENT_DISTANCE: Mutex<usize> = Mutex::new(20);
+//}
 
+//fn assign_to_constants(input_struct: &Input) {
+//    // Assign values to constants
+//    *MAX_AGE.lock().unwrap()                         = input_struct.max_age;
+//    *PRESENCE_TIME_LIMIT.lock().unwrap()             = input_struct.presence_time_limit;
+//    *MOVE_CHANCE_PERCENTAGE.lock().unwrap()          = input_struct.move_chance_percentage;
+//    *MAX_KNOWN_CELLS.lock().unwrap()                 = input_struct.max_known_cells;
+//    *RUNTIME.lock().unwrap()                         = input_struct.runtime;
+//    *ADULT_SURVIVAL.lock().unwrap()                  = input_struct.adult_survival;
+//    *PIGLET_SURVIVAL.lock().unwrap()                 = input_struct.piglet_survival;
+//    *ADULT_SURVIVAL_DAY.lock().unwrap()              = input_struct.adult_survival_day;
+//    *PIGLET_SURVIVAL_DAY.lock().unwrap()             = input_struct.piglet_survival_day;
+//    *MIN_STAY_TIME.lock().unwrap()                   = input_struct.min_stay_time;
+//    *MAX_STAY_TIME.lock().unwrap()                   = input_struct.max_stay_time;
+//    *DEFAULT_DAILY_MOVEMENT_DISTANCE.lock().unwrap() = input_struct.default_daily_movement_distance;
+//
+//}
 
-
-
-//const MAX_AGE: u32 = 365 * 12;
-//const PRESENCE_TIME_LIMIT: usize = 5;
-//const MOVE_CHANCE_PERCENTAGE: usize = 5;
-//const MAX_KNOWN_CELLS: usize = 20;
-//const MAX_LAST_VISITED_CELLS: usize = 3;
-//const RUNTIME: usize = 365;
-//const ADULT_SURVIVAL: f64 = 0.65;
-//const PIGLET_SURVIVAL: f64 = 0.5;
-//const ADULT_SURVIVAL_DAY: f64 =  0.9647;
-//const PIGLET_SURVIVAL_DAY: f64 = 0.9438;
-//const MIN_STAY_TIME: usize = 1;
-//const MAX_STAY_TIME: usize = 14;
-//const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
-
-fn assign_to_constants(input_struct: &Input) {
-    // Assign values to constants
-
-    //static MAX_AGE: u32 = input_struct.max_age;
-    static PRESENCE_TIME_LIMIT1: usize = 5;
-    static MOVE_CHANCE_PERCENTAGE: usize = 5;
-    static MAX_KNOWN_CELLS: usize = 20;
-    static MAX_LAST_VISITED_CELLS: usize = 3;
-    static RUNTIME: usize = 365;
-    static ADULT_SURVIVAL: f64 = 0.65;
-    static PIGLET_SURVIVAL: f64 = 0.5;
-    static ADULT_SURVIVAL_DAY: f64 =  0.9647;
-    static PIGLET_SURVIVAL_DAY: f64 = 0.9438;
-    static MIN_STAY_TIME: usize = 1;
-    static MAX_STAY_TIME: usize = 14;
-    static DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
-
-    // Print the assigned values for control
-    //println!("Constant 1: {}", CONSTANT1);
-    //println!("Constant 2: {}", CONSTANT2);
-    //println!("Constant 3: {}", CONSTANT3);
-}
-
-
-//Constants / inputs
 const MAX_AGE: u32 = 365 * 12;
 const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
-const MAX_KNOWN_CELLS: usize = 20;
+const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365;// 365 * 10; //<---------------------------FIX ME DEBUG TO 1 year
-const ADULT_SURVIVAL: f64 = 0.65; //annual
-const PIGLET_SURVIVAL: f64 = 0.5; //annual
-const ADULT_SURVIVAL_DAY: f64 =  0.9647;//daily //0.9647381; // monthly
-const PIGLET_SURVIVAL_DAY: f64 = 0.9438;//daily //0.9438743;// monthly
-const MIN_STAY_TIME: usize = 1; // days //<---------------------------------------------FIX ME randomly selected
-const MAX_STAY_TIME: usize = 14; // days
+const RUNTIME: usize = 365;
+const ADULT_SURVIVAL: f64 = 0.65;
+const PIGLET_SURVIVAL: f64 = 0.5;
+const ADULT_SURVIVAL_DAY: f64 =  0.9647;
+const PIGLET_SURVIVAL_DAY: f64 = 0.9438;
+const MIN_STAY_TIME: usize = 1;
+const MAX_STAY_TIME: usize = 14;
 const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
+
+
 // Individuals related functions
 
 // Function to perform circular BFS from the core cell
@@ -480,6 +475,7 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
         occupy_this_cell(&mut grid[x][y], group_id);
         //occupy_this_cell(&mut grid, x, y, group_id);
         let core_cell = (x, y);
+        make_core_cell(&mut grid[x][y], group_id);
 
         // Take the surrounding cells as territory
         // Total Cells=Width×Height
@@ -818,14 +814,12 @@ pub fn move_to_closest_adjacent_cell_to_target(grid: &Vec<Vec<Cell>>, group: &mu
     }
 }
 
-
-
-pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R) {
+pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R) {
     for group in group.iter_mut() {
 
         //println!("Movement called"); //<------ DEBUG print
 
-        let mut realign_time = 3; //number of steps before realigning towards the target
+        let realign_time = 3; //number of steps before realigning towards the target
 
         while group.daily_movement_distance > 0  {
 
@@ -891,7 +885,17 @@ pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, 
                 } else if group.movement == MovementMode::Foraging {
                     
                     if group.remaining_stay_time <= 0 { //if stay time around ap is used up get a new ap to move towards
+                        
+                        let new_target_cell;
+                        if rng.gen_range(1..100) > 100 { // 1% chance to choose a new ap outside the territory // DEBUG TEMPORARILY DEACTIVATED
+                           
+                           let outside_ap = get_closest_attraction_points_outside_territory(grid, group);
 
+                            new_target_cell = outside_ap
+                            .choose(rng)
+                            .cloned()
+                            .expect("No other attraction points found");
+                        } else {
                         let territory_ap = get_attraction_points_in_territory(grid, group.group_id);
                         let closest_ap = get_closest_attraction_point(group, &territory_ap);
                         let other_aps: Vec<(usize, usize)> = territory_ap
@@ -900,11 +904,11 @@ pub fn move_individuals<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, 
                             .collect();
 
                         // Choose a random target cell from the remaining attraction points
-                        let new_target_cell = other_aps
+                             new_target_cell = other_aps
                             .choose(rng)
                             .cloned()
                             .expect("No other attraction points in territory");
-
+                        }
                         group.set_target_cell(new_target_cell);
                         group.remaining_stay_time = rng.gen_range(MIN_STAY_TIME..MAX_STAY_TIME);
 
@@ -978,7 +982,6 @@ pub fn move_to_new_ap(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl 
     // Decrement remaining_stay_time
     group.update_remaining_stay_time();
 }
-
 
 pub fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng) {
     // Generate a list of adjacent cells
@@ -1058,12 +1061,11 @@ pub fn move_one_step_towards_target_cell(group: &mut Groups) {
     }
 }
 
-
 pub fn move_one_step_towards_target_cell_with_random(
     group: &mut Groups,
     rng: &mut impl Rng,
     grid: &Vec<Vec<Cell>>,
-) {
+    ) {
     // Check if there is a target cell set
     if let Some(target_cell) = group.target_cell {
         // Randomly decide whether to move towards the target or move randomly
@@ -1087,11 +1089,10 @@ pub fn move_one_step_towards_target_cell_with_random(
             );
         } else {
             // Move randomly
-            move_to_random_adjacent_cell(group, rng, grid);
+            move_to_random_adjacent_cells_2(grid, group, rng);
         }
     }
 }
-
 
 // Function for correlated random walk towards the target // NOT WORKING
 fn correlated_random_walk_towards_target(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng) {
@@ -1155,8 +1156,6 @@ fn correlated_random_walk_towards_target(grid: &Vec<Vec<Cell>>, group: &mut Grou
     last_direction = correlated_direction;
 }
 
-
-
 //TEST
 pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, group: &mut Groups, rng: &mut impl Rng){
     // Get the current position of the individual
@@ -1210,6 +1209,25 @@ fn random_cell_with_quality(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize
     }
 }
 
+//function that returns a random attraction point from the 10 closest attraction points to core cell that are not in the goups terriory
+
+//fn get_closest_attraction_point(group: &Groups, attraction_points: &Vec<(usize, usize)>) -> (usize, usize) {
+//    // Calculate the distance to the core cell for each attraction point
+//    let distances: Vec<_> = attraction_points
+//        .iter()
+//        .map(|&(x, y)| (x, y, group.distance_to_cell(x, y)))
+//        .collect();
+//
+//    // Find the attraction point with the minimum distance
+//    distances
+//        .into_iter()
+//        .min_by_key(|&(_, _, distance)| distance)
+//        .map(|(x, y, _)| (x, y))
+//        .unwrap_or_else(|| {
+//            // If no attraction points, return the core cell
+//            group.core_cell.unwrap_or((0, 0))
+//        })
+//}
 
 // Function to move to a random adjacent cell
 fn move_to_random_adjacent_cell(group: &mut Groups, rng: &mut impl Rng, grid: &Vec<Vec<Cell>>) {
@@ -1393,6 +1411,14 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
 
     fill_initial_groups(&mut groups, &grid);
 
+    remove_non_core_attraction_points(&mut grid);
+
+    place_additional_attraction_points(&mut grid, &mut groups, 0);
+
+    //let terr = get_group_territory(&mut grid, &mut groups);
+    //println!("Territory size: {}", terr.len());
+    //place_additional_attraction_points(&mut grid, &mut groups, 5);
+
     (grid, groups)
 }
 
@@ -1403,6 +1429,14 @@ fn main() {
     //let grid_size = 25;
 
     //assign_to_constants(&Input);
+    
+    //let mut input_json = String::new();
+    //io::stdin().read_to_string(&mut input_json).expect("Failed to read from stdin");
+//
+    //// Deserialize JSON into input structure
+    //let input: Input = serde_json::from_str(&input_json).expect("Failed to deserialize JSON");
+//
+    //assign_to_constants(&input);
 
     let num_groups = 1; // FIX ME DEBUG CHANGE TO 1
 
@@ -1411,6 +1445,10 @@ fn main() {
     // Setup the landscape and individuals
 
     let (mut grid, mut groups) = setup(file_path, num_groups);
+
+    // adjust attraction points
+
+   // place_new_attraction_points(&mut grid, &mut groups, 5);
 
     // Vector to store grid states for all iterations
     let mut all_grid_states: Vec<(usize, Vec<Vec<Cell>>)> = Vec::new();
@@ -1447,7 +1485,7 @@ fn main() {
 
         // Simulate movement of individuals
         let mut rng = rand::thread_rng();
-        move_individuals(&grid, &mut groups, &mut rng);
+        move_groups(&grid, &mut groups, &mut rng);
 
    
 
