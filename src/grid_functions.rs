@@ -3,6 +3,7 @@
 use crate::*;
 use core::num;
 use std::f64::consts::PI;
+use rand_distr::{Distribution, Normal};
 
 
 pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>, LandscapeMetadata)> {
@@ -271,80 +272,9 @@ pub fn get_group_territory(grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>) -> Vec<V
     group_territory
 }
 
-//pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, group: &Vec<Groups>, num_points: usize) {
-//    // Get the group's territory
-//    let group_territory = get_group_territory(grid, group);
-//
-//    //read cell x and y of group_territory
-//    let mut x = 0;
-//    let mut y = 0;
-//    for row in group_territory.iter() {
-//        for cell in row.iter() {
-//            if cell.territory.core_cell_of_group == group[0].group_id{
-//                x = cell.x_grid;
-//                y = cell.y_grid;
-//            }
-//        }
-//    }
-//
-//    //get width and height of group_territory
-//    let width = group_territory.len();
-//    let height = group_territory[0].len();
-//    let n = num_points;
-//    let step_x = width as f64 / (n as f64 + 1.0);
-//    let step_y = height as f64 / (n as f64 + 1.0);
-//
-//    for i in 1..=n {
-//        let x = (step_x * i as f64) as usize;
-//        let y = (step_y * i as f64) as usize;
-//
-//        // Mark the cell at position (x, y)
-//        grid[x][y].territory.is_ap = true;
-//    }
-//}
-
-//pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, group: &Vec<Groups>, num_points: usize) {
-//    // Get the group's territory
-//    let group_territory = get_group_territory(grid, group);
-//
-//    // Read the coordinates of the group's territory
-//    let mut core_cell_coordinates = (0, 0);
-//    for row in group_territory.iter() {
-//        for cell in row.iter() {
-//            if cell.territory.core_cell_of_group == group[0].group_id {
-//                core_cell_coordinates = (cell.x_grid, cell.y_grid);
-//            }
-//        }
-//    }
-//
-//    // Get the width and height of group_territory
-//    let width = group_territory.len();
-//    let height = group_territory[0].len();
-//
-//    // Calculate the step size between each marked cell
-//    let n = num_points;
-//    let step_x = width as f64 / (n as f64 + 1.0);
-//    let step_y = height as f64 / (n as f64 + 1.0);
-//
-//    // Iterate over the range of marked cells and mark only those within group_territory
-//    for i in 1..=n {
-//        let x = (step_x * i as f64) as usize;
-//        let y = (step_y * i as f64) as usize;
-//
-//        // Calculate the actual coordinates within the group's territory
-//        let actual_x = core_cell_coordinates.0 + x;
-//        let actual_y = core_cell_coordinates.1 + y;
-//
-//        // Check if the actual coordinates are within the bounds of group_territory
-//        if actual_x < width && actual_y < height {
-//            // Mark the cell at position (actual_x, actual_y)
-//            grid[actual_x][actual_y].territory.is_ap = true;
-//        }
-//    }
-//}
 
 
-pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, mut num_points: usize) {
+pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, mut num_points: usize, rng: &mut impl Rng) {
 
     //iterate through the groups
     for group in groups.iter_mut() {
@@ -379,15 +309,36 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
         let center_y = min_y  + (height) / 2;
 
         //println!("center_x: {}, center_y: {}", center_x, center_y);
-        let mut rng = rand::thread_rng();
-        let n_ap = rng.gen_range(2..6) as usize;
-        println!("n_ap: {}", n_ap);
 
-        num_points = n_ap + 1;
+       // let mut rng = rand::thread_rng();
+       // let n_ap = rng.gen_range(2..6) as usize;
+        // draw a random number with mean 4 and std 1 from a normal distribution
+        //let n_ap = (rand::thread_rng().gen_range(2..6) as f64).round() as usize;
 
-        let num_points_sqrt = (num_points as f64).sqrt() as usize;
+      // let n_ap = get_random_normal_int(4.5, 1.5, rng) as usize;
+        let n_ap = rng.gen_range(4..8);
+       // println!("n_ap: {}", n_ap);
+       // num_points = n_ap;
 
-        println!("num_points_sqrt: {}", num_points_sqrt);
+     //   num_points = 8; //n_ap + 2;
+//
+     //   println!("num_points: {}", num_points);
+//
+        let mut num_points_sqrt = (num_points as f64).sqrt() as usize;
+//
+     //   println!("num_points_sqrt: {}", num_points_sqrt);
+
+        // Ensure that the number of points is at least 2
+       // if num_points_sqrt == 1 {
+       //     num_points_sqrt += 1;
+       // }
+        let mut max_jitter: isize = 4;
+
+        if num_points_sqrt < 2 {
+            max_jitter = 6;
+        }
+
+        //println!("max_jitter: {}", max_jitter);
 
         // Dereference min_x and min_y
         let min_x = *min_x;
@@ -426,9 +377,7 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
                 let x = min_x as f64 + (i as f64) * step_x + step_x / 2.0;
                 let y = min_y as f64 + (j as f64) * step_y + step_y / 2.0;
 
-                let max_jitter: isize = 4;
-
-                let mut rng = rand::thread_rng();
+               // let mut rng = rand::thread_rng();
                 let x_offset = rng.gen_range(-max_jitter..=max_jitter + 1) as f64;
                 let y_offset = rng.gen_range(-max_jitter..=max_jitter + 1) as f64;
 
@@ -438,6 +387,7 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
                 // Ensure the jittered coordinates are within the territory bounds
                 let x_clamped = x_jittered as usize;
                 let y_clamped = y_jittered as usize;
+
                 grid[x_clamped as usize][y_clamped as usize].territory.is_ap = true;
 
             }
@@ -446,97 +396,28 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
     }
 }
 
-// Function to calculate the golden spiral coordinates
-fn calculate_golden_spiral_coordinates(num_points: usize) -> Vec<(i32, i32)> {
-    let mut coordinates = Vec::with_capacity(num_points);
 
-    let golden_angle = std::f64::consts::PI * (3.0 - (5.0f64).sqrt());
-    let mut radius = 1.0;
-    let mut angle: f64 = 0.0; // Explicitly typed as f64
+pub fn get_random_normal_int (mean: f64, std_dev: f64, rng: &mut impl Rng) -> i32 {
 
-    for _ in 0..num_points {
-        let x = (radius * angle.cos()).round() as i32;
-        let y = (radius * angle.sin()).round() as i32;
-        coordinates.push((x, y));
+    // Create a normal distribution with mean 4.5 and standard deviation 1.5
+ 
+    let normal = Normal::new(mean, std_dev).expect("Invalid parameters");
 
-        radius *= golden_angle;
-        angle += golden_angle;
-    }
-
-    coordinates
-}
-
-
-// Function to place attraction points using the golden spiral pattern
-pub fn place_new_attraction_points2(grid: &mut Vec<Vec<Cell>>, groups: &Vec<Groups>, num_points: usize) {
-    // Calculate the golden spiral coordinates
-    let coordinates = calculate_golden_spiral_coordinates(num_points);
-    let group_territory = get_group_territory(grid, groups);
-    // Iterate over the cells in the group's territory
-    for cell_row in &group_territory {
-        for cell in cell_row {
-            // Iterate over the calculated coordinates
-            for (i, (x_offset, y_offset)) in coordinates.iter().enumerate() {
-                // Calculate the coordinates relative to the current cell
-                let new_x = cell.x_grid as i32 + x_offset;
-                let new_y = cell.y_grid as i32 + y_offset;
-
-                // Ensure the new coordinates are within the grid bounds
-                if new_x >= 0 && new_x < grid.len() as i32 && new_y >= 0 && new_y < grid[0].len() as i32 {
-                    // Place the attraction point at the calculated coordinates
-                    grid[new_x as usize][new_y as usize].territory.is_ap = true;
-                }
-
-                // Stop iteration if enough attraction points are placed
-                if i >= num_points {
-                    break;
-                }
-            }
+    // Generate a random number from the normal distribution
+    let mut num: f64;
+    loop {
+        num = rng.sample(normal);
+        if num >= 2.0 && num <= 7.0 {
+            break;
         }
     }
+
+    // Convert the floating-point number to an integer
+    let random_int = num.round() as i32;
+
+    random_int
 }
 
-//pub fn place_new_attraction_points(grid: &mut Vec<Vec<Cell>>, group: &Vec<Groups>, num_points: usize) {
-//    // Iterate over each group
-//    for group in group {
-//        // Get the group's territory
-//        let group_territory = get_group_territory(grid, group);
-//
-//        // Find the core cell of the group
-//        let core_cell = group_territory.iter().flatten().find(|cell| cell.territory.is_core_of_group);
-//
-//        if let Some(core_cell) = core_cell {
-//            // Calculate the center coordinates
-//            let center_x = core_cell.x_grid;
-//            let center_y = core_cell.y_grid;
-//
-//            // Calculate the radius of the territory
-//            let radius = (group_territory.len().pow(2) + group_territory[0].len().pow(2)) as f64;
-//
-//            // Calculate the angle increment for each point
-//            let angle_increment = std::f64::consts::PI * (3.0 - (5.0f64).sqrt());
-//
-//            // Iterate over the number of points to be placed
-//            for i in 0..num_points {
-//                // Calculate the angle for this point in the golden spiral
-//                let angle = angle_increment * (i as f64);
-//
-//                // Calculate the coordinates for this point
-//                let x = (center_x as f64 + radius * angle.cos()).round() as usize;
-//                let y = (center_y as f64 + radius * angle.sin()).round() as usize;
-//
-//                // Ensure the coordinates are within the territory bounds
-//                let x = x.min(group_territory.len() - 1);
-//                let y = y.min(group_territory[0].len() - 1);
-//
-//                // Place the attraction point at the calculated coordinates
-//                if let Some(cell) = group_territory.get(x).and_then(|row| row.get(y)) {
-//                    grid[cell.x_grid][cell.y_grid].territory.is_ap = true;
-//                }
-//            }
-//        }
-//    }
-//}
 
 pub fn set_ap_at_individual_position(grid: &mut Vec<Vec<Cell>>, group: &Groups) {
     

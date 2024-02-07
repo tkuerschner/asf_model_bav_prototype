@@ -1,5 +1,4 @@
-
-use rand::Rng;
+use rand::{rngs, Rng};
 use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use std::fs::File;
@@ -27,29 +26,28 @@ use ageing::ageing;
 mod reproduction;
 use reproduction::*;
 
+mod homerange;
+use homerange::*;
+
+mod group_functions;
+use group_functions::*;
 
 // Define a struct to represent a group
 #[derive(Debug, Clone)]
 pub struct Groups {
-    //id: usize,
     group_id: usize,
     x: usize,
     y: usize,
-   // age: u32,
-   // sex: Sex,
-   // has_reproduced: bool,
-    time_of_reproduction: usize,
     core_cell:Option<(usize,usize)>,
     target_cell:Option<(usize,usize)>,
     remaining_stay_time: usize,
-   // age_class: AgeClass, 
     memory: GroupMemory,
     group_members: Vec<GroupMember>,
-    // add reset for reproduction
     movement: MovementMode,
     daily_movement_distance: usize,
 }
 
+// implementation of the group struct
 impl Groups {
     // Function to set a core cell
     fn set_core_cell(&mut self, core_cell: (usize, usize)) {
@@ -68,6 +66,7 @@ impl Groups {
         }
     }
 
+    // Function to add a group member
     pub fn add_group_member(&mut self, member_info: GroupMember) {
         self.group_members.push(member_info);
     }
@@ -85,11 +84,12 @@ impl Groups {
         }
     }
 
+    // Method to get the distance to the target cell
     pub fn distance_to_target (&self) -> i32 {
         (self.x as i32 - self.target_cell.unwrap().0 as i32).abs() + (self.y as i32 - self.target_cell.unwrap().1 as i32).abs() // manhattan distance
     }
 
-
+    // Method to create a new initial group member
    pub fn create_new_initial_group_member(&mut self) -> Result<GroupMember> {
     let mut rng = rand::thread_rng();
     let rand: f64 = rng.gen_range(0.0..1.0);
@@ -98,7 +98,7 @@ impl Groups {
 
     let individual_id = generate_individual_id(); 
 
-    let tmp_age = match rand {
+    let tmp_age = match rand { 
          r if r <= 0.38 => 52 + var_value,
          r if r <= 0.62 => 104 + var_value,
          r if r <= 0.77 => 156 + var_value,
@@ -122,6 +122,7 @@ impl Groups {
         AgeClass::Adult
     };
 
+    // randomly assign sex to the individual 50:50 ratio
     let sex = if rand::thread_rng().gen_bool(0.5) {
         Sex::Female
     } else {
@@ -133,6 +134,7 @@ impl Groups {
     let  has_reproduced = false;
     let  time_of_reproduction = 0;
 
+    // Create a new group member
     let new_member = GroupMember {
         individual_id,
         age,
@@ -144,12 +146,14 @@ impl Groups {
         time_of_reproduction,
     };
 
+    // Add the new group member to the group
     self.group_members.push(new_member.clone());
     Ok(new_member)
 }
 
 }
 
+// Define a enum to represent the movement mode 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MovementMode{
     ApTransition,
@@ -157,6 +161,7 @@ pub enum MovementMode{
     NotSet,
 }
 
+// Implement the Display trait for MovementMode
 impl fmt::Display for MovementMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -166,7 +171,6 @@ impl fmt::Display for MovementMode {
         }
     }
 }
-
 
 // Static counter for individual_id
 static mut INDIVIDUAL_COUNTER: usize = 0;
@@ -190,6 +194,7 @@ fn generate_group_id() -> usize {
     }
 }
 
+// Define a struct to represent an individual
 #[derive(Debug, Clone)]
 pub struct GroupMember {
     individual_id: usize,
@@ -202,8 +207,6 @@ pub struct GroupMember {
     time_of_reproduction: usize,
 }
 
-
-
 // Define a struct to represent a groups's memory
 #[derive(Debug, Clone)]
 struct GroupMemory {
@@ -215,7 +218,6 @@ struct GroupMemory {
     presence_timer: usize,
 }
 
-
 // Define a struct to represent an individual's health status
 #[derive(Debug, Clone, PartialEq)]
 enum HealthStatus {
@@ -224,6 +226,7 @@ enum HealthStatus {
     Immune,
 }
 
+// Implement the Display trait for HealthStatus
 impl fmt::Display for HealthStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -234,7 +237,6 @@ impl fmt::Display for HealthStatus {
     }
 }
 
-
 // Define a struct to represent an individual's sex
 #[derive(Debug, Clone, PartialEq)]
 enum Sex {
@@ -242,6 +244,7 @@ enum Sex {
     Female,
 }
 
+// Implement the Display trait for Sex
 impl fmt::Display for Sex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -251,7 +254,7 @@ impl fmt::Display for Sex {
     }
 }
 
-// Define a struct to represent an individual's age class
+// Define a enum to represent an individual's age class
 #[derive(Debug, Clone, PartialEq)]
 pub enum AgeClass {
     Piglet,
@@ -259,6 +262,7 @@ pub enum AgeClass {
     Adult,
 }
 
+// Implement the Display trait for AgeClass
 impl fmt::Display for AgeClass {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -269,6 +273,7 @@ impl fmt::Display for AgeClass {
     }
 }
 
+// Define a struct to represent the survival probability
 pub struct SurvivalProbability{
     adult: f64,
     piglet: f64,
@@ -284,6 +289,7 @@ pub struct Cell {
     territory: AreaSeparation
 }
 
+// Define a struct to represent the area separation
 #[derive(Debug, Clone, PartialEq)]
 pub struct AreaSeparation {
     is_ap: bool,
@@ -291,6 +297,8 @@ pub struct AreaSeparation {
     taken_by_group: usize,
     core_cell_of_group: usize,
 }
+
+// Define a struct to represent the cell information
 pub struct CellInfo {
     x_grid_o: usize,
     y_grid_o: usize,
@@ -308,6 +316,7 @@ pub struct GlobalVariables {
     year: u32,
 }
 
+// Define a struct to represent the landscape
 // Landscape metadata i.e. ASCII header
 #[derive(Debug)]
 pub struct LandscapeMetadata {
@@ -319,6 +328,7 @@ pub struct LandscapeMetadata {
     nodata_value: i32,
 }
 
+// Define a struct to represent the output
 #[derive(Debug, Serialize, Deserialize)]
 struct Output {
     iteration: usize,
@@ -336,9 +346,9 @@ struct Output {
     remaining_stay_time: usize,
 }
 
+// Define a struct to represent the input
 #[derive(Debug, Serialize, Deserialize)]
 struct Input {
-
 max_age: u32,
 presence_time_limit: usize,
 move_chance_percentage: usize,
@@ -388,259 +398,22 @@ default_daily_movement_distance:usize,
 //
 //}
 
+// consants
 const MAX_AGE: u32 = 365 * 12;
 const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
-const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
+const MAX_KNOWN_CELLS: usize = 24; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365;
+const RUNTIME: usize = 365 * 100;
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
 const PIGLET_SURVIVAL_DAY: f64 = 0.9438;
 const MIN_STAY_TIME: usize = 1;
 const MAX_STAY_TIME: usize = 14;
-const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
-
-
-// Individuals related functions
-
-// Function to perform circular BFS from the core cell
-
-fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, desired_total_cells: usize) {
-    let mut queue = VecDeque::new();
-    let mut visited = vec![vec![false; grid[0].len()]; grid.len()];
-
-    queue.push_back((x, y));
-    visited[x][y] = true;
-
-    let mut count = 0;
-
-    while let Some((cx, cy)) = queue.pop_front() {
-        occupy_this_cell(&mut grid[cx][cy], group_id);
-        count += 1;
-
-        if count >= desired_total_cells {
-            break;
-        }
-
-        // Explore neighbors in a circular fashion
-        let radius = 5.0;                  
-        let mut angle = 0.0;           
-
-        while angle <= 2.0 * std::f64::consts::PI {
-            let nx = (cx as f64 + (radius * angle.cos()).round()) as usize;
-            let ny = (cy as f64 + (radius * angle.sin()).round()) as usize;
-
-
-            if nx < grid.len() && ny < grid[0].len() && !visited[nx][ny] {
-                if grid[nx][ny].quality > 0.0 && !grid[nx][ny].territory.is_taken { // changed quality check
-                    queue.push_back((nx, ny));
-                    visited[nx][ny] = true;
-                }
-            }
-
-            angle += std::f64::consts::PI / 180.0; //12.0;      
-        }
-    }
-}
-
-pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, num_groups: usize) -> Vec<Groups> {
-
-    // Create individuals with unique IDs, group IDs, and memory
-    let mut group: Vec<Groups> = Vec::with_capacity(num_groups);
-    let grid_size = grid.len();  
-
-   // let tmp_Grid = grid.iter().iter().filter(|cell| cell.quality > 0.0);
-
-    for group_id in 0..num_groups {
-
-        // Select an free attraction point as territory coe cell
-        let free_ap = get_free_attraction_points(&grid);
-        if free_ap.is_empty(){
-
-        println!("No more free space for additional groups, group creation halted at {}/{} groups!", group_id,num_groups);
-        break;
-        }else{
-        let mut rng = rand::thread_rng();
-        let random_index = rng.gen_range(0..free_ap.len());
-        let random_ap = free_ap[random_index];
-        
-        let x = random_ap.0;
-        let y = random_ap.1;
-
-        let group_id = generate_group_id(); // id; //rand::thread_rng().gen_range(1..=2);
-
-        // Make this cell the core cell / the core Ap
-        occupy_this_cell(&mut grid[x][y], group_id);
-        //occupy_this_cell(&mut grid, x, y, group_id);
-        let core_cell = (x, y);
-        make_core_cell(&mut grid[x][y], group_id);
-
-        // Take the surrounding cells as territory
-        // Total Cells=Width×Height
-        //
-
-        let desired_total_cells = 1600;
-       // let range = ((desired_total_cells as f64).sqrt() - 1.0) / 2.0;
-
-       // for i in (x.saturating_sub(range as usize))..=(x + range as usize) {
-       //     for j in (y.saturating_sub(range as usize))..=(y + range as usize) {
-       //         if i < grid.len() && j < grid[0].len() {
-       //             if grid[i][j].quality > 0.0 && grid[i][j].territory.is_taken == false {
-//
-       //                // occupy_this_cell(&mut grid, x, y, group_id);
-       //                 occupy_this_cell(&mut grid[i][j], group_id);
-//
-       //             }
-       //         }
-       //     }
-       // }
-
-       circular_bfs(grid, x, y, group_id, desired_total_cells);
-
-        //if my_vector.is_empty() {
-        //    println!("The vector is empty!");
-        //} else {
-        //    println!("The vector is not empty!");
-        //}
-
-    // Random position
-       // let (x, y) = loop {
-       //     let x_candidate = rand::thread_rng().gen_range(0..grid_size);
-       //     let y_candidate = rand::thread_rng().gen_range(0..grid_size);
-
-       //     if grid[x_candidate][y_candidate].quality > 0.0 {
-       //         break (x_candidate, y_candidate);
-       //     }
-       // };
-
-        //let age = 730 + rand::thread_rng().gen_range(1..=1825);
-        
-        let presence_timer = 0;
-        
-        //let sex;
-        //if rand::thread_rng().gen_bool(0.5) == true {
-        //     sex = Sex::Female;
-        //}else{
-        //     sex = Sex::Male;
-        //}
-
-        let time_of_reproduction = 0;
-
-       // let age_class = AgeClass::Adult;
-
-       // let has_reproduced = false;
-        let memory = GroupMemory {
-            known_cells: HashSet::new(),
-            group_member_ids: Vec::new(),
-            //last_visited_cells: HashSet::new(),
-            known_cells_order: Vec::new(),
-            //last_visited_cells_order: Vec::new(),
-            presence_timer,
-        };
-
-        //let core_cell = None;
-        let target_cell = None;
-        let remaining_stay_time = 0;
-        let movement = MovementMode::Foraging;
-        let group_members = vec![];
-        let daily_movement_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE; //<--------------------DEBUG FIX ME with actual values
-        
-
-        group.push(Groups {
-            group_id,
-            x,
-            y,
-           //age,
-           //sex,
-           //age_class,
-           //has_reproduced,
-            time_of_reproduction,
-            core_cell: Some(core_cell),
-            target_cell,
-            remaining_stay_time,
-            memory,
-            movement,
-            group_members,
-            daily_movement_distance,
-        });
-
-     }
-    }
-
-    group
-}
-
-
-
-// use the mean habitat suitability of the surrounding cells (territory) to calculate number of breeding females and create groups accordingly
-//fn fill_initial_groups(group: &mut Vec<Groups> , grid: &Vec<Vec<Cell>>){
-//
-//
-// for group in group.iter_mut() {
-//
-//    let breed_cap = calculate_mean_quality_for_group(grid, group.group_id).round();
-//
-//    // group size estimator from SwiCoIBMove 4.5
-//
-//    let tmp_size = (4.5 * breed_cap - 1.0).round() as u32; 
-//
-//    for i in 0..tmp_size {
-//
-//        group.create_new_initial_group_member();
-//
-//    }
-//
-//
-// }
-//}
-
-fn fill_initial_groups(groups: &mut Vec<Groups>, grid: &Vec<Vec<Cell>>) {
-    for group in groups.iter_mut() {
-        let breed_cap = calculate_mean_quality_for_group(grid, group.group_id).round();
-
-        // group size estimator from SwiCoIBMove 4.5
-        let tmp_size = (4.5 * breed_cap - 1.0).round() as u32;
-        //println!("grpsize {}", tmp_size); FIX ME  DEBUG PRINT
-
-        for _ in 0..tmp_size {
-            group.create_new_initial_group_member();
-        }
-    }
-}
-
-
-fn calculate_mean_quality_for_group(grid: &Vec<Vec<Cell>>, group_id: usize) -> f64 {
-    let mut total_quality = 0.0;
-    let mut num_cells = 0;
-
-    for row in grid {
-        for cell in row {
-            if cell.territory.is_taken && cell.territory.taken_by_group == group_id {
-                total_quality += cell.quality * 10.0; //FIX ME adjust for the raster
-                num_cells += 1;
-            }
-        }
-    }
-
-    if num_cells == 0 {
-        return 0.0; // Avoid division by zero
-    }
-
-    //println!("qual: {}, ncell: {}", total_quality, num_cells );
-
-    total_quality / (num_cells as f64)
-}
-
+const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 24;
 
 //EXPERMINETS
-
-// Function to choose a core cell (within 1600 cells)
-fn choose_core_cell(grid: &Vec<Vec<Cell>>, group: &Groups, rng: &mut impl Rng) -> (usize, usize) {
-    // Get the position of the individual as the core cell
-    (group.x, group.y)
-}
 
 //// Function to choose a target cell (90% within 1600 cells, 10% within 3200 cells)
 //fn choose_target_cell(grid: &Vec<Vec<Cell>>, individual: &Individual, rng: &mut impl Rng) -> (usize, usize) {
@@ -729,44 +502,9 @@ fn choose_core_cell(grid: &Vec<Vec<Cell>>, group: &Groups, rng: &mut impl Rng) -
 //    order.push(new_cell);
 //}
 
-pub fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usize, usize)>, new_cell: (usize, usize), max_size: usize) {
-    memory.insert(new_cell);
 
-    order.retain(|&cell| memory.contains(&cell)); // Remove cells that are not in the memory
 
-    if order.len() >= max_size {
-        let oldest_cell = order.remove(0); // Remove the oldest element
-        memory.remove(&oldest_cell);
-    }
 
-    order.push(new_cell);
-}
-
-pub fn update_group_memory(group: &mut Vec<Groups>) {
-    // Get the indices of individuals
-   // let indices: Vec<usize> = (0..group.len()).collect();
-//
-   // // Iterate through indices to update group memory
-   // for &index in &indices {
-   //     let group_id = group[index].group_id;
-//
-   //     // Find indices of group members with the same group_id
-   //     let group_members_ids: Vec<usize> = indices
-   //         .iter()
-   //         .filter(|&&i| group[i].group_id == group_id)
-   //         .map(|&i| group[i].id)
-   //         .collect();
-//
-   //     // Update group memory with the IDs of group members
-   //     group[index].memory.group_member_ids = group_members_ids;
-//
-   //     // Print debug information
-   //     //println!(
-   //     //    "Individual {}: Group ID: {}, Group members: {:?}",
-   //     //    index, group_id, individuals[index].memory.group_member_ids
-   //     //);
-   // }
-}
 
 // Movement functions
 
@@ -776,7 +514,7 @@ pub fn calculate_quality_score(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> f64
     // placeholder FIXME
     match &grid[x][y] {
         Cell { quality, .. } => *quality,
-        // Add other cases as needed
+        
     }
 }
 
@@ -1230,74 +968,74 @@ fn random_cell_with_quality(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize
 //}
 
 // Function to move to a random adjacent cell
-fn move_to_random_adjacent_cell(group: &mut Groups, rng: &mut impl Rng, grid: &Vec<Vec<Cell>>) {
-    let adjacent_cells = vec![
-        (group.x.saturating_sub(1), group.y),
-        (group.x.saturating_add(1), group.y),
-        (group.x, group.y.saturating_sub(1)),
-        (group.x, group.y.saturating_add(1)),
-    ];
+//fn move_to_random_adjacent_cell(group: &mut Groups, rng: &mut impl Rng, grid: &Vec<Vec<Cell>>) {
+//    let adjacent_cells = vec![
+//        (group.x.saturating_sub(1), group.y),
+//        (group.x.saturating_add(1), group.y),
+//        (group.x, group.y.saturating_sub(1)),
+//        (group.x, group.y.saturating_add(1)),
+//    ];
+//
+//    // Shuffle the list of adjacent cells
+//    let mut shuffled_cells = adjacent_cells.clone();
+//    shuffled_cells.shuffle(rng);
+//
+//    // Select the first cell (randomized) with quality > 0
+//    if let Some(target_cell) = shuffled_cells
+//        .into_iter()
+//        .filter(|&(x, y)| x < grid.len() && y < grid[0].len() && grid[x][y].quality > 0.0)
+//        .next()
+//    {
+//        // Update individual's position
+//        group.x = target_cell.0;
+//        group.y = target_cell.1;
+//
+//        // Update known cells
+//        update_memory(
+//            &mut group.memory.known_cells,
+//            &mut group.memory.known_cells_order,
+//            (group.x, group.y),
+//            MAX_KNOWN_CELLS,
+//        );
+//    }
+//}
 
-    // Shuffle the list of adjacent cells
-    let mut shuffled_cells = adjacent_cells.clone();
-    shuffled_cells.shuffle(rng);
-
-    // Select the first cell (randomized) with quality > 0
-    if let Some(target_cell) = shuffled_cells
-        .into_iter()
-        .filter(|&(x, y)| x < grid.len() && y < grid[0].len() && grid[x][y].quality > 0.0)
-        .next()
-    {
-        // Update individual's position
-        group.x = target_cell.0;
-        group.y = target_cell.1;
-
-        // Update known cells
-        update_memory(
-            &mut group.memory.known_cells,
-            &mut group.memory.known_cells_order,
-            (group.x, group.y),
-            MAX_KNOWN_CELLS,
-        );
-    }
-}
-
-pub fn move_to_random_adjacent_cells3(grid_size: usize, group: &mut Groups, rng: &mut impl Rng) {
-    // Get the current position of the individual
-    let current_x = group.x;
-    let current_y = group.y;
-
-    // Generate a list of adjacent cells
-    let mut adjacent_cells = vec![
-        (current_x.saturating_sub(1), current_y),
-        (current_x.saturating_add(1), current_y),
-        (current_x, current_y.saturating_sub(1)),
-        (current_x, current_y.saturating_add(1)),
-    ];
-
-    // Shuffle the list of adjacent cells
-    adjacent_cells.shuffle(rng);
-
-    // Select the first cell (randomized)
-    let target_cell = adjacent_cells
-        .into_iter()
-        .find(|&(x, y)| x < grid_size && y < grid_size)
-        .unwrap_or_else(|| {
-            // If no valid adjacent cells, move randomly within the grid
-            random_cell(grid_size, rng)
-        });
-
-    // Update known cells and last visited cells
-    //update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, target_cell, MAX_KNOWN_CELLS);
-    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, target_cell, MAX_LAST_VISITED_CELLS);
-
-    update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), MAX_KNOWN_CELLS);
-    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
-
-    // Update individual's position
-    group.x = target_cell.0;
-    group.y = target_cell.1;
-}
+//pub fn move_to_random_adjacent_cells3(grid_size: usize, group: &mut Groups, rng: &mut impl Rng) {
+//    // Get the current position of the individual
+//    let current_x = group.x;
+//    let current_y = group.y;
+//
+//    // Generate a list of adjacent cells
+//    let mut adjacent_cells = vec![
+//        (current_x.saturating_sub(1), current_y),
+//        (current_x.saturating_add(1), current_y),
+//        (current_x, current_y.saturating_sub(1)),
+//        (current_x, current_y.saturating_add(1)),
+//    ];
+//
+//    // Shuffle the list of adjacent cells
+//    adjacent_cells.shuffle(rng);
+//
+//    // Select the first cell (randomized)
+//    let target_cell = adjacent_cells
+//        .into_iter()
+//        .find(|&(x, y)| x < grid_size && y < grid_size)
+//        .unwrap_or_else(|| {
+//            // If no valid adjacent cells, move randomly within the grid
+//            random_cell(grid_size, rng)
+//        });
+//
+//    // Update known cells and last visited cells
+//    //update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, target_cell, MAX_KNOWN_CELLS);
+//    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, target_cell, MAX_LAST_VISITED_CELLS);
+//
+//    update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), MAX_KNOWN_CELLS);
+//    //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
+//
+//    // Update individual's position
+//    group.x = target_cell.0;
+//    group.y = target_cell.1;
+//}
 
 pub fn random_cell(grid_size: usize, rng: &mut impl Rng) -> (usize, usize) {
     let x = rng.gen_range(0..grid_size);
@@ -1316,39 +1054,39 @@ pub fn random_known_cell(known_cells: &HashSet<(usize, usize)>, rng: &mut impl r
     }
 }
 
-pub fn random_cell_around(x: usize, y: usize, grid_size: usize, rng: &mut impl Rng) -> (usize, usize) {
-    // Generate random offsets within a radius of 2 cells
-    let dx = rng.gen_range(-2..=2);
-    let dy = rng.gen_range(-2..=2);
+//pub fn random_cell_around(x: usize, y: usize, grid_size: usize, rng: &mut impl Rng) -> (usize, usize) {
+//    // Generate random offsets within a radius of 2 cells
+//    let dx = rng.gen_range(-2..=2);
+//    let dy = rng.gen_range(-2..=2);
+//
+//    // Calculate the new coordinates, ensuring they stay within bounds
+//    let new_x = (x as isize + dx).clamp(0, grid_size as isize - 1) as usize;
+//    let new_y = (y as isize + dy).clamp(0, grid_size as isize - 1) as usize;
+//
+//    (new_x, new_y)
+//}
 
-    // Calculate the new coordinates, ensuring they stay within bounds
-    let new_x = (x as isize + dx).clamp(0, grid_size as isize - 1) as usize;
-    let new_y = (y as isize + dy).clamp(0, grid_size as isize - 1) as usize;
+//pub fn random_cell_around_known(known_cells: &HashSet<(usize, usize)>, grid_size: usize, rng: &mut impl rand::Rng) -> Option<(usize, usize)> {
+//    let vec: Vec<&(usize, usize)> = known_cells.iter().collect();
+//    if let Some(&(x, y)) = vec.choose(rng) {
+//        Some(random_cell_around(*x, *y, grid_size, rng))
+//    } else {
+//        None
+//    }
+//}
 
-    (new_x, new_y)
-}
-
-pub fn random_cell_around_known(known_cells: &HashSet<(usize, usize)>, grid_size: usize, rng: &mut impl rand::Rng) -> Option<(usize, usize)> {
-    let vec: Vec<&(usize, usize)> = known_cells.iter().collect();
-    if let Some(&(x, y)) = vec.choose(rng) {
-        Some(random_cell_around(*x, *y, grid_size, rng))
-    } else {
-        None
-    }
-}
-
-pub fn random_known_cell_except_last_three(known_cells: &HashSet<(usize, usize)>,last_visited_cells: &HashSet<(usize, usize)>,rng: &mut impl Rng,) -> Option<(usize, usize)> {
-    let available_cells: Vec<_> = known_cells
-        .difference(last_visited_cells)
-        .cloned()
-        .collect();
-
-    if let Some(&cell) = available_cells.choose(rng) {
-        Some(cell)
-    } else {
-        None
-    }
-}
+//pub fn random_known_cell_except_last_three(known_cells: &HashSet<(usize, usize)>,last_visited_cells: &HashSet<(usize, usize)>,rng: &mut impl Rng,) -> Option<(usize, usize)> {
+//    let available_cells: Vec<_> = known_cells
+//        .difference(last_visited_cells)
+//        .cloned()
+//        .collect();
+//
+//    if let Some(&cell) = available_cells.choose(rng) {
+//        Some(cell)
+//    } else {
+//        None
+//    }
+//}
  
 // Update functions
 
@@ -1413,8 +1151,6 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
 
     remove_non_core_attraction_points(&mut grid);
 
-    place_additional_attraction_points(&mut grid, &mut groups, 0);
-
     //let terr = get_group_territory(&mut grid, &mut groups);
     //println!("Territory size: {}", terr.len());
     //place_additional_attraction_points(&mut grid, &mut groups, 5);
@@ -1437,7 +1173,7 @@ fn main() {
     //let input: Input = serde_json::from_str(&input_json).expect("Failed to deserialize JSON");
 //
     //assign_to_constants(&input);
-
+    let mut rng = rand::thread_rng();
     let num_groups = 1; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
@@ -1447,6 +1183,8 @@ fn main() {
     let (mut grid, mut groups) = setup(file_path, num_groups);
 
     // adjust attraction points
+    place_additional_attraction_points(&mut grid, &mut groups, 10, &mut rng);
+    
 
    // place_new_attraction_points(&mut grid, &mut groups, 5);
 
@@ -1484,7 +1222,7 @@ fn main() {
     for iteration in 1..= RUNTIME {
 
         // Simulate movement of individuals
-        let mut rng = rand::thread_rng();
+       
         move_groups(&grid, &mut groups, &mut rng);
 
    
@@ -1493,7 +1231,7 @@ fn main() {
             //debug print REMOVE ME
             //print!("reproduction is triggered");
 
-          reproduction(global_variables.month, &mut groups, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
+         // reproduction(global_variables.month, &mut groups, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
         }
 
         if global_variables.day == 15 {

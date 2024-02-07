@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 12 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 999 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -69,6 +69,7 @@ i1 <- groups %>% filter(iteration == 1)
 gr1 <- groups %>%
   group_by(iteration) %>%
   sample_n(1)
+
 
 # head(gr1)
 
@@ -253,7 +254,7 @@ anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, "_spa
 )
 
 
-g2 %>% filter(is_ap == "true")
+#g2 %>% filter(is_ap == "true")
 
 ```
 
