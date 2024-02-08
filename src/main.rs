@@ -2,9 +2,11 @@ use rand::{rngs, Rng};
 use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result, Read};
+use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result, Read,};
 use std::collections::VecDeque;
+use std::time::Instant;
 use serde::{Serialize, Deserialize};
+
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 use std::f64::consts::PI;
@@ -31,6 +33,9 @@ use homerange::*;
 
 mod group_functions;
 use group_functions::*;
+
+mod dispersal;
+use dispersal::*;
 
 // Define a struct to represent a group
 #[derive(Debug, Clone)]
@@ -131,8 +136,10 @@ impl Groups {
 
     let health_status = HealthStatus::Susceptible;
     let time_of_birth = 0;
-    let  has_reproduced = false;
-    let  time_of_reproduction = 0;
+    let has_reproduced = false;
+    let time_of_reproduction = 0;
+    let origin_group_id = self.group_id;
+    let has_dispersed = false;
 
     // Create a new group member
     let new_member = GroupMember {
@@ -144,6 +151,8 @@ impl Groups {
         time_of_birth,
         has_reproduced,
         time_of_reproduction,
+        origin_group_id,
+        has_dispersed,
     };
 
     // Add the new group member to the group
@@ -205,6 +214,8 @@ pub struct GroupMember {
     time_of_birth: usize,
     has_reproduced: bool,
     time_of_reproduction: usize,
+    origin_group_id: usize,
+    has_dispersed: bool,
 }
 
 // Define a struct to represent a groups's memory
@@ -220,7 +231,7 @@ struct GroupMemory {
 
 // Define a struct to represent an individual's health status
 #[derive(Debug, Clone, PartialEq)]
-enum HealthStatus {
+pub enum HealthStatus {
     Susceptible,
     Infected,
     Immune,
@@ -239,7 +250,7 @@ impl fmt::Display for HealthStatus {
 
 // Define a struct to represent an individual's sex
 #[derive(Debug, Clone, PartialEq)]
-enum Sex {
+pub enum Sex {
     Male,
     Female,
 }
@@ -402,18 +413,19 @@ default_daily_movement_distance:usize,
 const MAX_AGE: u32 = 365 * 12;
 const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
-const MAX_KNOWN_CELLS: usize = 24; // DEBUG FIX ME with actual values
+const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 100;
+const RUNTIME: usize = 365 * 5;
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
 const PIGLET_SURVIVAL_DAY: f64 = 0.9438;
 const MIN_STAY_TIME: usize = 1;
 const MAX_STAY_TIME: usize = 14;
-const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 24;
+const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
 
 //EXPERMINETS
+
 
 //// Function to choose a target cell (90% within 1600 cells, 10% within 3200 cells)
 //fn choose_target_cell(grid: &Vec<Vec<Cell>>, individual: &Individual, rng: &mut impl Rng) -> (usize, usize) {
@@ -452,40 +464,37 @@ const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 24;
 
 // Mortality
 
-//fn mortality(surv_prob: &SurvivalProbability, group: &mut Vec<Groups>, random_mortality: &mut u32){
-//
-//    let retained_groups: Vec<Groups> = group
-//    .drain(..)
-//    .filter(|ind| {
-//       if ind.age_class != AgeClass::Piglet {
-//
-//        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
-//        let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
-//
-//        if rounded_number < surv_prob.adult 
-//         {true} else {
-//            *random_mortality += 1;
-//            false
-//        }
-//       }else{
-//
-//        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
-//        let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
-//
-//        if rounded_number < surv_prob.piglet
-//         {true} else {
-//            
-//            *random_mortality += 1;
-//            false
-//        }
-//       }
-//    })
-//    .collect();
-//
-//    // Clear the original vector and insert retained individuals
-//    group.clear();
-//    group.extend_from_slice(&retained_groups);
-//}
+fn mortality(surv_prob: &SurvivalProbability, group: &mut Vec<Groups>, random_mortality: &mut u32){
+
+    //mortality function that checks each groups group_members age their age class survival probability and removes them from the group if they die
+    for group in group.iter_mut() {
+        let mut retained_group_members: Vec<GroupMember> = group.group_members
+            .drain(..)// remove all elements
+            .filter(|member| { // and add back the ones that survive
+                let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
+                let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
+
+                if member.age_class != AgeClass::Piglet {   // if the age class is not piglet i.e. adult or yearling
+                    if rounded_number < surv_prob.adult {
+                        true
+                    } else {
+                        *random_mortality += 1; // increase the random mortality counter
+                        false // remove the individual
+                    }
+                } else {
+                    if rounded_number < surv_prob.piglet { // if the age class is piglet
+                        true
+                    } else {
+                        *random_mortality += 1; // increase the random mortality counter
+                        false // remove the individual
+                    }
+                }
+            })
+            .collect(); // collect the retained group members
+        group.group_members.extend_from_slice(&retained_group_members); // add the retained group members back to the group
+    }
+
+}
 
 // Memory functions
 
@@ -1054,45 +1063,46 @@ pub fn random_known_cell(known_cells: &HashSet<(usize, usize)>, rng: &mut impl r
     }
 }
 
-//pub fn random_cell_around(x: usize, y: usize, grid_size: usize, rng: &mut impl Rng) -> (usize, usize) {
-//    // Generate random offsets within a radius of 2 cells
-//    let dx = rng.gen_range(-2..=2);
-//    let dy = rng.gen_range(-2..=2);
-//
-//    // Calculate the new coordinates, ensuring they stay within bounds
-//    let new_x = (x as isize + dx).clamp(0, grid_size as isize - 1) as usize;
-//    let new_y = (y as isize + dy).clamp(0, grid_size as isize - 1) as usize;
-//
-//    (new_x, new_y)
-//}
+pub fn random_cell_around(x: usize, y: usize, grid_size: usize, rng: &mut impl Rng) -> (usize, usize) {
+    // Generate random offsets within a radius of 2 cells
+    let dx = rng.gen_range(-2..=2);
+    let dy = rng.gen_range(-2..=2);
 
-//pub fn random_cell_around_known(known_cells: &HashSet<(usize, usize)>, grid_size: usize, rng: &mut impl rand::Rng) -> Option<(usize, usize)> {
-//    let vec: Vec<&(usize, usize)> = known_cells.iter().collect();
-//    if let Some(&(x, y)) = vec.choose(rng) {
-//        Some(random_cell_around(*x, *y, grid_size, rng))
-//    } else {
-//        None
-//    }
-//}
+    // Calculate the new coordinates, ensuring they stay within bounds
+    let new_x = (x as isize + dx).clamp(0, grid_size as isize - 1) as usize;
+    let new_y = (y as isize + dy).clamp(0, grid_size as isize - 1) as usize;
 
-//pub fn random_known_cell_except_last_three(known_cells: &HashSet<(usize, usize)>,last_visited_cells: &HashSet<(usize, usize)>,rng: &mut impl Rng,) -> Option<(usize, usize)> {
-//    let available_cells: Vec<_> = known_cells
-//        .difference(last_visited_cells)
-//        .cloned()
-//        .collect();
-//
-//    if let Some(&cell) = available_cells.choose(rng) {
-//        Some(cell)
-//    } else {
-//        None
-//    }
-//}
+    (new_x, new_y)
+}
+
+pub fn random_cell_around_known(known_cells: &HashSet<(usize, usize)>, grid_size: usize, rng: &mut impl rand::Rng) -> Option<(usize, usize)> {
+    let vec: Vec<&(usize, usize)> = known_cells.iter().collect();
+    if let Some(&(x, y)) = vec.choose(rng) {
+        Some(random_cell_around(*x, *y, grid_size, rng))
+    } else {
+        None
+    }
+}
+
+pub fn random_known_cell_except_last_three(known_cells: &HashSet<(usize, usize)>,last_visited_cells: &HashSet<(usize, usize)>,rng: &mut impl Rng,) -> Option<(usize, usize)> {
+    let available_cells: Vec<_> = known_cells
+        .difference(last_visited_cells)
+        .cloned()
+        .collect();
+
+    if let Some(&cell) = available_cells.choose(rng) {
+        Some(cell)
+    } else {
+        None
+    }
+}
  
 // Update functions
 
-pub fn update_counter(n_groups: &mut usize,group: &mut Vec<Groups>){
-
-    *n_groups = group.len();
+pub fn update_counter(n_groups: &mut usize, groups: &mut Vec<Groups>, disperser_vector: &Vec<DispersingIndividual>) {
+    let nd = disperser_vector.len();
+    let ng: usize = groups.iter().map(|group| group.group_members.len()).sum();
+    *n_groups = nd + ng;
 }
  
 pub fn progress_time(global_variables: &mut GlobalVariables) {
@@ -1173,8 +1183,12 @@ fn main() {
     //let input: Input = serde_json::from_str(&input_json).expect("Failed to deserialize JSON");
 //
     //assign_to_constants(&input);
+
+    // variable that is set to the system time when the simulation starts
+    let start_time = Instant::now();
+
     let mut rng = rand::thread_rng();
-    let num_groups = 1; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 2; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
@@ -1185,7 +1199,10 @@ fn main() {
     // adjust attraction points
     place_additional_attraction_points(&mut grid, &mut groups, 10, &mut rng);
     
+    //create vector for dispersing individuals using the struct in dispersal.rs
+    let disperser_vector: &mut Vec<DispersingIndividual> = &mut Vec::new();
 
+    
    // place_new_attraction_points(&mut grid, &mut groups, 5);
 
     // Vector to store grid states for all iterations
@@ -1194,13 +1211,16 @@ fn main() {
     // Vector to store individual states for all iterations
     let mut all_group_states: Vec<(usize, Vec<Groups>)> = Vec::new();
 
+    // Vector to store disperser states for all iterations
+    let mut all_disperser_states: Vec<(usize, Vec<DispersingIndividual>)> = Vec::new();
+
     // Vector to store global variables for all iterations
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
 
        let mut global_variables = GlobalVariables {
         age_mortality: 0,
         random_mortality: 0,
-        n_individuals: groups.len(), // FIX ME
+        n_individuals: groups.iter().map(|group| group.group_members.len()).sum(),
         day: 1,   // Initialize with 1
         month: 1, // Initialize with 1
         year: 1,  // Initialize with 1
@@ -1221,9 +1241,26 @@ fn main() {
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
 
+        //dispersal
+        if iteration > 100 {
+            
+        //println!("Dispersal triggered");
+        if global_variables.day == 1 {
+            //println!("Dispersal triggered2");
+            dispersal_assignment(&mut groups, disperser_vector);
+            assign_dispersal_targets( disperser_vector, &groups);
+        }
+        move_female_disperser(disperser_vector, &mut grid, &mut groups);
+        }
         // Simulate movement of individuals
        
         move_groups(&grid, &mut groups, &mut rng);
+
+        //check dispersers if their target cell == none
+
+
+        
+
 
    
 
@@ -1236,14 +1273,14 @@ fn main() {
 
         if global_variables.day == 15 {
 
-        //  mortality(&survival_prob, &mut individuals, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
+        //  mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
         }
 
         //age individuals by one day
         ageing(&mut groups, &mut global_variables.age_mortality);                                         //   <-----------------temp OFF
 
         //Updating various counters such as number of individuals
-        update_counter(&mut global_variables.n_individuals, &mut groups);
+        update_counter(&mut global_variables.n_individuals, &mut groups, &disperser_vector);
 
         // Update group memory
         //update_group_memory(&mut individuals); // turned off for speed
@@ -1256,6 +1293,9 @@ fn main() {
     
             // Save the individual state for the current iteration
             all_group_states.push((iteration, groups.clone()));
+
+            // Save the disperser state for the current iteration
+            all_disperser_states.push((iteration, disperser_vector.clone()));
 
         // Stop the sim when all individuals are dead
 
@@ -1291,6 +1331,12 @@ fn main() {
     }
     println!("Simulation complete, saving output\n");
 
+    //variable that is set to the system time when the simulation ends
+    let end_time = Instant::now();
+    //variable showing the difference between the start and end time
+    let time_taken = end_time.duration_since(start_time);
+    println!("Time taken to run simulation: {:?}", time_taken);
+
     // Save all grid states to a single CSV file
     save_grid_as_csv("output/all_grid_states.csv", &all_grid_states).expect("Failed to save grid states as CSV");                //   <-----------------temp OFF
 
@@ -1300,6 +1346,14 @@ fn main() {
     // Save all global variables to a single CSV file
     save_global_variables_as_csv("output/all_global_variables.csv", &all_global_variables).expect("Failed to save global variables as CSV");
 
+    // Save all disperser states to a single CSV file
+    save_disperser_as_csv("output/all_dispersers.csv", &all_disperser_states).expect("Failed to save disperser as CSV");
+    
+    // variable that is set to the system time when the save is complete
+    let save_time = Instant::now();
+    //variable showing the difference between the end time and the save time
+    let time_taken_save = save_time.duration_since(end_time);
+    println!("Time taken to save output: {:?}", time_taken_save);
 
 }
 

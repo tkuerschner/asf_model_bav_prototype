@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 999 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 30 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -48,8 +48,12 @@ grid <- read.csv("./output/all_grid_states.csv", header = T)
 globals <- read.csv("./output/all_global_variables.csv", header = T)
 
 groups <- read.csv("./output/all_groups.csv", header = T)
-# head((groups))
+
+dispersers <- read.csv("./output/all_dispersers.csv", header = T)
+
 ```
+
+
 
 ```{r data prep}
 g1 <- grid # %>% filter(iteration == 1)
@@ -258,6 +262,79 @@ anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, "_spa
 
 ```
 
+```{r population metrics}
+
+
+head(globals)
+
+globals %>%
+  ggplot(aes(iteration, n_individuals)) +
+  geom_line() +
+  labs(title = "Population size over time", x = "Day", y = "Population size") +
+  theme_minimal()
+
+
+```
+
+```{r dispersers}
+
+head(dispersers)
+
+uid <- unique(dispersers$disperser_id)
+
+# one random entry of uid
+random_disperser_id <- sample(uid, 1)
+
+disp_event <- dispersers %>%
+  filter(disperser_id == random_disperser_id) 
+
+head(disp_event)
+tail(disp_event)
+
+ggplot()+
+geom_tile(data = g2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+geom_point(data = disp_event, aes(x, y))
+
+  #ggplot(aes(iteration, x, y)) +
+  #geom_point() +
+  #geom_path() +
+  #labs(title = "Disperser movement", x = "Day", y = "Population size") +
+  #theme_minimal()
+
+```
+
+```{r}
+
+i1 <- groups %>% filter(individual_id == 41)
+
+head(i1)
+
+unique(i1$group_id)
+
+
+unique(i1$iteration)
+
+
+
+head(groups)
+
+unique(groups$individual_id)
+
+
+unique(dispersers$disperser_id)
+
+```
+
+
+```{r}
+
+
+
+
+
+
+```
 
 
 ```{r animate memory}

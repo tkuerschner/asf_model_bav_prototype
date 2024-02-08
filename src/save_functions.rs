@@ -10,7 +10,7 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,id,group_id,x,y,sex,age,age_class,known_cells,target_cell,core_cell,movement_type, remaining_stay_time")?;//,group_member_ids")?;
+    writeln!(file, "iteration,individual_id,group_id,x,y,sex,age,age_class,known_cells,target_cell,core_cell,movement_type,remaining_stay_time,origin_group")?;//,group_member_ids")?;
 
     // Write each individual's data for each iteration
     for (iteration, groups) in group_states {
@@ -66,7 +66,7 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
                 
                 writeln!(
                     file,
-                    "{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                    "{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
                     iteration,
                     group_members.individual_id,
                     group.group_id,
@@ -80,6 +80,7 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
                     core_cell_str,
                     group.movement,
                     group.remaining_stay_time,
+                    group_members.origin_group_id,
                     //remaining_stay_stime_str,
                     //group_member_ids_str,
                     //last_three_cells_str
@@ -130,6 +131,53 @@ pub fn save_global_variables_as_csv(filename: &str, global_variables: &[GlobalVa
     println!("Global variables saved to: {}", filename);
     Ok(())
 }
+
+
+
+pub fn save_disperser_as_csv(filename: &str, disperser_states: &[(usize, Vec<DispersingIndividual>)]) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
+
+    // Write the header line
+    writeln!(file, "iteration,individual_id,disperser_id,x,y,age,age_class,sex,health_status,target_x,target_y,origin_group_id")?;
+
+    // Write each disperser's data for each iteration
+    for (iteration, dispersers) in disperser_states {
+        for disperser in dispersers {
+            writeln!(
+                file,
+                "{},{},{},{},{},{},{},{},{},{},{},{}",
+                iteration,
+                disperser.individual_id,
+                disperser.disperser_id,
+                disperser.x,
+                disperser.y,
+                disperser.age,
+                disperser.age_class,
+                disperser.sex,
+                disperser.health_status,
+                disperser.target_cell.unwrap().0,
+                disperser.target_cell.unwrap().1,
+                disperser.origin_group_id,
+            )?;
+        }
+    }
+
+    println!("Disperser states saved to: {}", filename);
+    Ok(())
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
