@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 30 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 36 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -70,6 +70,9 @@ i1 <- groups %>% filter(iteration == 1)
 ```
 
 ```{r animate path of group}
+
+disp_event <- dispersers
+
 gr1 <- groups %>%
   group_by(iteration) %>%
   sample_n(1)
@@ -86,7 +89,7 @@ gr1 <- gr1 %>%
 
 gr2 <- gr1 %>%
   ungroup() %>%
-  dplyr::select(iteration, x, y, movement_type, tx, ty)
+  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id)
 
 buffer_size <- 20
 
@@ -117,6 +120,8 @@ terr_data <- g4 %>%
   ) %>%
   dplyr::select(x, y, quality)
 
+  #gr2 <- gr2 %>% filter(group_id == 1)
+
 gr2$group <- 1
 
 grp_path_bp <- ggplot() +
@@ -126,13 +131,16 @@ grp_path_bp <- ggplot() +
   new_scale_fill() +
   geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
   scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
-  guides(fill = "none") +
-  geom_path(data = gr2, aes(x = x, y = y), linewidth = 1, , color = "black", linetype = "dashed") +
+  #guides(fill = "none") +
+  geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
   geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 2) +
-  geom_point(data = gr2, aes(tx, ty), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8) +
+  geom_point(data = gr2, aes(tx, ty, group = group_id), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8) +
   new_scale_fill() +
   geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
-  labs(title = "Day: {frame_along}", color = "Movement") +
+  new_scale_color() +
+  geom_point(data = disp_event, aes(x, y, color = as.factor(disperser_id)))+
+  geom_path(data = disp_event, aes(x, y, color = as.factor(disperser_id)))+
+  #labs(title = "Day: {frame_along}", color = "Movement") +
   theme_minimal() +
   theme(
     axis.text = element_blank(),
@@ -148,12 +156,15 @@ grp_path_bp <- ggplot() +
 animated_plot <- grp_path_bp +
   # transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
   transition_reveal(iteration) +
+  labs(fill = "Group movement", title = "Day: {frame_along}") +
+  #transition_time(iteration) +
   enter_fade() +
   exit_fade()
 
 # summary(mpz_data)
 # summary(gr2)
-anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, ".gif"), animate(animated_plot))
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, ".gif"), animate(animated_plot)) # i get an eror here
+
 ```
 
 
@@ -194,6 +205,7 @@ space_use <- detailed_path_df %>%
 ```
 
 ```{r space use and path}
+
 spuseplot <- ggplot() +
   geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
@@ -328,7 +340,36 @@ unique(dispersers$disperser_id)
 
 
 ```{r}
+unique(gr1$group_id)
 
+gr2 <- gr1 %>%
+  ungroup() %>%
+  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id)
+
+
+
+grp_path_bp <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  guides(fill = "none") +
+  geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
+  geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 2) +
+  geom_point(data = gr2, aes(tx, ty), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8) +
+  new_scale_fill() +
+  geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  labs(title = "Day: {frame_along}", color = "Movement") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
 
 
 
@@ -449,4 +490,103 @@ animated_plot <- tt1 +
 # summary(mpz_data)
 # summary(gr2)
 anim_save("example_movementTEST.gif", animate(animated_plot))
+```
+
+
+```{r}
+
+disp_event <- dispersers
+
+gr1 <- groups %>%
+  group_by(iteration) %>%
+  sample_n(1)
+
+
+# head(gr1)
+
+# gr1$target_cell
+
+gr1 <- gr1 %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)
+
+gr2 <- gr1 %>%
+  ungroup() %>%
+  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id)
+
+buffer_size <- 20
+
+mpz_data <- g2 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
+
+ap_data <- g3 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y)
+
+terr_data <- g4 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
+
+  #gr2 <- gr2 %>% filter(group_id == 1)
+
+gr2$group <- 1
+
+grp_path_bp <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  #guides(fill = "none") +
+ # geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
+ # geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 2) +
+ # geom_point(data = gr2, aes(tx, ty, group = group_id), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8) +
+  new_scale_fill() +
+  geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  new_scale_color() +
+  geom_point(data = disp_event, aes(x, y, color = as.factor(disperser_id)))+
+  geom_path(data = disp_event, aes(x, y, color = as.factor(disperser_id)))+
+  #labs(title = "Day: {frame_along}", color = "Movement") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+
+
+# ggsave("example_movement.png", grp_path_bp, width = 10, height = 10, units = "cm", dpi = 300)
+animated_plot3 <- grp_path_bp +
+  # transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
+  transition_reveal(iteration) +
+  labs(fill = "Dispersal movement", title = "Day: {frame_along}") +
+  #transition_time(iteration) +
+  enter_fade() +
+  exit_fade()
+
+# summary(mpz_data)
+# summary(gr2)
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_Dispersal_", it, ".gif"), animate(animated_plot3)) # i get an eror here
+
 ```

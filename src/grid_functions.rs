@@ -197,6 +197,17 @@ pub fn filter_grid2(original_grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
 }
 
 
+//new function for checking if cell at xy is valid
+pub fn is_valid_cell(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> bool {
+    if x >= grid.len() || y >= grid[0].len() {
+        return false;
+    }
+    let cell = &grid[x][y];
+    cell.quality > 0.0
+}
+
+
+
 pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usize, max_ap_per_chunk: usize, chunk_size: usize) {
    
 
@@ -206,6 +217,8 @@ pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usiz
     // 1600 cells per chunk
     // no cell cant be in 2 chunks at a time
     // place 3-6 randomly positioned attraction points per chunk
+
+
 
 
     // Extract cells with quality > 0
@@ -568,4 +581,17 @@ pub fn get_cells_around_individual(group: &Groups, grid: &Vec<Vec<Cell>>, range:
     }
 
     cells_around
+}
+
+
+
+//function to remove attraction points that are on cells with quality 0
+pub fn remove_ap_on_cells_with_quality_0(grid: &mut Vec<Vec<Cell>>) {
+    for row in grid.iter_mut() {
+        for cell in row.iter_mut() {
+            if cell.quality == 0.0 {
+                cell.territory.is_ap = false;
+            }
+        }
+    }
 }

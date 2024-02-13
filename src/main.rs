@@ -140,6 +140,7 @@ impl Groups {
     let time_of_reproduction = 0;
     let origin_group_id = self.group_id;
     let has_dispersed = false;
+    let current_group_id = self.group_id;
 
     // Create a new group member
     let new_member = GroupMember {
@@ -153,6 +154,7 @@ impl Groups {
         time_of_reproduction,
         origin_group_id,
         has_dispersed,
+        current_group_id,
     };
 
     // Add the new group member to the group
@@ -216,6 +218,7 @@ pub struct GroupMember {
     time_of_reproduction: usize,
     origin_group_id: usize,
     has_dispersed: bool,
+    current_group_id: usize,
 }
 
 // Define a struct to represent a groups's memory
@@ -929,7 +932,8 @@ pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, group: &mut Groups
      .unwrap_or_else(|| {
          // If no valid adjacent cells with quality > 0, move randomly within the grid
          // TEMP FIX ME 
-         random_cell_with_quality(grid, rng)
+         //andom_cell_with_quality(grid, rng)
+         reset_group_coordinates_to_core_cell(group) // TEMP FIX ME
      });
 
        // Update known cells and last visited cells
@@ -943,6 +947,15 @@ pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, group: &mut Groups
     group.x = target_cell.0;
     group.y = target_cell.1;
 }
+
+// function to reset a group back to the core cell by outputing the core cell coordiantes as -> (usize, usize)
+pub fn reset_group_coordinates_to_core_cell(group: &mut Groups) -> (usize, usize) {
+    group.x = group.core_cell.unwrap().0;
+    group.y = group.core_cell.unwrap().1;
+    (group.x, group.y)
+}
+
+
    
 //TEST
 fn random_cell_with_quality(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize, usize) {
@@ -1188,7 +1201,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-    let num_groups = 2; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 10; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
@@ -1198,6 +1211,8 @@ fn main() {
 
     // adjust attraction points
     place_additional_attraction_points(&mut grid, &mut groups, 10, &mut rng);
+
+    remove_ap_on_cells_with_quality_0(&mut grid);
     
     //create vector for dispersing individuals using the struct in dispersal.rs
     let disperser_vector: &mut Vec<DispersingIndividual> = &mut Vec::new();

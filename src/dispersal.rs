@@ -1,5 +1,6 @@
 use crate::*;
 
+
 //struct for dispersal with all fields of the group_member struct and new fields x and y coordinates
 
 // Static counter for disperser_id
@@ -351,7 +352,7 @@ fn move_towards_target_cell(disperser: &mut DispersingIndividual, grid: &Vec<Vec
         let new_y = (disperser.y as isize + dy) as usize;
 
         // Update disperser's position if within grid boundaries
-        if new_x < grid.len() && new_y < grid[0].len() {
+        if new_x < grid.len() && new_y < grid[0].len() && is_valid_cell(grid, new_x, new_y) {
             disperser.x = new_x;
             disperser.y = new_y;
             disperser.daily_distance -= 1;
@@ -368,7 +369,7 @@ fn move_randomly(disperser: &mut DispersingIndividual, grid: &Vec<Vec<Cell>>) {
     let new_y = (disperser.y as isize + dy) as usize;
 
     // Update disperser's position if within grid boundaries
-    if new_x < grid.len() && new_y < grid[0].len() {
+    if new_x < grid.len() && new_y < grid[0].len() && is_valid_cell(grid, new_x, new_y) {
         disperser.x = new_x;
         disperser.y = new_y;
         disperser.daily_distance -= 1;
@@ -399,6 +400,7 @@ fn add_dispersers_to_groups(dispersing_individuals: &mut Vec<DispersingIndividua
                         time_of_reproduction: disperser.time_of_reproduction,
                         origin_group_id: disperser.origin_group_id,
                         has_dispersed: true,
+                        current_group_id: target_group.group_id,
                     };
                     target_group.group_members.push(new_group_member);
 
