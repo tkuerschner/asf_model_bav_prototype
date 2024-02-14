@@ -1,4 +1,5 @@
 use crate::*;
+use crate::group_functions::*;
 
 
 //struct for dispersal with all fields of the group_member struct and new fields x and y coordinates
@@ -17,7 +18,7 @@ pub fn generate_disperser_id() -> usize {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DispersingIndividual {
-    pub ageclass: AgeClass,
+    //pub ageclass: AgeClass,
     pub x: usize,
     pub y: usize,
     pub individual_id: usize,
@@ -241,7 +242,7 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
             // Remove the member from the group and collect it as a dispersing individual
             let member = group.group_members.remove(index);
             let dispersing_individual = DispersingIndividual {
-                ageclass: member.age_class.clone(),
+                //ageClass: member.age_class.clone(),
                 x: group.x,
                 y: group.y,
                 individual_id: member.individual_id,
@@ -414,6 +415,16 @@ fn add_dispersers_to_groups(dispersing_individuals: &mut Vec<DispersingIndividua
         index += 1;
     }
 }
+
+pub fn form_new_group(grid: &mut Vec<Vec<Cell>>,x: usize, y: usize, groups: &mut Vec<Groups>) {
+    //form a new group at the disperser's current location
+
+   add_new_group_at_location(groups, grid, x, y);
+
+
+}
+
+
 
 
 

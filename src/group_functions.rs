@@ -146,3 +146,49 @@ pub fn update_group_memory(group: &mut Vec<Groups>) {
    // }
 }
 
+// function to add a new group at a specific set of coordinates
+pub fn add_new_group_at_location(
+    groups: &mut Vec<Groups>,
+    grid: &mut Vec<Vec<Cell>>,
+    x: usize,
+    y: usize,
+) {
+    let group_id = generate_group_id(); // add incrementing group id
+
+    occupy_this_cell(&mut grid[x][y], group_id); // occupy the selected ap
+
+    let core_cell = (x, y); // set the core cell
+    make_core_cell(&mut grid[x][y], group_id);
+
+    let desired_total_cells = 1600; // FIX ME DEBUG
+
+    circular_bfs(grid, x, y, group_id, desired_total_cells); // fill the territory with cells
+
+    let presence_timer = 0;
+
+    let memory = GroupMemory {
+        known_cells: HashSet::new(),
+        group_member_ids: Vec::new(),
+        known_cells_order: Vec::new(),
+        presence_timer,
+    };
+
+    let target_cell = None;
+    let remaining_stay_time = 0;
+    let movement = MovementMode::Foraging;
+    let group_members = vec![];
+    let daily_movement_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE; //<--------------------DEBUG FIX ME with actual values
+
+    groups.push(Groups {
+        group_id,
+        x,
+        y,
+        core_cell: Some(core_cell),
+        target_cell,
+        remaining_stay_time,
+        memory,
+        movement,
+        group_members,
+        daily_movement_distance,
+    });
+}

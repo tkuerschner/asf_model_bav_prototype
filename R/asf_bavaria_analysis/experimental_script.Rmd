@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 36 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 46 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -166,7 +166,6 @@ animated_plot <- grp_path_bp +
 anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, ".gif"), animate(animated_plot)) # i get an eror here
 
 ```
-
 
 ```{r extract spatial memory}
 ## test case
@@ -338,7 +337,6 @@ unique(dispersers$disperser_id)
 
 ```
 
-
 ```{r}
 unique(gr1$group_id)
 
@@ -376,7 +374,6 @@ grp_path_bp <- ggplot() +
 
 
 ```
-
 
 ```{r animate memory}
 ed1 <- new_df %>%
@@ -440,9 +437,6 @@ animated_plot <- bp +
 anim_save("example_movement.gif", animate(animated_plot))
 ```
 
-
-
-
 ```{r}
 p <- ggplot(
   airquality,
@@ -493,8 +487,7 @@ anim_save("example_movementTEST.gif", animate(animated_plot))
 ```
 
 
-```{r}
-
+```{r animate dispersal} 
 disp_event <- dispersers
 
 gr1 <- groups %>%
@@ -517,7 +510,7 @@ gr2 <- gr1 %>%
 
 buffer_size <- 20
 
-mpz_data <- g2 %>%
+mpz_data <- g2 %>% 
   filter(
     x >= min(gr2$x) - buffer_size &
       x <= max(gr2$x) + buffer_size &
@@ -555,23 +548,23 @@ grp_path_bp <- ggplot() +
   new_scale_fill() +
   geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
   scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
-  #guides(fill = "none") +
- # geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
- # geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 2) +
- # geom_point(data = gr2, aes(tx, ty, group = group_id), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8) +
+  # guides(fill = "none") +
+  # geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
+  # geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 2) +
+  # geom_point(data = gr2, aes(tx, ty, group = group_id), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8) +
   new_scale_fill() +
   geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
   new_scale_color() +
-  geom_point(data = disp_event, aes(x, y, color = as.factor(disperser_id)))+
-  geom_path(data = disp_event, aes(x, y, color = as.factor(disperser_id)))+
-  #labs(title = "Day: {frame_along}", color = "Movement") +
+  geom_point(data = disp_event, aes(x, y, color = as.factor(disperser_id))) +
+  geom_path(data = disp_event, aes(x, y, color = as.factor(disperser_id))) +
   theme_minimal() +
   theme(
     axis.text = element_blank(),
     axis.title = element_blank(),
     axis.ticks = element_blank(),
     panel.grid = element_blank(),
-    plot.title = element_text(hjust = 0.5, size = 20)
+    plot.title = element_text(hjust = 0.5, size = 20),
+    legend.position = "none"
   )
 
 

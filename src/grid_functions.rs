@@ -583,8 +583,6 @@ pub fn get_cells_around_individual(group: &Groups, grid: &Vec<Vec<Cell>>, range:
     cells_around
 }
 
-
-
 //function to remove attraction points that are on cells with quality 0
 pub fn remove_ap_on_cells_with_quality_0(grid: &mut Vec<Vec<Cell>>) {
     for row in grid.iter_mut() {
@@ -595,3 +593,49 @@ pub fn remove_ap_on_cells_with_quality_0(grid: &mut Vec<Vec<Cell>>) {
         }
     }
 }
+
+// function to select a cell that is not an attraction point that has no group occupying it and has a distance of at least 600 cells 
+// to the nearest cell occupied by a group and is within 2000 cells of a specific set of xy coordinates
+pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usize, rng: &mut impl Rng, groups: &Vec<Groups>) -> (usize, usize) {
+    let mut free_cells = Vec::new();
+    let mut free_cells_within_range = Vec::new();
+
+    // iterate through the grid and select all cells that are not occupied by a group and are not an attraction point and have a quality > 0
+    for (i, row) in grid.iter().enumerate() {
+        for (j, cell) in row.iter().enumerate() {
+            if cell.territory.is_taken == false && cell.territory.is_ap == false && cell.quality > 0.0 {
+                free_cells.push((i, j));
+            }
+        }
+    }
+
+    // iterate through the free cells and select all cells that are within 2000 cells of the input x and y coordinates
+    for (i, j) in free_cells {
+        if distance_squared(i, j, x, y) <= 2000 * 2000 {
+            free_cells_within_range.push((i, j));
+        }
+    }
+
+    let mut free_cells_within_range_and_far_enough = Vec::new();
+
+    // iterate through the free cells within range and select all cells that are at least 600 cells away from the nearest cell occupied by a group
+    for (i, j) in free_cells_within_range {
+        let mut far_enough = true;
+        for group in groups.iter() {
+            if distance_squared(i, j, group.x, group.y) <= 600 * 600 {
+                far_enough = false;
+                break;
+            }
+        }
+        if far_enough {
+            free_cells_within_range_and_far_enough.push((i, j));
+        }
+    }
+
+    // select a random cell from the free cells within range and far enough
+    let random_cell = free_cells_within_range_and_far_enough.choose(rng).unwrap();
+    *random_cell
+}
+  
+
+//
