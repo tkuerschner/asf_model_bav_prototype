@@ -118,9 +118,9 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
             .collect();
 
         //print the number of dispersers if there is more then 0
-        if members_to_disperse_indices.len() > 0 {
-            println!("Number of dispersers: {}", members_to_disperse_indices.len());
-        }
+        //if members_to_disperse_indices.len() > 0 {
+           // println!("Number of dispersers: {}", members_to_disperse_indices.len());
+       // }
 
         
 
@@ -163,7 +163,7 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
                 disp_grp_y: dispersing_individuals[0].y, // Use y of the first individual
             };
             dispersing_groups.push(dispersing_group);
-            println!("Dispersing group created");
+           // println!("Dispersing group created");
         } else {
              // If there's only one dispersing individual, merge it back into its original group
     if let Some(group) = groups.iter_mut().find(|g| g.group_id == group_id as usize) {
@@ -183,7 +183,7 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
                 current_group_id: group_id as usize, // Update current group ID
             };
             group.group_members.push(group_member);
-            println!("Dispersing individual merged back into original group");
+           // println!("Dispersing individual merged back into original group");
         }
     } else {
         // Couldn't find the original group, add to remaining_individuals
@@ -378,21 +378,21 @@ pub fn move_female_disperser_group2(dispersing_group: &mut Vec<DispersingFemaleG
                     move_towards_target_cell_group(disperser_group, grid);
                     if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
                         reached_target = true;
-                        println!("disperser reached target tw");
+                       // println!("disperser reached target tw");
                         break;
                     }
                 } else {
                     move_randomly_group(disperser_group, grid);
                     if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
                         reached_target = true;
-                        println!("disperser reached target rw");
+                       // println!("disperser reached target rw");
                         break;
                     }
                 }
 
                 if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y== disperser_group.target_cell.unwrap().1 {
                     reached_target = true;
-                    println!("disperser reached target");
+                  //  println!("disperser reached target");
                     break; // Exit the loop if one disperser reached the target
                 }
 
@@ -443,7 +443,7 @@ pub fn move_female_disperser_group2(dispersing_group: &mut Vec<DispersingFemaleG
       //  }
       groups_to_remove.sort_unstable_by(|a, b| b.cmp(a));
       for &index in groups_to_remove.iter().rev() {
-        println!("Removing group at index {}", index);
+        //println!("Removing group at index {}", index);
         if index < dispersing_groups.len() {
             dispersing_groups.remove(index);
         } else {

@@ -578,7 +578,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
         }
     }
     // print number of free cells
-    println!("Number of free cells: {}", free_cells.len());
+    //println!("Number of free cells: {}", free_cells.len());
 
     // iterate through the free cells and select all cells that are within 2000 cells of the input x and y coordinates
     for (i, j) in free_cells {
@@ -587,7 +587,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
         }
     }
     // print number of free cells within range
-    println!("Number of free cells within range: {}", free_cells_within_range.len());
+    //println!("Number of free cells within range: {}", free_cells_within_range.len());
 
     let mut free_cells_within_range_and_far_enough = Vec::new();
 
@@ -624,7 +624,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
     //    }
     //}
     // print number of free cells within range and far enough
-    println!("Number of free cells within range and far enough: {}", free_cells_within_range_and_far_enough.len());
+    //println!("Number of free cells within range and far enough: {}", free_cells_within_range_and_far_enough.len());
 
     // select a random cell from the free cells within range and far enough
     //let random_cell = free_cells_within_range_and_far_enough.choose(rng).unwrap();
@@ -644,7 +644,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
     } else {
         // Select the closest cell to the given position
         let closest_cell = free_cells_within_range_and_far_enough.iter().min_by_key(|&&(i, j)| distance_squared(i, j, x, y)).unwrap();
-        println!("Selected cell: {:?}", closest_cell);
+       // println!("Selected cell: {:?}", closest_cell);
         return *closest_cell;
     }
 
