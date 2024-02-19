@@ -1,6 +1,6 @@
 use crate::*;
 use crate::group_functions::*;
-
+use std::collections::HashMap;
 
 //struct for dispersal with all fields of the group_member struct and new fields x and y coordinates
 
@@ -34,25 +34,35 @@ pub struct DispersingIndividual {
     pub target_cell:Option<(usize,usize)>,
     pub daily_distance: usize,
 }
+#[derive(Debug, Clone, PartialEq)]
+pub struct DispersingFemaleGroup {
+    pub dispersing_individuals: Vec<DispersingIndividual>,
+    pub disp_grp_id: usize,
+    pub target_cell: Option<(usize, usize)>,
+    pub daily_distance: usize,
+    pub disp_grp_x: usize,
+    pub disp_grp_y: usize,
+}
 
 
-// dispersal check function, once a female group members ageclass switches to yearling it creates a new instance of 
-// dispersing individual with the same fields as the group member and the x and y coordinates of the group the member is then removed from the group
-//
-//pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &mut Vec<DispersingIndividual>) {
+//pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &mut Vec<DispersingIndividual>, dispersing_groups: &mut Vec<DispersingFemaleGroup>) {
+//    // Iterate over groups and their members to find individuals to disperse
 //    for group in groups.iter_mut() {
+//        // Collect indices of group members that need to disperse
 //        let members_to_disperse_indices: Vec<usize> = group
 //            .group_members
 //            .iter()
 //            .enumerate()
-//            .filter(|(_, mem)| mem.age_class == AgeClass::Yearling && mem.sex == Sex::Female)
+//            .filter(|(_, mem)| mem.age_class == AgeClass::Yearling && mem.sex == Sex::Female && !mem.has_dispersed)
 //            .map(|(i, _)| i)
 //            .collect();
 //
-//        for index in members_to_disperse_indices.into_iter() { 
-//            let member = &mut group.group_members[index];
-//            let dispersing_individual = DispersingIndividual { //create new dispersing individual
-//                ageclass: member.age_class.clone(),
+//        // Iterate over indices in reverse order to remove elements safely
+//        for &index in members_to_disperse_indices.iter().rev() {
+//            // Remove the member from the group and collect it as a dispersing individual
+//            let member = group.group_members.remove(index);
+//            let dispersing_individual = DispersingIndividual {
+//                //ageClass: member.age_class.clone(),
 //                x: group.x,
 //                y: group.y,
 //                individual_id: member.individual_id,
@@ -68,164 +78,34 @@ pub struct DispersingIndividual {
 //                target_cell: None,
 //                daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
 //            };
-//
-//            // Remove the member from the group
-//            group.group_members.remove(index);
-//
-//            // Add the dispersing individual to the vector
+//            // Add the dispersing individual to the dispersing_individuals vector
 //            dispersing_individuals.push(dispersing_individual);
+//
+//            // if the number of instances in dispersing_individuals is above 2 then create a new instance of DispersingFemaleGroup and put those in there
+//            if dispersing_individuals.len() >= 2 {
+//                let dispersing_group = DispersingFemaleGroup {
+//                    dispersing_individuals: dispersing_individuals.clone(),
+//                    disp_grp_id: generate_disperser_id(),
+//                    target_cell: None,
+//                    daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
+//                    disp_grp_x: group.x,
+//                    disp_grp_y: group.y,
+//                };
+//                dispersing_groups.push(dispersing_group);
+//
+//                // Clear the dispersing_individuals vector
+//                dispersing_individuals.clear();
+//            } 
 //        }
 //    }
 //}
-//
-//pub fn assign_dispersal_targets (dispersing_individuals: &mut Vec<DispersingIndividual>, groups: &Vec<Groups>) {
-//    let selected_groups = select_dispersal_target(dispersing_individuals, groups);
-//    for (i, disperser) in dispersing_individuals.iter_mut().enumerate() {
-//        let target_group = groups.iter().find(|group| group.group_id == selected_groups[i]).unwrap();
-//        disperser.target_cell = Some((target_group.x, target_group.y));
-//    }
-//}
-//
-//
-//// function for dispersers to find the closest 4 groups that are not the origin group and return their ids
-//pub fn find_closest_groups(dispersing_individuals: &Vec<DispersingIndividual>, groups: &Vec<Groups>) -> Vec<usize> {
-//    let mut closest_groups: Vec<usize> = Vec::new();
-//    for disperser in dispersing_individuals.iter() {
-//        let mut distances: Vec<(usize, usize, usize)> = Vec::new();
-//        for group in groups.iter() {
-//            if group.group_id != disperser.origin_group_id {
-//                let distance = ((disperser.x as isize - group.x as isize).pow(2) + (disperser.y as isize - group.y as isize).pow(2)) as f64;
-//                distances.push((group.group_id, disperser.x, disperser.y));
-//            }
-//        }
-//        distances.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap());
-//        for i in 0..4 {
-//            closest_groups.push(distances[i].0);
-//        }
-//    }
-//    closest_groups
-//}
-//
-//// function for disperser to randomly select a group from the closest groups 
-//pub fn select_dispersal_target(dispersing_individuals: &Vec<DispersingIndividual>, groups: &Vec<Groups>) -> Vec<usize> {
-//    let closest_groups = find_closest_groups(dispersing_individuals, groups);
-//    let mut selected_groups: Vec<usize> = Vec::new();
-//    for disperser in dispersing_individuals.iter() {
-//        let selected_group = rand::thread_rng().gen_range(0..4);
-//        selected_groups.push(closest_groups[selected_group]);
-//    }
-//    selected_groups
-//}
-//
-//// function to to assign the selected groups coordinates as target_cell for the disperser
-//pub fn assign_dispersal_target_cell(dispersing_individuals: &mut Vec<DispersingIndividual>, groups: &Vec<Groups>) {
-//    let selected_groups = select_dispersal_target(dispersing_individuals, groups);
-//    for (i, disperser) in dispersing_individuals.iter_mut().enumerate() {
-//        let target_group = groups.iter().find(|group| group.group_id == selected_groups[i]).unwrap();
-//        disperser.target_cell = Some((target_group.x, target_group.y));
-//    }
-//}
-//
-//// function to move the disperser to the target cell wit 25% chance of moving randomly one cell per step until daily distance is 0
-//pub fn move_female_disperser(dispersing_individuals: &mut Vec<DispersingIndividual>, grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>) { 
-//    let grid_width = grid[0].len();
-//    let grid_height = grid.len();
-//
-//    for disperser in dispersing_individuals.iter_mut() {
-//        while disperser.daily_distance > 0 {
-//            let mut rng = rand::thread_rng();
-//            let random_number: f64 = rng.gen();
-//            if random_number < 0.25 {
-//                let mut new_x = disperser.x;
-//                let mut new_y = disperser.y;
-//                let random_number: f64 = rng.gen();
-//                if random_number < 0.25 {
-//                    new_x = new_x + 1;
-//                } else if random_number < 0.5 {
-//                    new_x = new_x - 1;
-//                } else if random_number < 0.75 {
-//                    new_y = new_y + 1;
-//                } else {
-//                    new_y = new_y - 1;
-//                }
-//                if new_x < grid_width && new_y < grid_height {
-//                    disperser.x = new_x;
-//                    disperser.y = new_y;
-//                    disperser.daily_distance -= 1;
-//                }
-//            } else {
-//                if let Some((target_x, target_y)) = disperser.target_cell {
-//                    let mut new_x = disperser.x;
-//                    let mut new_y = disperser.y;
-//                    if new_x < target_x {
-//                        new_x = new_x + 1;
-//                    } else if new_x > target_x {
-//                        new_x = new_x - 1;
-//                    }
-//                    if new_y < target_y {
-//                        new_y = new_y + 1;
-//                    } else if new_y > target_y {
-//                        new_y = new_y - 1;
-//                    }
-//                    if new_x < grid_width && new_y < grid_height {
-//                        disperser.x = new_x;
-//                        disperser.y = new_y;
-//                        disperser.daily_distance -= 1;
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    add_disperser_to_group(dispersing_individuals, groups);
-//}
-//
-//
-//
-////function to add the disperser to the group at the target cell and remove it from the dispersing individuals vector
-//pub fn add_disperser_to_group(dispersing_individuals: &mut Vec<DispersingIndividual>, groups: &mut Vec<Groups>) {
-//   for disperser in dispersing_individuals.iter() {
-//       let group = groups.iter_mut().find(|group| group.x == disperser.x && group.y == disperser.y).unwrap();
-//       group.group_members.push(GroupMember {
-//           individual_id: disperser.individual_id,
-//           age: disperser.age,
-//           age_class: disperser.age_class.clone(),
-//           sex: disperser.sex.clone(),
-//           health_status: disperser.health_status.clone(),
-//           time_of_birth: disperser.time_of_birth,
-//           has_reproduced: disperser.has_reproduced,
-//           time_of_reproduction: disperser.time_of_reproduction,
-//           origin_group_id: disperser.origin_group_id,
-//       });
-//   }
-//   //dispersing_individuals.retain(|disperser| disperser.x != disperser.target_cell.unwrap().0 && disperser.y != disperser.target_cell.unwrap().1);
-//   dispersing_individuals.retain(|disperser| {
-//    if let Some((target_x, target_y)) = disperser.target_cell {
-//        disperser.x != target_x || disperser.y != target_y
-//    } else {
-//        true // Retain the disperser if target_cell is None
-//    }
-//});
-//}
-//
-//
-////pub fn add_disperser_to_group(disperser: &DispersingIndividual, groups: &mut Vec<Groups>) {
-////    let group = groups.iter_mut().find(|group| group.x == disperser.x && group.y == disperser.y).unwrap();
-////    group.group_members.push(GroupMember {
-////        individual_id: disperser.individual_id,
-////        age: disperser.age,
-////        age_class: disperser.age_class.clone(),
-////        sex: disperser.sex.clone(),
-////        health_status: disperser.health_status.clone(),
-////        time_of_birth: disperser.time_of_birth,
-////        has_reproduced: disperser.has_reproduced,
-////        time_of_reproduction: disperser.time_of_reproduction,
-////        origin_group_id: disperser.origin_group_id,
-////    });
-////}   
-////
 
+pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &mut Vec<DispersingIndividual>, dispersing_groups: &mut Vec<DispersingFemaleGroup>) {
+    let mut remaining_individuals = Vec::new(); // Store individuals that couldn't be dispersed
 
-pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &mut Vec<DispersingIndividual>) {
+    // Create a map to store dispersing individuals by their origin group ID
+    let mut dispersing_by_group: HashMap<u64, Vec<DispersingIndividual>> = HashMap::new();
+
     // Iterate over groups and their members to find individuals to disperse
     for group in groups.iter_mut() {
         // Collect indices of group members that need to disperse
@@ -237,12 +117,18 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
             .map(|(i, _)| i)
             .collect();
 
+        //print the number of dispersers if there is more then 0
+        if members_to_disperse_indices.len() > 0 {
+            println!("Number of dispersers: {}", members_to_disperse_indices.len());
+        }
+
+        
+
         // Iterate over indices in reverse order to remove elements safely
         for &index in members_to_disperse_indices.iter().rev() {
             // Remove the member from the group and collect it as a dispersing individual
             let member = group.group_members.remove(index);
             let dispersing_individual = DispersingIndividual {
-                //ageClass: member.age_class.clone(),
                 x: group.x,
                 y: group.y,
                 individual_id: member.individual_id,
@@ -258,15 +144,59 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
                 target_cell: None,
                 daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
             };
-            // Add the dispersing individual to the dispersing_individuals vector
-            dispersing_individuals.push(dispersing_individual);
+            // Add the dispersing individual to the dispersing_by_group map
+            let dispersing_group = dispersing_by_group.entry(group.group_id as u64).or_insert_with(Vec::new);
+            dispersing_group.push(dispersing_individual.clone());
         }
     }
+
+    // Iterate over dispersing_by_group to create DispersingFemaleGroup instances as needed
+    for (group_id, dispersing_individuals) in dispersing_by_group {
+        // If there are at least two individuals, create a dispersing group
+        if dispersing_individuals.len() >= 2 {
+            let dispersing_group = DispersingFemaleGroup {
+                dispersing_individuals: dispersing_individuals.clone(),
+                disp_grp_id: generate_disperser_id(),
+                target_cell: None,
+                daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
+                disp_grp_x: dispersing_individuals[0].x, // Use x of the first individual
+                disp_grp_y: dispersing_individuals[0].y, // Use y of the first individual
+            };
+            dispersing_groups.push(dispersing_group);
+            println!("Dispersing group created");
+        } else {
+             // If there's only one dispersing individual, merge it back into its original group
+    if let Some(group) = groups.iter_mut().find(|g| g.group_id == group_id as usize) {
+        for dispersing_individual in dispersing_individuals {
+            // Convert dispersing individual back to GroupMember
+            let group_member = GroupMember {
+                individual_id: dispersing_individual.individual_id,
+                age: dispersing_individual.age,
+                age_class: dispersing_individual.age_class.clone(),
+                sex: dispersing_individual.sex.clone(),
+                health_status: dispersing_individual.health_status.clone(),
+                time_of_birth: dispersing_individual.time_of_birth,
+                has_reproduced: dispersing_individual.has_reproduced,
+                time_of_reproduction: dispersing_individual.time_of_reproduction,
+                origin_group_id: dispersing_individual.origin_group_id,
+                has_dispersed: false, // Mark as dispersed
+                current_group_id: group_id as usize, // Update current group ID
+            };
+            group.group_members.push(group_member);
+            println!("Dispersing individual merged back into original group");
+        }
+    } else {
+        // Couldn't find the original group, add to remaining_individuals
+        remaining_individuals.extend(dispersing_individuals);
+    }
+        }
+    }
+
+    // Update dispersing_individuals with the remaining individuals
+    dispersing_individuals.extend(remaining_individuals);
 }
 
-
-
-pub fn assign_dispersal_targets(dispersing_individuals: &mut Vec<DispersingIndividual>, groups: &Vec<Groups>) {
+pub fn assign_dispersal_targets_individuals(dispersing_individuals: &mut Vec<DispersingIndividual>, groups: &Vec<Groups>) {
     for disperser in dispersing_individuals.iter_mut() {
         // Find the closest groups that are not the origin group
         let closest_groups = find_closest_groups(disperser, groups);
@@ -282,6 +212,36 @@ pub fn assign_dispersal_targets(dispersing_individuals: &mut Vec<DispersingIndiv
         } else {
             // Handle the case where the selected group cannot be found
             println!("Error: Selected group not found!");
+        }
+    }
+}
+
+pub fn assign_dispersal_targets_groups(dispersing_groups: &mut Vec<DispersingFemaleGroup>, groups: &Vec<Groups>, grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) {
+    for dispersing_group in dispersing_groups.iter_mut() {
+        // Find the closest groups that are not the origin group
+     //   let closest_groups = find_closest_groups(&dispersing_group.dispersing_individuals[0], groups);
+//
+     //   // Randomly select a target group from the closest groups
+     //   let selected_group_index = rand::thread_rng().gen_range(0..closest_groups.len());
+     //   let selected_group_id = closest_groups[selected_group_index];
+//
+     //   // Find the coordinates of the selected group
+     //   if let Some(selected_group) = groups.iter().find(|group| group.group_id == selected_group_id) {
+     //       // Assign the coordinates of the selected group as the target cell for each dispersing individual in the group
+     //       for disperser in &mut dispersing_group.dispersing_individuals {
+     //           disperser.target_cell = Some((selected_group.core_cell.unwrap().0, selected_group.core_cell.unwrap().1));
+     //       }
+     //   } else {
+     //       // Handle the case where the selected group cannot be found
+     //       println!("Error: Selected group not found!");
+     //   }
+
+        if dispersing_group.target_cell.is_none() {
+            let target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
+           // for disperser in &mut dispersing_group.dispersing_individuals {
+           //     disperser.target_cell = Some(target_cell);
+           // }
+            dispersing_group.target_cell = Some(target_cell);
         }
     }
 }
@@ -342,6 +302,190 @@ pub fn move_female_disperser(dispersing_individuals: &mut Vec<DispersingIndividu
     
     add_dispersers_to_groups(dispersing_individuals, groups);
 }
+
+pub fn move_female_disperser_group2(dispersing_group: &mut Vec<DispersingFemaleGroup>, grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>) {
+  
+    for disperser_group in dispersing_group.iter_mut() {
+
+        let new_group_id: usize;
+      
+                // check if grid cell at location of individual 1 in female disperser group == target cell
+                if let Some((target_x, target_y)) = disperser_group.target_cell {
+                    if grid[target_x][target_y].x_grid == disperser_group.target_cell.unwrap().0 && grid[target_x][target_y].y_grid == disperser_group.target_cell.unwrap().1{
+                        // call add_new_group_at_location
+                        add_new_group_at_location(groups, grid, target_x, target_y);
+                        // get the group id of the just created group
+                        new_group_id = groups.last().unwrap().group_id;
+                    
+                
+
+                // for each individual in dispersing group create a group member and add to group with the values copied over from the dispersing individual
+                for disperser in &mut disperser_group.dispersing_individuals {
+                    let new_group_member = GroupMember {
+                        individual_id: disperser.individual_id,
+                        age: disperser.age,
+                        age_class: disperser.age_class.clone(),
+                        sex: disperser.sex.clone(),
+                        health_status: disperser.health_status.clone(),
+                        time_of_birth: disperser.time_of_birth,
+                        has_reproduced: disperser.has_reproduced,
+                        time_of_reproduction: disperser.time_of_reproduction,
+                        origin_group_id: disperser.origin_group_id,
+                        has_dispersed: true,
+                        current_group_id: disperser.origin_group_id,
+                    };
+                    
+                    groups[new_group_id].group_members.push(new_group_member);
+                    }
+                   
+                 }         
+
+            }
+
+        }
+
+
+
+        //while disperser.daily_distance > 0 {
+        //    // Randomly decide whether to move towards the target or move randomly
+        //    let move_towards_target = rand::thread_rng().gen_bool(0.25);
+//
+        //    if move_towards_target {
+        //        move_towards_target_cell(disperser, grid);
+        //        if disperser.x == disperser.target_cell.unwrap().0 && disperser.y == disperser.target_cell.unwrap().1 {
+        //            disperser.daily_distance = 0;
+        //        }
+        //    } else {
+        //        move_randomly(disperser, grid);
+        //        if disperser.x == disperser.target_cell.unwrap().0 && disperser.y == disperser.target_cell.unwrap().1 {
+        //            disperser.daily_distance = 0;
+        //        }
+        //    }
+        //}
+        //disperser.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+    }
+
+    pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleGroup>, grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng) {
+        let mut groups_to_remove = Vec::new(); // Vector to store indices of groups to remove
+        for (index, disperser_group) in dispersing_groups.iter_mut().enumerate() {
+            let mut reached_target = false;
+
+            while disperser_group.daily_distance > 0 && !reached_target {
+                // Randomly decide whether to move towards the target or move randomly
+                let move_towards_target = rand::thread_rng().gen_bool(0.25);
+
+                if move_towards_target {
+                    move_towards_target_cell_group(disperser_group, grid);
+                    if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
+                        reached_target = true;
+                        println!("disperser reached target tw");
+                        break;
+                    }
+                } else {
+                    move_randomly_group(disperser_group, grid);
+                    if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
+                        reached_target = true;
+                        println!("disperser reached target rw");
+                        break;
+                    }
+                }
+
+                if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y== disperser_group.target_cell.unwrap().1 {
+                    reached_target = true;
+                    println!("disperser reached target");
+                    break; // Exit the loop if one disperser reached the target
+                }
+
+                 // Decrement daily distance
+                 if disperser_group.daily_distance > 0 {
+                    disperser_group.daily_distance -= 1;
+                }
+            }
+            
+            if !reached_target {
+                disperser_group.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+            }
+
+            if reached_target {
+                let (target_x, target_y) = disperser_group.target_cell.unwrap();
+                // Call add_new_group_at_location
+                let new_group_id: usize;
+                add_new_group_at_location(groups, grid, target_x, target_y);
+                new_group_id = groups.last().unwrap().group_id;
+                place_attraction_points_in_territory(grid, new_group_id, 8, rng);
+                // For each individual in dispersing group, create a group member and add to group
+                for disperser in &mut disperser_group.dispersing_individuals {
+                    let new_group_member = GroupMember {
+                        individual_id: disperser.individual_id,
+                        age: disperser.age,
+                        age_class: disperser.age_class.clone(),
+                        sex: disperser.sex.clone(),
+                        health_status: disperser.health_status.clone(),
+                        time_of_birth: disperser.time_of_birth,
+                        has_reproduced: disperser.has_reproduced,
+                        time_of_reproduction: disperser.time_of_reproduction,
+                        origin_group_id: disperser.origin_group_id,
+                        has_dispersed: true,
+                        current_group_id: new_group_id,
+                    };
+                    groups[new_group_id - 1].group_members.push(new_group_member);
+                }
+                    // Add index to groups_to_remove vector
+                 groups_to_remove.push(index);
+                // Remove disperser group from the vector
+               // dispersing_groups.retain(|g| g != disperser_group);
+               // break; // Exit the loop since the group has been processed
+            }
+        }
+        //println!("Groups to remove: {:?}", groups_to_remove);
+      //  for &index in groups_to_remove.iter().rev() {
+      //      dispersing_groups.remove(index);
+      //  }
+      groups_to_remove.sort_unstable_by(|a, b| b.cmp(a));
+      for &index in groups_to_remove.iter().rev() {
+        println!("Removing group at index {}", index);
+        if index < dispersing_groups.len() {
+            dispersing_groups.remove(index);
+        } else {
+            println!("Index {} is out of bounds (length: {})", index , dispersing_groups.len());
+        }
+    }
+
+       // println!("Remaining dispersing groups: {:?}", dispersing_groups);
+    }
+
+    fn move_towards_target_cell_group(disperser_group: &mut DispersingFemaleGroup, grid: &Vec<Vec<Cell>>) {
+        if let Some((target_x, target_y)) = disperser_group.target_cell {
+            let dx = (target_x as isize - disperser_group.disp_grp_x as isize).signum();
+            let dy = (target_y as isize - disperser_group.disp_grp_y as isize).signum();
+
+            let new_x = (disperser_group.disp_grp_x as isize + dx) as usize;
+            let new_y = (disperser_group.disp_grp_y as isize + dy) as usize;
+
+            // Update disperser's position if within grid boundaries
+            if new_x < grid.len() && new_y < grid[0].len() && is_valid_cell(grid, new_x, new_y) {
+                disperser_group.disp_grp_x = new_x;
+                disperser_group.disp_grp_y = new_y;
+                disperser_group.daily_distance -= 1;
+            }
+        }
+    }
+
+    fn move_randomly_group(disperser_group: &mut DispersingFemaleGroup, grid: &Vec<Vec<Cell>>) {
+        let dx = rand::thread_rng().gen_range(-1..=1);
+        let dy = rand::thread_rng().gen_range(-1..=1);
+
+        let new_x = (disperser_group.disp_grp_x as isize + dx) as usize;
+        let new_y = (disperser_group.disp_grp_y as isize + dy) as usize;
+
+        // Update disperser's position if within grid boundaries
+        if new_x < grid.len() && new_y < grid[0].len() && is_valid_cell(grid, new_x, new_y) {
+            disperser_group.disp_grp_x = new_x;
+            disperser_group.disp_grp_y = new_y;
+            disperser_group.daily_distance -= 1;
+        }
+    }
+
 
 // Function to move disperser towards its target cell
 fn move_towards_target_cell(disperser: &mut DispersingIndividual, grid: &Vec<Vec<Cell>>) {

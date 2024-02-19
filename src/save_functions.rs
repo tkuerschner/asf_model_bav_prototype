@@ -134,34 +134,36 @@ pub fn save_global_variables_as_csv(filename: &str, global_variables: &[GlobalVa
 
 
 
-pub fn save_disperser_as_csv(filename: &str, disperser_states: &[(usize, Vec<DispersingIndividual>)]) -> io::Result<()> {
+pub fn save_disperser_group_as_csv(filename: &str, disperser_states: &[(usize, Vec<DispersingFemaleGroup>)]) -> io::Result<()> {
     // Create or open the CSV file
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,individual_id,disperser_id,x,y,age,age_class,sex,health_status,target_x,target_y,origin_group_id")?;
+    writeln!(file, "iteration,individual_id,disperser_id,age,age_class,sex,health_status,origin_group_id,disperser_group_x,disperser_group_y,disperser_group_id")?;
 
     // Write each disperser's data for each iteration
-    for (iteration, dispersers) in disperser_states {
-        for disperser in dispersers {
-            writeln!(
-                file,
-                "{},{},{},{},{},{},{},{},{},{},{},{}",
-                iteration,
-                disperser.individual_id,
-                disperser.disperser_id,
-                disperser.x,
-                disperser.y,
-                disperser.age,
-                disperser.age_class,
-                disperser.sex,
-                disperser.health_status,
-                disperser.target_cell.unwrap().0,
-                disperser.target_cell.unwrap().1,
-                disperser.origin_group_id,
+    for (iteration, disperser_groups) in disperser_states {
+        for disperser_group in disperser_groups {
+            for disperser_group_member in disperser_group.dispersing_individuals.iter() {
+                writeln!(
+                    file,
+                    "{},{},{},{},{},{},{},{},{},{},{}",
+                    iteration,
+                    disperser_group_member.individual_id,
+                    disperser_group_member.disperser_id,
+                    disperser_group_member.age,
+                    disperser_group_member.age_class,
+                    disperser_group_member.sex,
+                    disperser_group_member.health_status,
+                    disperser_group_member.origin_group_id,
+                    disperser_group.disp_grp_x,
+                    disperser_group.disp_grp_y,
+                    disperser_group.disp_grp_id                    
+          
             )?;
         }
     }
+}
 
     println!("Disperser states saved to: {}", filename);
     Ok(())

@@ -197,7 +197,7 @@ fn generate_individual_id() -> usize {
 // Static counter for group_id
 static mut GROUP_COUNTER: usize = 0;
 
-// Function to generate a unique individual_id
+// Function to generate a unique group_id
 fn generate_group_id() -> usize {
     unsafe {
         GROUP_COUNTER += 1;
@@ -1160,7 +1160,7 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
     // save_cellinfo_as_csv("output/debugCellInfo.csv",&cell_info_list);
 
     // Flip the grid for northing
-    flip_grid(&mut grid);
+    //flip_grid(&mut grid);
 
     // Setup the individuals
     let mut groups = group_setup(&cell_info_list, &mut grid, num_groups);
@@ -1201,7 +1201,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-    let num_groups = 100; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 1; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
@@ -1216,6 +1216,7 @@ fn main() {
     
     //create vector for dispersing individuals using the struct in dispersal.rs
     let disperser_vector: &mut Vec<DispersingIndividual> = &mut Vec::new();
+    let dispersing_groups_vector: &mut Vec<DispersingFemaleGroup> = &mut Vec::new();
 
     
    // place_new_attraction_points(&mut grid, &mut groups, 5);
@@ -1227,7 +1228,7 @@ fn main() {
     let mut all_group_states: Vec<(usize, Vec<Groups>)> = Vec::new();
 
     // Vector to store disperser states for all iterations
-    let mut all_disperser_states: Vec<(usize, Vec<DispersingIndividual>)> = Vec::new();
+    let mut all_disperser_states: Vec<(usize, Vec<DispersingFemaleGroup>)> = Vec::new();
 
     // Vector to store global variables for all iterations
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
@@ -1262,10 +1263,12 @@ fn main() {
         //println!("Dispersal triggered");
         if global_variables.day == 1 {
             //println!("Dispersal triggered2");
-            dispersal_assignment(&mut groups, disperser_vector);
-            assign_dispersal_targets( disperser_vector, &groups);
+            dispersal_assignment(&mut groups, disperser_vector, dispersing_groups_vector);
+            //assign_dispersal_targets_individuals( disperser_vector, &groups);
+            assign_dispersal_targets_groups(dispersing_groups_vector, &groups, &mut grid, &mut rng);
         }
-        move_female_disperser(disperser_vector, &mut grid, &mut groups);
+       // move_female_disperser(disperser_vector, &mut grid, &mut groups);
+            move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng);
         }
         // Simulate movement of individuals
        
@@ -1274,21 +1277,16 @@ fn main() {
         //check dispersers if their target cell == none
 
 
-        
-
-
-   
-
         if global_variables.month == 5 {
             //debug print REMOVE ME
             //print!("reproduction is triggered");
 
-         // reproduction(global_variables.month, &mut groups, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
+          reproduction(global_variables.month, &mut groups, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
         }
 
         if global_variables.day == 15 {
 
-        //  mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
+         mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
         }
 
         //age individuals by one day
@@ -1310,7 +1308,7 @@ fn main() {
             all_group_states.push((iteration, groups.clone()));
 
             // Save the disperser state for the current iteration
-            all_disperser_states.push((iteration, disperser_vector.clone()));
+            all_disperser_states.push((iteration, dispersing_groups_vector.clone()));
 
         // Stop the sim when all individuals are dead
 
@@ -1362,7 +1360,7 @@ fn main() {
     save_global_variables_as_csv("output/all_global_variables.csv", &all_global_variables).expect("Failed to save global variables as CSV");
 
     // Save all disperser states to a single CSV file
-    save_disperser_as_csv("output/all_dispersers.csv", &all_disperser_states).expect("Failed to save disperser as CSV");
+    save_disperser_group_as_csv("output/all_dispersers.csv", &all_disperser_states).expect("Failed to save disperser as CSV");
     
     // variable that is set to the system time when the save is complete
     let save_time = Instant::now();

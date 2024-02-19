@@ -218,9 +218,6 @@ pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usiz
     // no cell cant be in 2 chunks at a time
     // place 3-6 randomly positioned attraction points per chunk
 
-
-
-
     // Extract cells with quality > 0
     let cells_with_quality: Vec<(usize, usize)> = grid
         .iter()
@@ -263,8 +260,6 @@ pub fn remove_non_core_attraction_points(grid: &mut Vec<Vec<Cell>>) {
     }
 }
 
-
-
 //
 ////function that returns a subset of the grid for each group containing only the groups territory
 
@@ -284,8 +279,6 @@ pub fn get_group_territory(grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>) -> Vec<V
 
     group_territory
 }
-
-
 
 pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, mut num_points: usize, rng: &mut impl Rng) {
 
@@ -315,36 +308,12 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
         let width = max_x - min_x;
         let height = max_y - min_y;
 
-       // println!("width: {}, height: {}", width, height);
 
-        //get the center of the group
         let center_x = min_x  + (width ) / 2;
         let center_y = min_y  + (height) / 2;
-
-        //println!("center_x: {}, center_y: {}", center_x, center_y);
-
-       // let mut rng = rand::thread_rng();
-       // let n_ap = rng.gen_range(2..6) as usize;
-        // draw a random number with mean 4 and std 1 from a normal distribution
-        //let n_ap = (rand::thread_rng().gen_range(2..6) as f64).round() as usize;
-
-      // let n_ap = get_random_normal_int(4.5, 1.5, rng) as usize;
         let n_ap = rng.gen_range(4..8);
-       // println!("n_ap: {}", n_ap);
-       // num_points = n_ap;
+        let num_points_sqrt = (num_points as f64).sqrt() as usize;
 
-     //   num_points = 8; //n_ap + 2;
-//
-     //   println!("num_points: {}", num_points);
-//
-        let mut num_points_sqrt = (num_points as f64).sqrt() as usize;
-//
-     //   println!("num_points_sqrt: {}", num_points_sqrt);
-
-        // Ensure that the number of points is at least 2
-       // if num_points_sqrt == 1 {
-       //     num_points_sqrt += 1;
-       // }
         let mut max_jitter: isize = 4;
 
         if num_points_sqrt < 2 {
@@ -517,8 +486,14 @@ pub fn get_closest_attraction_point(group: &Groups, ap_list: &[(usize, usize)]) 
 }
 
 // Helper function to calculate squared distance between two points
-fn distance_squared(x1: usize, y1: usize, x2: usize, y2: usize) -> usize {
-    ((x1 as isize - x2 as isize).pow(2) + (y1 as isize - y2 as isize).pow(2)) as usize
+//fn distance_squared(x1: usize, y1: usize, x2: usize, y2: usize) -> usize {
+//    ((x1 as isize - x2 as isize).pow(2) + (y1 as isize - y2 as isize).pow(2)) as usize
+//}
+
+pub fn distance_squared(x1: usize, y1: usize, x2: usize, y2: usize) -> usize {
+    let dx = x1 as isize - x2 as isize;
+    let dy = y1 as isize - y2 as isize;
+    (dx * dx + dy * dy) as usize
 }
 
 // Occupy an attraction point as core cell and claim the surrounding ap
@@ -529,12 +504,6 @@ pub fn occupy_cell_here(grid: &mut Vec<Vec<Cell>>, group: &Groups) {
 
 }
 
-//pub fn occupy_this_cell(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize) {
-//
-//    grid[x][y].territory.is_taken = true;
-//    grid[x][y].territory.taken_by_group = group_id;
-//
-//}
 
 pub fn occupy_this_cell(cell: &mut Cell, group_id: usize) {
     cell.territory.is_taken = true;
@@ -608,34 +577,176 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
             }
         }
     }
+    // print number of free cells
+    println!("Number of free cells: {}", free_cells.len());
 
     // iterate through the free cells and select all cells that are within 2000 cells of the input x and y coordinates
     for (i, j) in free_cells {
-        if distance_squared(i, j, x, y) <= 2000 * 2000 {
+        if distance_squared(i, j, x, y) <= 600 * 600 {
             free_cells_within_range.push((i, j));
         }
     }
+    // print number of free cells within range
+    println!("Number of free cells within range: {}", free_cells_within_range.len());
 
     let mut free_cells_within_range_and_far_enough = Vec::new();
 
-    // iterate through the free cells within range and select all cells that are at least 600 cells away from the nearest cell occupied by a group
     for (i, j) in free_cells_within_range {
         let mut far_enough = true;
         for group in groups.iter() {
-            if distance_squared(i, j, group.x, group.y) <= 600 * 600 {
+            let distance = distance_squared(i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1);
+            if distance <= 60 * 60 {
+                //println!("Cell ({}, {}) is too close to group at ({}, {}). Distance: {}", i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1, distance);
                 far_enough = false;
                 break;
             }
         }
         if far_enough {
+           // println!("Cell ({}, {}) is far enough from all groups", i, j);
             free_cells_within_range_and_far_enough.push((i, j));
         }
     }
+    
+
+    // iterate through the free cells within range and select all cells that are at least 600 cells away from the nearest cell occupied by a group
+    //for (i, j) in free_cells_within_range {
+    //    let mut far_enough = true;
+    //    for group in groups.iter() {
+    //        if distance_squared(i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1) <= 600 * 600 {
+    //            //println!("Distance to nearest group core: {}", distance_squared(i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1));
+    //            //println!("Cell ({}, {}) is too close to group at ({}, {}). Distance: {}", i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1, distance.sqrt());
+    //            far_enough = false;
+    //            break;
+    //        }
+    //    }
+    //    if far_enough {
+    //        free_cells_within_range_and_far_enough.push((i, j));
+    //    }
+    //}
+    // print number of free cells within range and far enough
+    println!("Number of free cells within range and far enough: {}", free_cells_within_range_and_far_enough.len());
 
     // select a random cell from the free cells within range and far enough
-    let random_cell = free_cells_within_range_and_far_enough.choose(rng).unwrap();
-    *random_cell
+    //let random_cell = free_cells_within_range_and_far_enough.choose(rng).unwrap();
+    
+    // if no cell is found return the x and y coordinates 1 / 1
+    //if free_cells_within_range_and_far_enough.len() == 0 {
+    //    return (1, 1);
+    //}
+    //else {
+    //    let random_cell = free_cells_within_range_and_far_enough.choose(rng).unwrap();
+    //    println!("Selected cell: {:?}", random_cell);
+    //    return *random_cell
+    //}
+
+    if free_cells_within_range_and_far_enough.is_empty() {
+        return (1, 1);
+    } else {
+        // Select the closest cell to the given position
+        let closest_cell = free_cells_within_range_and_far_enough.iter().min_by_key(|&&(i, j)| distance_squared(i, j, x, y)).unwrap();
+        println!("Selected cell: {:?}", closest_cell);
+        return *closest_cell;
+    }
+
+    
+   // *random_cell
 }
   
 
-//
+pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id: usize, num_points: usize, rng: &mut impl Rng) {
+   
+   //iterate through the groups
+   
+
+    //get the cells of the group
+    let cells_of_group: Vec<(usize, usize)> = grid
+    .iter()
+    .enumerate()
+    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group_id).map(move |(j, _)| (i, j)))
+    .collect();
+
+    //get the min x and y coordinates of the group
+    let min_x = cells_of_group.iter().map(|(x, _)| x).min().unwrap();
+    let min_y = cells_of_group.iter().map(|(_, y)| y).min().unwrap();
+
+   // println!("min_x: {}, min_y: {}", min_x, min_y);
+
+    //get the max x and y coordinates of the group
+    let max_x = cells_of_group.iter().map(|(x, _)| x).max().unwrap();
+    let max_y = cells_of_group.iter().map(|(_, y)| y).max().unwrap();
+
+    //println!("max_x: {}, max_y: {}", max_x, max_y);
+
+    //get the width and height of the group
+    let width = max_x - min_x;
+    let height = max_y - min_y;
+
+
+    let center_x = min_x  + (width ) / 2;
+    let center_y = min_y  + (height) / 2;
+    let n_ap = rng.gen_range(4..8);
+    let num_points_sqrt = (num_points as f64).sqrt() as usize;
+
+    let mut max_jitter: isize = 4;
+
+    if num_points_sqrt < 2 {
+        max_jitter = 6;
+    }
+
+    //println!("max_jitter: {}", max_jitter);
+
+    // Dereference min_x and min_y
+    let min_x = *min_x;
+    let min_y = *min_y;
+
+    let min_x_f64 = min_x as f64;
+    let max_x_f64 = *max_x as f64;
+
+    let min_y_f64 = min_y as f64;
+    let max_y_f64 = *max_y as f64;
+
+    // Calculate the width and height of the bounding box as floating-point numbers
+    let width_f64 = width as f64;
+    let height_f64 = height as f64;
+
+    // Calculate the step sizes for x and y directions
+    let step_x = width_f64 / num_points_sqrt as f64;
+    let step_y = height_f64 / num_points_sqrt as f64;
+
+    // Iterate to place points
+    for i in 0..num_points_sqrt {
+        for j in 0..num_points_sqrt {
+            // No jitter version
+            // Calculate the x and y coordinates for this point
+            //let x = min_x as f64 + (i as f64) * step_x + step_x / 2.0;
+            //let y = min_y as f64 + (j as f64) * step_y + step_y / 2.0;
+            
+            //// Ensure the coordinates are within the territory bounds
+            //let x_clamped = x.max(min_x_f64).min(max_x_f64) as usize;
+            //let y_clamped = y.max(min_y_f64).min(max_y_f64) as usize;
+            
+            //// Place the attraction point at the calculated coordinates
+            //grid[x_clamped as usize][y_clamped as usize].territory.is_ap = true;
+
+           //Jitter version
+            let x = min_x as f64 + (i as f64) * step_x + step_x / 2.0;
+            let y = min_y as f64 + (j as f64) * step_y + step_y / 2.0;
+
+           // let mut rng = rand::thread_rng();
+            let x_offset = rng.gen_range(-max_jitter..=max_jitter + 1) as f64;
+            let y_offset = rng.gen_range(-max_jitter..=max_jitter + 1) as f64;
+
+            let x_jittered = (x + x_offset).max(min_x as f64).min(*max_x as f64);
+            let y_jittered = (y + y_offset).max(min_y as f64).min(*max_y as f64);
+
+            // Ensure the jittered coordinates are within the territory bounds
+            let x_clamped = x_jittered as usize;
+            let y_clamped = y_jittered as usize;
+
+            grid[x_clamped as usize][y_clamped as usize].territory.is_ap = true;
+
+        }
+    }
+
+
+}

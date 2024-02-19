@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 46 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 53 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -77,6 +77,8 @@ gr1 <- groups %>%
   group_by(iteration) %>%
   sample_n(1)
 
+#gr1 <- groups %>% filter(group_id == 2) %>% group_by(iteration) #%>%
+  #sample_n(1)
 
 # head(gr1)
 
@@ -103,22 +105,22 @@ mpz_data <- g2 %>%
   dplyr::select(x, y, quality)
 
 ap_data <- g3 %>%
-  filter(
-    x >= min(gr2$x) - buffer_size &
-      x <= max(gr2$x) + buffer_size &
-      y >= min(gr2$y) - buffer_size &
-      y <= max(gr2$y) + buffer_size
-  ) %>%
-  dplyr::select(x, y)
+ #filter(
+ #  x >= min(gr2$x) - buffer_size &
+ #    x <= max(gr2$x) + buffer_size &
+ #    y >= min(gr2$y) - buffer_size &
+ #    y <= max(gr2$y) + buffer_size
+ #) %>%
+  dplyr::select(x, y,iteration)
 
 terr_data <- g4 %>%
-  filter(
-    x >= min(gr2$x) - buffer_size &
-      x <= max(gr2$x) + buffer_size &
-      y >= min(gr2$y) - buffer_size &
-      y <= max(gr2$y) + buffer_size
-  ) %>%
-  dplyr::select(x, y, quality)
+  #filter(
+  #  x >= min(gr2$x) - buffer_size &
+  #    x <= max(gr2$x) + buffer_size &
+  #    y >= min(gr2$y) - buffer_size &
+  #    y <= max(gr2$y) + buffer_size
+  #) %>%
+  dplyr::select(x, y, quality,iteration)
 
   #gr2 <- gr2 %>% filter(group_id == 1)
 
@@ -129,17 +131,17 @@ grp_path_bp <- ggplot() +
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
   labs(fill = "Habitat quality") +
   new_scale_fill() +
-  geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = quality, group = seq_along(iteration)), alpha = .5) +
   scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
   #guides(fill = "none") +
   geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
   geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 2) +
   geom_point(data = gr2, aes(tx, ty, group = group_id), fill = "#c02ad3", colour = "#c02ad3", size = 4, shape = 8) +
   new_scale_fill() +
-  geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  geom_point(data = ap_data, aes(x = x, y = y,group = seq_along(iteration)), size = 2, color = "#003cff", fill = "blue", shape = 22) +
   new_scale_color() +
-  geom_point(data = disp_event, aes(x, y, color = as.factor(disperser_id)))+
-  geom_path(data = disp_event, aes(x, y, color = as.factor(disperser_id)))+
+  geom_point(data = disp_event, aes(disperser_group_x, disperser_group_y, color = as.factor(disperser_id)))+
+  geom_path(data = disp_event, aes(disperser_group_x, disperser_group_y, color = as.factor(disperser_id)))+
   #labs(title = "Day: {frame_along}", color = "Movement") +
   theme_minimal() +
   theme(
@@ -581,5 +583,21 @@ animated_plot3 <- grp_path_bp +
 # summary(mpz_data)
 # summary(gr2)
 anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_Dispersal_", it, ".gif"), animate(animated_plot3)) # i get an eror here
+
+```
+
+```{r}
+
+x1 <- 57
+y1 <- 151
+
+x2 <- 164
+y2 <- 203
+
+
+
+dist <- (x1 - x2)^2 + (y1 - y2)^2 #<= 600 * 600
+
+sqrt(dist)
 
 ```
