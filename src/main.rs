@@ -418,7 +418,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 5;
+const RUNTIME: usize = 365 * 10;
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -1272,6 +1272,7 @@ fn main() {
         }
         // Simulate movement of individuals
        
+        check_attraction_points_in_territory(&mut grid, &mut groups, 8, &mut rng);
         move_groups(&grid, &mut groups, &mut rng);
 
         //check dispersers if their target cell == none

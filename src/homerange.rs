@@ -11,8 +11,12 @@ pub fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usi
 
     let mut count = 0; // Keep track of the number of cells visited
 
-    while let Some((cx, cy)) = queue.pop_front() {
+    while let Some((cx, cy)) = queue.pop_front() { // While the queue is not empty
+       // if grid[cx][cy].territory.is_taken { // If the cell is already occupied, skip it
+       //     continue;
+       // } else {
         occupy_this_cell(&mut grid[cx][cy], group_id); // Occupy the cell
+       // }
         count += 1; // Increment the count of visited cells
 
         if count >= desired_total_cells { // If the desired number of cells is reached, break the loop

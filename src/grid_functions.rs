@@ -196,7 +196,6 @@ pub fn filter_grid2(original_grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
         .collect()
 }
 
-
 //new function for checking if cell at xy is valid
 pub fn is_valid_cell(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> bool {
     if x >= grid.len() || y >= grid[0].len() {
@@ -205,8 +204,6 @@ pub fn is_valid_cell(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> bool {
     let cell = &grid[x][y];
     cell.quality > 0.0
 }
-
-
 
 pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usize, max_ap_per_chunk: usize, chunk_size: usize) {
    
@@ -260,7 +257,6 @@ pub fn remove_non_core_attraction_points(grid: &mut Vec<Vec<Cell>>) {
     }
 }
 
-//
 ////function that returns a subset of the grid for each group containing only the groups territory
 
 pub fn get_group_territory(grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>) -> Vec<Vec<Cell>> {
@@ -378,7 +374,6 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
     }
 }
 
-
 pub fn get_random_normal_int (mean: f64, std_dev: f64, rng: &mut impl Rng) -> i32 {
 
     // Create a normal distribution with mean 4.5 and standard deviation 1.5
@@ -399,7 +394,6 @@ pub fn get_random_normal_int (mean: f64, std_dev: f64, rng: &mut impl Rng) -> i3
 
     random_int
 }
-
 
 pub fn set_ap_at_individual_position(grid: &mut Vec<Vec<Cell>>, group: &Groups) {
     
@@ -506,8 +500,14 @@ pub fn occupy_cell_here(grid: &mut Vec<Vec<Cell>>, group: &Groups) {
 
 
 pub fn occupy_this_cell(cell: &mut Cell, group_id: usize) {
-    cell.territory.is_taken = true;
-    cell.territory.taken_by_group = group_id;
+    if cell.territory.is_taken {
+        return;
+    } else {
+        cell.territory.is_taken = true;
+        cell.territory.taken_by_group = group_id;
+    }
+    //cell.territory.is_taken = true;
+    //cell.territory.taken_by_group = group_id;
 }
 
 pub fn make_core_cell(cell: &mut Cell, group_id: usize) {
@@ -582,7 +582,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
 
     // iterate through the free cells and select all cells that are within 2000 cells of the input x and y coordinates
     for (i, j) in free_cells {
-        if distance_squared(i, j, x, y) <= 600 * 600 {
+        if distance_squared(i, j, x, y) <= 100 * 100 {
             free_cells_within_range.push((i, j));
         }
     }
@@ -595,7 +595,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
         let mut far_enough = true;
         for group in groups.iter() {
             let distance = distance_squared(i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1);
-            if distance <= 60 * 60 {
+            if distance <= 20 * 20 {
                 //println!("Cell ({}, {}) is too close to group at ({}, {}). Distance: {}", i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1, distance);
                 far_enough = false;
                 break;
@@ -651,13 +651,9 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
     
    // *random_cell
 }
-  
 
 pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id: usize, num_points: usize, rng: &mut impl Rng) {
    
-   //iterate through the groups
-   
-
     //get the cells of the group
     let cells_of_group: Vec<(usize, usize)> = grid
     .iter()
@@ -749,4 +745,21 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     }
 
 
+}
+
+// function to check all groups territory and if there are no attraction points call place additional attraction points in territopry
+pub fn check_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, num_points: usize, rng: &mut impl Rng) {
+    for group in groups.iter_mut() {
+        let group_ap = get_attraction_points_in_territory(grid, group.group_id);
+        if group_ap.is_empty() {
+            place_attraction_points_in_territory(grid, group.group_id, num_points, rng);
+        }
+    }
+}
+
+// function to make a specifics groups core cell an ap called by core cell x and y
+
+pub fn make_core_cell_an_ap(grid: &mut Vec<Vec<Cell>>, cx: usize, cy: usize) {
+    grid[cx][cy].territory.is_ap = true;
+    
 }

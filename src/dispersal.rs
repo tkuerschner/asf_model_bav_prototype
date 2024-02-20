@@ -412,7 +412,9 @@ pub fn move_female_disperser_group2(dispersing_group: &mut Vec<DispersingFemaleG
                 let new_group_id: usize;
                 add_new_group_at_location(groups, grid, target_x, target_y);
                 new_group_id = groups.last().unwrap().group_id;
+                make_core_cell_an_ap(grid, groups.last().unwrap().core_cell.unwrap().0, groups.last().unwrap().core_cell.unwrap().1);
                 place_attraction_points_in_territory(grid, new_group_id, 8, rng);
+                remove_ap_on_cells_with_quality_0(grid);
                 // For each individual in dispersing group, create a group member and add to group
                 for disperser in &mut disperser_group.dispersing_individuals {
                     let new_group_member = GroupMember {
