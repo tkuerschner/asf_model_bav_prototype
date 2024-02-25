@@ -432,17 +432,11 @@ pub fn move_female_disperser_group2(dispersing_group: &mut Vec<DispersingFemaleG
                     };
                     groups[new_group_id - 1].group_members.push(new_group_member);
                 }
-                    // Add index to groups_to_remove vector
+                // Add index to groups_to_remove vector
                  groups_to_remove.push(index);
-                // Remove disperser group from the vector
-               // dispersing_groups.retain(|g| g != disperser_group);
-               // break; // Exit the loop since the group has been processed
             }
         }
-        //println!("Groups to remove: {:?}", groups_to_remove);
-      //  for &index in groups_to_remove.iter().rev() {
-      //      dispersing_groups.remove(index);
-      //  }
+      //println!("Groups to remove: {:?}", groups_to_remove);
       groups_to_remove.sort_unstable_by(|a, b| b.cmp(a));
       for &index in groups_to_remove.iter().rev() {
         //println!("Removing group at index {}", index);
