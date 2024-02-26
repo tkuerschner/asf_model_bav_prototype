@@ -582,7 +582,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
 
     // iterate through the free cells and select all cells that are within 2000 cells of the input x and y coordinates
     for (i, j) in free_cells {
-        if distance_squared(i, j, x, y) <= 100 * 100 {
+        if distance_squared(i, j, x, y) <= 2000 * 2000 {
             free_cells_within_range.push((i, j));
         }
     }
@@ -652,6 +652,44 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
    // *random_cell
 }
 
+
+// take the return from select_random_free_cell_in_range and create a check function the runs circular bfs with dummy values to see if the resulting list of cells is empty
+pub fn check_if_cell_is_isolated(grid: &Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize) -> bool {
+    let mut isolated = false;
+    let desired_total_cells = 1600;
+    let n_cells = circular_bfs_dummy(grid, x, y, group_id, desired_total_cells);
+    println!("Number of cells in territory: {}", n_cells);
+    if n_cells <= 10 {
+        isolated = true;
+    }
+    isolated
+}
+
+pub fn check_surrounding(cells: &Vec<Vec<Cell>>, x: usize, y: usize, extent: usize) -> bool {
+    // Define boundaries for surrounding area
+    let start_x = if x >= extent { x - extent } else { 0 };
+    let end_x = if x + extent < cells.len() { x + extent } else { cells.len() - 1 };
+    let start_y = if y >= extent { y - extent } else { 0 };
+    let end_y = if y + extent < cells[0].len() { y + extent } else { cells[0].len() - 1 };
+
+    // Count consecutive cells with is_taken as false
+    let mut consecutive_count = 0;
+    for i in start_x..=end_x {
+        for j in start_y..=end_y {
+            if !cells[i][j].territory.is_taken && cells[i][j].quality > 0.0{
+                consecutive_count += 1;
+                if consecutive_count >= extent {
+                    return true;
+                }
+            } else {
+                consecutive_count = 0;
+            }
+        }
+    }
+    false
+}
+
+
 pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id: usize, num_points: usize, rng: &mut impl Rng) {
    
     //get the cells of the group
@@ -660,6 +698,12 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     .enumerate()
     .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group_id).map(move |(j, _)| (i, j)))
     .collect();
+
+    if cells_of_group.is_empty() {
+        println!("No cells in group!!"); // FIX ME find a proper way to deal with those groups
+        return;
+    }
+        
 
     //get the min x and y coordinates of the group
     let min_x = cells_of_group.iter().map(|(x, _)| x).min().unwrap();
