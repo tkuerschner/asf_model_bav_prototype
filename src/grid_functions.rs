@@ -640,6 +640,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
     //}
 
     if free_cells_within_range_and_far_enough.is_empty() {
+        println!("No free cells within range and far enough");
         return (1, 1);
     } else {
         // Select the closest cell to the given position
