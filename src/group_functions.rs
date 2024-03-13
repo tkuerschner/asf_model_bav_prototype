@@ -47,7 +47,7 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
         let movement = MovementMode::Foraging;
         let group_members = vec![];
         let daily_movement_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE; //<--------------------DEBUG FIX ME with actual values
-        
+        let max_size = 10000; 
 
         group.push(Groups { // create the group
             group_id,
@@ -60,6 +60,7 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
             movement,
             group_members,
             daily_movement_distance,
+            max_size,
         });
 
      }
@@ -76,6 +77,7 @@ pub fn fill_initial_groups(groups: &mut Vec<Groups>, grid: &Vec<Vec<Cell>>) {
         // group size estimator from SwiCoIBMove 4.5
         let tmp_size = (4.5 * breed_cap - 1.0).round() as u32;
         //println!("grpsize {}", tmp_size); FIX ME  DEBUG PRINT
+        group.max_size = tmp_size as usize;
 
         for _ in 0..tmp_size {
             group.create_new_initial_group_member();
@@ -105,6 +107,25 @@ pub fn calculate_mean_quality_for_group(grid: &Vec<Vec<Cell>>, group_id: usize) 
 
     total_quality / (num_cells as f64)
 }
+
+pub fn calculate_max_group_size_for_group(grid: &Vec<Vec<Cell>>, group_id: usize) -> usize {
+    let breed_cap = calculate_mean_quality_for_group(grid, group_id).round();
+
+    // group size estimator from SwiCoIBMove 4.5
+    let tmp_size = (4.5 * breed_cap - 1.0).round() as u32;
+    //println!("grpsize {}", tmp_size); FIX ME  DEBUG PRINT
+    tmp_size as usize
+}
+
+pub fn count_group_members(group: &Groups) -> usize {
+    group.group_members.len()
+}
+
+pub fn count_dispersers_in_disperser_group(disperser_group: &mut DispersingFemaleGroup) -> usize {
+   disperser_group.dispersing_individuals.len()
+
+}
+
 
 // function to update the memory of a group
 pub fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usize, usize)>, new_cell: (usize, usize), max_size: usize) {
@@ -166,6 +187,7 @@ pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Ce
     let movement = MovementMode::Foraging;
     let group_members = vec![];
     let daily_movement_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE; //<--------------------DEBUG FIX ME with actual values
+    let max_size = calculate_max_group_size_for_group(grid, group_id);
 
     groups.push(Groups {
         group_id,
@@ -178,5 +200,7 @@ pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Ce
         movement,
         group_members,
         daily_movement_distance,
+        max_size,
     });
 }
+

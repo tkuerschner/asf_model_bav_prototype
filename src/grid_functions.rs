@@ -457,7 +457,6 @@ pub fn get_free_attraction_points_for_group(grid: &Vec<Vec<Cell>>, group_id: usi
 
 }
 
-
 //TESTER
 pub fn get_attraction_points2(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)> { // Test which function is faster
    let mut attraction_points = Vec::new();
@@ -500,7 +499,7 @@ pub fn occupy_cell_here(grid: &mut Vec<Vec<Cell>>, group: &Groups) {
 
 
 pub fn occupy_this_cell(cell: &mut Cell, group_id: usize) {
-    if cell.territory.is_taken {
+    if cell.territory.is_taken || cell.quality == 0.0{
         return;
     } else {
         cell.territory.is_taken = true;
@@ -518,7 +517,7 @@ pub fn make_core_cell(cell: &mut Cell, group_id: usize) {
 pub fn occupy_territory(grid: &mut Vec<Vec<Cell>>, positions: Vec<(usize, usize)>, id:usize){
 
     for (x, y) in positions {
-        if x < grid.len() && y < grid[0].len() {
+        if x < grid.len() && y < grid[0].len() && grid[x][y].quality > 0.0{
             
             grid[x][y].territory.is_taken = true;
             grid[x][y].territory.taken_by_group = id;
@@ -798,6 +797,9 @@ pub fn check_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, groups: &
         let group_ap = get_attraction_points_in_territory(grid, group.group_id);
         if group_ap.is_empty() {
             place_attraction_points_in_territory(grid, group.group_id, num_points, rng);
+            if group_ap.is_empty() { 
+                println!("ERROR: No attraction points in territory after trying to placing new ones");
+            }
         }
     }
 }

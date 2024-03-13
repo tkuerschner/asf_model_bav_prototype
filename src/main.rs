@@ -50,6 +50,7 @@ pub struct Groups {
     group_members: Vec<GroupMember>,
     movement: MovementMode,
     daily_movement_distance: usize,
+    max_size: usize,
 }
 
 // implementation of the group struct
@@ -418,7 +419,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 10;
+const RUNTIME: usize = 365 * 25;
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -1201,7 +1202,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-    let num_groups = 3; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 10; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    
@@ -1265,7 +1266,7 @@ fn main() {
             //println!("Dispersal triggered2");
             dispersal_assignment(&mut groups, disperser_vector, dispersing_groups_vector);
             //assign_dispersal_targets_individuals( disperser_vector, &groups);
-            assign_dispersal_targets_groups(dispersing_groups_vector, &groups, &mut grid, &mut rng);
+            assign_dispersal_targets_groups(dispersing_groups_vector, &mut groups, &mut grid, &mut rng);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
             move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng);
