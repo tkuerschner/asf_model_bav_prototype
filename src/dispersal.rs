@@ -239,13 +239,15 @@ pub fn assign_dispersal_targets_groups(dispersing_groups: &mut Vec<DispersingFem
         if dispersing_group.target_cell.is_none() {
             let mut target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
             
-
-            if !check_surrounding(grid, target_cell.0, target_cell.1, 100){ // check 100 cells around the target cell if they are taken
+            let mut ptc = 0;
+            while !check_surrounding(grid, target_cell.0, target_cell.1, 100) && ptc < 10{ // check 100 cells around the target cell if they are taken
                 println!("Target cell is isolated, looking for new target cell");
+                println!("Target cell: {:?}", target_cell);
                 //while check_surrounding(grid, target_cell.0, target_cell.1, 100) {
                 //    target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
                 //}
                 target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
+                ptc += 1;
             }
            // if check_if_cell_is_isolated(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, dispersing_group.disp_grp_id){
            //     println!("Cell is isolated, looking for new target cell");

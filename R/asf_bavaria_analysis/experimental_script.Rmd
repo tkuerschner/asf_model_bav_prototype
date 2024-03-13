@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 70 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 72 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -207,7 +207,7 @@ grp_path_bp <- ggplot() +
 
 
 
- ggsave("example_hr2.png", grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
+ ggsave("example_hr4.png", grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
 
 
 
@@ -643,5 +643,43 @@ y2 <- 203
 dist <- (x1 - x2)^2 + (y1 - y2)^2 #<= 600 * 600
 
 sqrt(dist)
+
+```
+
+
+```{r}
+
+testGrid <- grid
+
+test_x <- 41
+test_y <- 38
+
+# plot the grid with the test cell highlighted in red
+ggp1 <- ggplot() +
+  geom_tile(data = testGrid, aes(x = x, y = y, fill = quality)) +
+  geom_tile(data = testGrid %>% filter(x == test_x, y == test_y), aes(x = x, y = y), fill = "red") +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  theme_minimal()
+
+
+ ggsave("testcell.png", ggp1, width = 25, height = 25, units = "cm", dpi = 300)
+
+
+```
+
+
+```{r}
+
+# create a raster with 500 x 500 cells and a random value between 0.1 and 1.0 with resolution 50m x 50m
+r <- raster(nrows = 500, ncols = 500, xmn = 0, xmx = 25000, ymn = 0, ymx = 25000, crs = "+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0")
+
+# fill the raster with values between 0.1 and 1.0
+r[] <- runif(ncell(r), 0.1, 1.0)
+
+#save the raster as ascii
+writeRaster(r, "test.asc", format = "ascii")
+
+
 
 ```

@@ -701,6 +701,7 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
 
     if cells_of_group.is_empty() {
         println!("No cells in group!!"); // FIX ME find a proper way to deal with those groups
+    
         return;
     }
         
