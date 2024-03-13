@@ -1202,7 +1202,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-    let num_groups = 1; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 2; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
     //let file_path = "input/landscape/test.asc";
