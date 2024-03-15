@@ -16,3 +16,6 @@ R/asf_bavaria_analysis/asf_bavaria_analysis.Rproj
 *example_movement*
 .radian_profile
 input/landscape/test.asc
+input/landscape/occupancy_prob_prediction_wildboar_summer_2018.tif
+input/landscape/wb_50x50_prob_pred_s18.asc
+output/all_dispersers.csv

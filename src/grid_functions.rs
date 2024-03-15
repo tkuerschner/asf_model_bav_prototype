@@ -638,6 +638,14 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
     //    return *random_cell
     //}
 
+    // check if number of cells is  < 10
+
+    //if free_cells_within_range_and_far_enough.len() < 10 {
+    //    println!("Number of free cells within range and far enough: {}", free_cells_within_range_and_far_enough.len());
+    //    return (1, 1);
+    //} 
+
+
     if free_cells_within_range_and_far_enough.is_empty() {
         println!("No free cells within range and far enough");
         return (1, 1);
@@ -657,7 +665,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
 pub fn check_if_cell_is_isolated(grid: &Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize) -> bool {
     let mut isolated = false;
     let desired_total_cells = 1600;
-    let n_cells = circular_bfs_dummy(grid, x, y, group_id, desired_total_cells);
+    let n_cells = circular_bfs_dummy(grid, x, y, desired_total_cells);
     println!("Number of cells in territory: {}", n_cells);
     if n_cells <= 10 {
         isolated = true;

@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 72 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 74 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -184,7 +184,7 @@ grp_path_bp <- ggplot() +
   labs(fill = "Habitat quality") +
   new_scale_fill() +
   geom_tile(data = terr_data, aes(x = x, y = y, fill = as.factor(territory_of_group)), alpha = .5) +
-  scale_fill_brewer(palette = "Set3") +
+  #scale_fill_brewer(palette = "Set3") +
   #cale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
   #guides(fill = "none") +
   #geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
@@ -207,7 +207,7 @@ grp_path_bp <- ggplot() +
 
 
 
- ggsave("example_hr4.png", grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
+ ggsave("example_hr5.png", grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
 
 
 

@@ -42,10 +42,11 @@ pub fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usi
             angle += std::f64::consts::PI / 180.0; //12.0;      // increment the angle
         }
     }
+  //  println!("Group {} has occupied {} cells", group_id, count);
 }
 
 
-pub fn circular_bfs_dummy(grid: &Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, desired_total_cells: usize) -> usize {
+pub fn circular_bfs_dummy(grid: &Vec<Vec<Cell>>, x: usize, y: usize, desired_total_cells: usize) -> usize {
     let mut queue = VecDeque::new(); // Use a deque as a queue
     let mut visited = vec![vec![false; grid[0].len()]; grid.len()]; // Create a 2D array to keep track of visited cells
 

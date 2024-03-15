@@ -272,6 +272,14 @@ pub fn assign_dispersal_targets_groups(dispersing_groups: &mut Vec<DispersingFem
            // }
             dispersing_group.target_cell = Some(target_cell);
            }
+
+          // if circular_bfs_dummy(grid, target_cell.0, target_cell.1, 1600) < 1000 {
+          //  //println!("number of possible cells to low");
+          //  merge_dispersing_group_back_to_origin(dispersing_group, groups);
+          //  return;
+          //  }
+
+
         }
     }
 }
@@ -483,6 +491,7 @@ pub fn move_female_disperser(dispersing_individuals: &mut Vec<DispersingIndividu
                 let (target_x, target_y) = disperser_group.target_cell.unwrap();
                 // Call add_new_group_at_location
                 let new_group_id: usize;
+
                 add_new_group_at_location(groups, grid, target_x, target_y);
                 new_group_id = groups.last().unwrap().group_id;
                 make_core_cell_an_ap(grid, groups.last().unwrap().core_cell.unwrap().0, groups.last().unwrap().core_cell.unwrap().1);
