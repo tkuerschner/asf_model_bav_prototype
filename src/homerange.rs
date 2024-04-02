@@ -1,6 +1,27 @@
 
 use crate::*;
 
+
+pub struct hr_core_cells {
+    x: usize,
+    y: usize,
+    is_taken: bool,
+    taken_by: Option<usize>,
+}
+
+impl hr_core_cells {
+  pub fn occupy_core_cell(&mut self, group_id: usize) {
+    self.is_taken = true;
+    self.taken_by = Some(group_id);
+  }
+    
+}
+
+
+
+
+
+
 // Function to perform circular BFS (Breadth First Search) from the core cell
 pub fn circular_bfs(grid: &mut Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize, desired_total_cells: usize) {
     let mut queue = VecDeque::new(); // Use a deque as a queue
@@ -88,3 +109,20 @@ pub fn circular_bfs_dummy(grid: &Vec<Vec<Cell>>, x: usize, y: usize, desired_tot
     }
     return count;
 }
+
+
+pub fn is_valid_territory(grid: &Vec<Vec<Cell>>, x: usize, y: usize, desired_total_cells: usize) -> bool {
+
+    if circular_bfs_dummy(grid, x, y, desired_total_cells) < 200 {
+        return false;
+    } else {
+        return true;
+
+    }
+
+}
+
+//pub fn territory_has_attraction_points(grid: &Vec<Vec<Cell>>, group_id: usize) -> bool {
+//   
+//}
+

@@ -581,7 +581,7 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
 
     // iterate through the free cells and select all cells that are within 2000 cells of the input x and y coordinates
     for (i, j) in free_cells {
-        if distance_squared(i, j, x, y) <= 2000 * 2000 {
+        if distance_squared(i, j, x, y) <= 200 * 200 { // FIX ME 2000 * 2000
             free_cells_within_range.push((i, j));
         }
     }
@@ -650,10 +650,16 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
         println!("No free cells within range and far enough");
         return (1, 1);
     } else {
-        // Select the closest cell to the given position
-        let closest_cell = free_cells_within_range_and_far_enough.iter().min_by_key(|&&(i, j)| distance_squared(i, j, x, y)).unwrap();
-       // println!("Selected cell: {:?}", closest_cell);
-        return *closest_cell;
+       if rand::thread_rng().gen_bool(0.75) { //75% chance to select a random cell
+           let random_cell = free_cells_within_range_and_far_enough.choose(rng).unwrap();
+           //println!("Selected cell: {:?}", random_cell);
+           return *random_cell;
+       }else{
+         // Select the closest cell to the given position
+         let closest_cell = free_cells_within_range_and_far_enough.iter().min_by_key(|&&(i, j)| distance_squared(i, j, x, y)).unwrap();
+        // println!("Selected cell: {:?}", closest_cell);
+         return *closest_cell;
+        }
     }
 
     
