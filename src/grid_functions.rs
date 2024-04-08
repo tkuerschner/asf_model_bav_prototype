@@ -825,3 +825,14 @@ pub fn make_core_cell_an_ap(grid: &mut Vec<Vec<Cell>>, cx: usize, cy: usize) {
     grid[cx][cy].territory.is_ap = true;
     
 }
+
+//function to remove ap from cells that are not taken
+pub fn remove_ap_from_freed_cells(grid: &mut Vec<Vec<Cell>>) {
+    for row in grid.iter_mut() {
+        for cell in row.iter_mut() {
+            if cell.territory.is_ap && !cell.territory.is_taken && cell.territory.taken_by_group == 0 {
+                cell.territory.is_ap = false;
+            }
+        }
+    }
+}

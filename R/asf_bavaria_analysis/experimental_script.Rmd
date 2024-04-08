@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 78 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 82 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -207,7 +207,7 @@ grp_path_bp <- ggplot() +
 
 
 
- ggsave("example_hr8.png", grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
+ggsave(paste0("./R/asf_bavaria_analysis/visuals/example_hr_",it,".png"), grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
 
 
 
@@ -330,6 +330,29 @@ globals %>%
   labs(title = "Population size over time", x = "Day", y = "Population size") +
   theme_minimal()
 
+
+head(groups)
+
+g2 <- groups %>% dplyr::select(-known_cells, -target_cell)
+
+head(g2)
+max(g2$iteration)
+
+gt <- g2 %>% filter(group_id == 1, iteration == 1) %>% summarise(n = n())
+
+
+g3 <- g2 %>% group_by(group_id, iteration) %>%  summarise(n = n())
+
+
+ggplot(g3)+
+  geom_line(aes(iteration, n, color = as.factor(group_id)))
+
+min(g3$n)
+
+gt2 <- g2 %>% filter(iteration == 3650)
+
+unique(gt2$group_id)
+length(unique(gt2$group_id))
 
 ```
 

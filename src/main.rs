@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result, Read,};
 use std::collections::VecDeque;
 use std::time::Instant;
-use serde::{Serialize, Deserialize};
+use serde::{de, Deserialize, Serialize};
 
 use lazy_static::lazy_static;
 use std::sync::Mutex;
@@ -419,7 +419,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 10;
+const RUNTIME: usize = 365 * 2; 
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -1260,8 +1260,19 @@ fn main() {
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
 
+        //check_for_empty_groups(&mut groups);
+        //delete_groups_without_members(&mut groups);
+        //check_for_empty_groups(&mut groups);
+
+        
+
+
         //dispersal
         if iteration > 100 {
+
+            //DEBUG FIX me: those 2 functions are breaking the simulation
+        //free_group_cells(&mut groups, &mut grid);
+        //delete_groups_without_members(&mut groups);
             
         //println!("Dispersal triggered");
         if global_variables.day == 1 {
@@ -1273,6 +1284,13 @@ fn main() {
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
             move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng);
         }
+
+        // Free territory of groups with no members
+        if global_variables.day == 1 {
+          //  free_group_cells(&mut groups, &mut grid);
+          //  remove_ap_from_freed_cells(&mut grid);
+        }
+
         // Simulate movement of individuals
        
         check_attraction_points_in_territory(&mut grid, &mut groups, 8, &mut rng);
@@ -1338,7 +1356,8 @@ fn main() {
         //print!("Day:{}, Month:{}, Year:{}, Individuals:{}\n", global_variables.day, global_variables.month, global_variables.year, global_variables.n_individuals);
         if global_variables.month == 1 && global_variables.day == 1{
             let perc = (iteration as f64 / RUNTIME as f64 * 100.0).round();
-        println!("Simulation {}% complete!", perc);
+            let elapsed_time = start_time.elapsed().as_secs();
+        println!("Simulation {}% complete! - Elapsed time: {}s", perc, elapsed_time);
         }
         // Progress time 
         
