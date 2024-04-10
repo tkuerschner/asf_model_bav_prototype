@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 82 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 88#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -174,8 +174,6 @@ anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, ".gif
 ```{r HRs}
 
 #RColorBrewer::display.brewer.all()
-
-
 
 
 grp_path_bp <- ggplot() +
