@@ -163,7 +163,353 @@ impl Groups {
     Ok(new_member)
 }
 
+    pub fn expand_territory(&mut self, grid: &mut Vec<Vec<Cell>>) {
+        let mut territory_cells = HashSet::new();
+        if let Some((x, y)) = self.core_cell {
+            // Iterate over neighboring cells
+            for dx in -1..=1 {
+                for dy in -1..=1 {
+                    if dx == 0 && dy == 0 {
+                        continue;
+                    }
+                    let new_x = x as isize + dx;
+                    let new_y = y as isize + dy;
+                    // Check if the neighboring cell is within grid bounds
+                    if new_x >= 0
+                        && new_x < grid.len() as isize
+                        && new_y >= 0
+                        && new_y < grid[0].len() as isize
+                    {
+                        let new_x = new_x as usize;
+                        let new_y = new_y as usize;
+                        // Check if the cell is unoccupied and has positive quality
+                        if !grid[new_x][new_y].territory.is_taken && grid[new_x][new_y].quality > 0.0 {
+                            territory_cells.insert((new_x, new_y));
+                        }
+                    }
+                }
+            }
+        }
+        // If territory needs expansion, claim unoccupied cells around the core cell
+        for (x, y) in territory_cells {
+            grid[x][y].territory.is_taken = true;
+            grid[x][y].territory.taken_by_group = self.group_id;
+        }
+    }
+
+    fn expand_territory_with_quality_criteria(&mut self, grid: &mut Vec<Vec<Cell>>) {
+        // Constants for desired number of cells and quality thresholds
+        let desired_cells = 1600;
+        let quality_threshold_high = 7.0;
+        let quality_threshold_low = 0.0; 
+
+        // Calculate the minimum number of cells based on quality thresholds
+        let desired_cells_with_quality_high = 1000;
+        let desired_cells_with_quality_low = 1200;
+
+        // Function to calculate the mean quality of a set of cells
+        fn calculate_mean_quality(cells: &HashSet<(usize, usize)>, grid: &Vec<Vec<Cell>>) -> f64 {
+            let total_quality: f64 = cells.iter().map(|&(x, y)| grid[x][y].quality).sum();
+            total_quality / cells.len() as f64
+        }
+
+        let mut territory_cells = HashSet::new();
+        if let Some((x, y)) = self.core_cell {
+            // Start with the core cell
+            territory_cells.insert((x, y));
+
+            // Expand territory until desired number of cells is reached
+            while territory_cells.len() < desired_cells {
+                // Clone the current set of territory cells
+                let current_territory_cells = territory_cells.clone();
+                // Iterate over the current territory cells
+                for (x, y) in current_territory_cells {
+                    // Iterate over neighboring cells
+                    for dx in -1..=1 {
+                        for dy in -1..=1 {
+                            if dx == 0 && dy == 0 {
+                                continue;
+                            }
+                            let new_x = x as isize + dx;
+                            let new_y = y as isize + dy;
+                            // Check if the neighboring cell is within grid bounds
+                            if new_x >= 0
+                                && new_x < grid.len() as isize
+                                && new_y >= 0
+                                && new_y < grid[0].len() as isize
+                            {
+                                let new_x = new_x as usize;
+                                let new_y = new_y as usize;
+                                // Check if the cell is unoccupied and has positive quality
+                                if !grid[new_x][new_y].territory.is_taken && grid[new_x][new_y].quality > 0.0 {
+                                    territory_cells.insert((new_x, new_y));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Adjust territory based on mean quality
+        let mean_quality = calculate_mean_quality(&territory_cells, grid);
+        let desired_cells_adjusted = if mean_quality >= quality_threshold_high {
+            desired_cells_with_quality_high
+        } else {
+            desired_cells_with_quality_low
+        };
+
+        // Only keep desired number of cells
+        territory_cells = territory_cells.into_iter().take(desired_cells_adjusted).collect();
+
+        // Claim territory cells
+        for (x, y) in territory_cells {
+            grid[x][y].territory.is_taken = true;
+            grid[x][y].territory.taken_by_group = self.group_id;
+        }
+    }
+
+    pub fn adapt_territory(&mut self, grid: &mut Vec<Vec<Cell>>) {
+        // Check if group size exceeds maximum size
+            if self.group_members.len() > self.max_size {
+            // Call territory expansion function
+            self.expand_territory(grid);
+         }
+        }
+    pub fn claim_territory(&mut self, grid: &mut Vec<Vec<Cell>>) {
+        if let Some((core_x, core_y)) = self.core_cell {
+            for dx in -1..=1 {
+                for dy in -1..=1 {
+                    if dx == 0 && dy == 0 {
+                        continue;
+                    }
+                    let new_x = core_x as isize + dx;
+                    let new_y = core_y as isize + dy;
+                    if new_x >= 0
+                        && new_x < grid.len() as isize
+                        && new_y >= 0
+                        && new_y < grid[0].len() as isize
+                    {
+                        let new_x = new_x as usize;
+                        let new_y = new_y as usize;
+                        grid[new_x][new_y].territory.is_taken = true;
+                        grid[new_x][new_y].territory.taken_by_group = self.group_id;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn expand_territory_within_range(&mut self, grid: &mut Vec<Vec<Cell>>) {
+        // Constants for desired number of cells
+        let min_desired_cells = 1000;
+        let max_desired_cells = 1600;
+
+        let mut territory_cells = HashSet::new();
+        if let Some((x, y)) = self.core_cell {
+            // Start with the core cell
+            territory_cells.insert((x, y));
+
+            // Expand territory until desired number of cells is reached
+            while territory_cells.len() < min_desired_cells || territory_cells.len() > max_desired_cells {
+                // Clone the current set of territory cells
+                let current_territory_cells = territory_cells.clone();
+                // Iterate over the current territory cells
+                for (x, y) in current_territory_cells {
+                    // Iterate over neighboring cells
+                    for dx in -1..=1 {
+                        for dy in -1..=1 {
+                            if dx == 0 && dy == 0 {
+                                continue;
+                            }
+                            let new_x = x as isize + dx;
+                            let new_y = y as isize + dy;
+                            // Check if the neighboring cell is within grid bounds
+                            if new_x >= 0
+                                && new_x < grid.len() as isize
+                                && new_y >= 0
+                                && new_y < grid[0].len() as isize
+                            {
+                                let new_x = new_x as usize;
+                                let new_y = new_y as usize;
+                                // Check if the cell is unoccupied and has positive quality
+                                if !grid[new_x][new_y].territory.is_taken && grid[new_x][new_y].quality > 0.0 {
+                                    territory_cells.insert((new_x, new_y));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Only keep cells within the desired range
+        territory_cells = territory_cells.into_iter().take(max_desired_cells).collect();
+
+        // Claim territory cells
+        for (x, y) in territory_cells {
+            grid[x][y].territory.is_taken = true;
+            grid[x][y].territory.taken_by_group = self.group_id;
+        }
+    }
+
+    pub fn expand_territory_with_natural_shape(&mut self, grid: &mut Vec<Vec<Cell>>) {
+        // Constants for desired number of cells and shape
+        let min_desired_cells = 1000;
+        let max_desired_cells = 1600;
+        let shape_factor = 0.5; // Adjust shape factor for desired shape
+    
+        let mut territory_cells = HashSet::new();
+        if let Some((x, y)) = self.core_cell {
+            // Start with the core cell
+            territory_cells.insert((x, y));
+    
+            // Keep track of the number of iterations
+            let mut iterations = 0;
+    
+            // Expand territory until desired number of cells is reached or max iterations exceeded
+            while territory_cells.len() < max_desired_cells && iterations < 10000 {
+                // Increment iterations count
+                iterations += 1;
+    
+                // Clone the current set of territory cells
+                let current_territory_cells = territory_cells.clone();
+                // Iterate over the current territory cells
+                for (x, y) in current_territory_cells {
+                    // Iterate over neighboring cells
+                    for dx in -1..=1 {
+                        for dy in -1..=1 {
+                            if dx == 0 && dy == 0 {
+                                continue;
+                            }
+                            let new_x = x as isize + dx;
+                            let new_y = y as isize + dy;
+                            // Check if the neighboring cell is within grid bounds
+                            if new_x >= 0
+                                && new_x < grid.len() as isize
+                                && new_y >= 0
+                                && new_y < grid[0].len() as isize
+                            {
+                                let new_x = new_x as usize;
+                                let new_y = new_y as usize;
+                                // Check if the cell is unoccupied and has positive quality
+                                if !grid[new_x][new_y].territory.is_taken && grid[new_x][new_y].quality > 0.0 {
+                                    // Calculate distance from core cell
+                                    let distance = ((new_x as f64 - x as f64).powi(2) + (new_y as f64 - y as f64).powi(2)).sqrt();
+                                    // Bias selection based on distance for circular shape
+                                    let random_value = rand::random::<f64>();
+                                    if random_value < 1.0 / (1.0 + shape_factor * distance) {
+                                        territory_cells.insert((new_x, new_y));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+    
+            // Claim territory cells
+            for (x, y) in territory_cells {
+                grid[x][y].territory.is_taken = true;
+                grid[x][y].territory.taken_by_group = self.group_id;
+            }
+        }
+    }
+    
+
+pub fn expand_territory_with_natural_shape_and_radius(&mut self, grid: &mut Vec<Vec<Cell>>) {
+    // Constants for desired number of cells, shape, and radius
+    let min_desired_cells = 1000;
+    let max_desired_cells = 1600;
+    let shape_factor = 0.5; // Adjust shape factor for desired shape
+    let radius = 50;
+
+    let mut territory_cells = HashSet::new();
+    if let Some((x, y)) = self.core_cell {
+        // Start with the core cell
+        territory_cells.insert((x, y));
+
+        // Check if there are enough cells left in the grid within the radius
+        let mut cells_left = 0;
+        for dx in -radius..=radius {
+            for dy in -radius..=radius {
+                let new_x = x as isize + dx;
+                let new_y = y as isize + dy;
+                // Check if the neighboring cell is within the specified radius
+                let distance_squared = (new_x - x as isize).pow(2) + (new_y - y as isize).pow(2);
+                if distance_squared <= radius * radius {
+                    // Check if the neighboring cell is within grid bounds
+                    if new_x >= 0
+                        && new_x < grid.len() as isize
+                        && new_y >= 0
+                        && new_y < grid[0].len() as isize
+                    {
+                        let new_x = new_x as usize;
+                        let new_y = new_y as usize;
+                        // Check if the cell is unoccupied and has positive quality
+                        if grid[new_x][new_y].quality > 0.0 && !grid[new_x][new_y].territory.is_taken {
+                            cells_left += 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        if cells_left < min_desired_cells {
+            println!("Not enough cells left in the grid within the radius to create territory for group {}!", self.group_id);
+            return; // Abort expansion process
+        }
+
+        // Expand territory until desired number of cells is reached
+        while territory_cells.len() < min_desired_cells || territory_cells.len() > max_desired_cells {
+            // Clone the current set of territory cells
+            let current_territory_cells = territory_cells.clone();
+            // Iterate over the current territory cells
+            for (x, y) in current_territory_cells {
+                // Iterate over neighboring cells within the radius
+                for dx in -radius..=radius {
+                    for dy in -radius..=radius {
+                        let new_x = x as isize + dx;
+                        let new_y = y as isize + dy;
+                        // Check if the neighboring cell is within the specified radius
+                        let distance_squared = (new_x - x as isize).pow(2) + (new_y - y as isize).pow(2);
+                        if distance_squared <= radius * radius {
+                            // Check if the neighboring cell is within grid bounds
+                            if new_x >= 0
+                                && new_x < grid.len() as isize
+                                && new_y >= 0
+                                && new_y < grid[0].len() as isize
+                            {
+                                let new_x = new_x as usize;
+                                let new_y = new_y as usize;
+                                // Check if the cell is unoccupied and has positive quality
+                                if grid[new_x][new_y].quality > 0.0 && !grid[new_x][new_y].territory.is_taken {
+                                    // Bias selection based on distance for circular shape
+                                    let random_value = rand::random::<f64>();
+                                    if random_value < 1.0 / (1.0 + shape_factor * distance_squared as f64) {
+                                        territory_cells.insert((new_x, new_y));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Only keep cells within the desired range
+    territory_cells = territory_cells.into_iter().take(max_desired_cells).collect();
+
+    // Claim territory cells
+    for (x, y) in territory_cells {
+        grid[x][y].territory.is_taken = true;
+        grid[x][y].territory.taken_by_group = self.group_id;
+    }
 }
+
+}
+
 
 // Define a enum to represent the movement mode 
 #[derive(Debug, Clone, PartialEq)]
@@ -1202,7 +1548,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-    let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 10; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
@@ -1279,7 +1625,7 @@ fn main() {
             //println!("Dispersal triggered2");
             dispersal_assignment(&mut groups, disperser_vector, dispersing_groups_vector);
             //assign_dispersal_targets_individuals( disperser_vector, &groups);
-            assign_dispersal_targets_groups(dispersing_groups_vector, &mut groups, &mut grid, &mut rng);
+             assign_dispersal_targets_groups(dispersing_groups_vector, &mut groups, &mut grid, &mut rng);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
             move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng);

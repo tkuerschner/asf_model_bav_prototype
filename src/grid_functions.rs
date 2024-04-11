@@ -239,7 +239,10 @@ pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usiz
 
         for _ in 0..num_ap {
             if let Some(cell) = chunk.choose(&mut rng) {
-                grid[cell.0][cell.1].territory.is_ap = true;
+                if grid[cell.0][cell.1].quality > 0.0 {
+                    grid[cell.0][cell.1].territory.is_ap = true;
+                }
+                
             }
         }
     }
@@ -366,7 +369,9 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
                 let x_clamped = x_jittered as usize;
                 let y_clamped = y_jittered as usize;
 
+                if grid[x_clamped as usize][y_clamped as usize].quality > 0.0 {
                 grid[x_clamped as usize][y_clamped as usize].territory.is_ap = true;
+                }
 
             }
         }
@@ -710,7 +715,7 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     let cells_of_group: Vec<(usize, usize)> = grid
     .iter()
     .enumerate()
-    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group_id).map(move |(j, _)| (i, j)))
+    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group_id && cell.quality > 0.0).map(move |(j, _)| (i, j)))
     .collect();
 
     if cells_of_group.is_empty() {
@@ -798,7 +803,9 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
             let x_clamped = x_jittered as usize;
             let y_clamped = y_jittered as usize;
 
+            if grid[x_clamped as usize][y_clamped as usize].quality > 0.0 {
             grid[x_clamped as usize][y_clamped as usize].territory.is_ap = true;
+            }
 
         }
     }

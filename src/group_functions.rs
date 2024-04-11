@@ -31,7 +31,7 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
 
         let desired_total_cells = 1600;     
  
-        circular_bfs(grid, x, y, group_id, desired_total_cells); // fill the territory with cells
+        //circular_bfs(grid, x, y, group_id, desired_total_cells); // fill the territory with cells
         
         let presence_timer = 0; 
 
@@ -42,26 +42,53 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
             presence_timer,
         };
 
-        let target_cell = None; 
-        let remaining_stay_time = 0;
-        let movement = MovementMode::Foraging;
-        let group_members = vec![];
-        let daily_movement_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE; //<--------------------DEBUG FIX ME with actual values
-        let max_size = 10000; 
+        //let target_cell = None; 
+        //let remaining_stay_time = 0;
+        //let movement = MovementMode::Foraging;
+        //let group_members = vec![];
+        //let daily_movement_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE; //<--------------------DEBUG FIX ME with actual values
+        //let max_size = 10000; 
 
-        group.push(Groups { // create the group
+        let mut new_group = Groups {
             group_id,
             x,
             y,
             core_cell: Some(core_cell),
-            target_cell,
-            remaining_stay_time,
-            memory,
-            movement,
-            group_members,
-            daily_movement_distance,
-            max_size,
-        });
+            target_cell: None,
+            remaining_stay_time: 0,
+            memory: GroupMemory {
+                known_cells: HashSet::new(),
+                group_member_ids: Vec::new(),
+                known_cells_order: Vec::new(),
+                presence_timer: 0,
+            },
+            movement: MovementMode::Foraging,
+            group_members: vec![],
+            daily_movement_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE, //<--------------------DEBUG FIX ME with actual values
+            max_size: 10000,
+        };
+        //new_group.expand_territory_within_range(grid);
+        //new_group.expand_territory_with_natural_shape_and_radius(grid);
+        new_group.expand_territory_with_natural_shape(grid);
+        //new_group.expand_territory(grid); // Fill the territory with cells
+        //new_group.claim_territory(grid); // Claim the territory
+
+        group.push(new_group);
+
+
+       // group.push(Groups { // create the group
+       //     group_id,
+       //     x,
+       //     y,
+       //     core_cell: Some(core_cell),
+       //     target_cell,
+       //     remaining_stay_time,
+       //     memory,
+       //     movement,
+       //     group_members,
+       //     daily_movement_distance,
+       //     max_size,
+       // });
 
      }
     }
@@ -126,7 +153,6 @@ pub fn count_dispersers_in_disperser_group(disperser_group: &mut DispersingFemal
 
 }
 
-
 // function to update the memory of a group
 pub fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usize, usize)>, new_cell: (usize, usize), max_size: usize) {
     memory.insert(new_cell);
@@ -169,47 +195,75 @@ pub fn update_group_memory(group: &mut Vec<Groups>) {
 
 // function to add a new group at a specific set of coordinates
 pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
-    let group_id = generate_group_id(); // add incrementing group id
-    occupy_this_cell(&mut grid[x][y], group_id); // occupy the selected ap
-    let core_cell = (x, y); // set the core cell
-    make_core_cell(&mut grid[x][y], group_id);
-    let desired_total_cells = 1600; // FIX ME DEBUG
-    circular_bfs(grid, x, y, group_id, desired_total_cells); // fill the territory with cells
-    let presence_timer = 0;
-    let memory = GroupMemory {
-        known_cells: HashSet::new(),
-        group_member_ids: Vec::new(),
-        known_cells_order: Vec::new(),
-        presence_timer,
-    };
-    let target_cell = None;
-    let remaining_stay_time = 0;
-    let movement = MovementMode::Foraging;
-    let group_members = vec![];
-    let daily_movement_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE; //<--------------------DEBUG FIX ME with actual values
-    let max_size = calculate_max_group_size_for_group(grid, group_id);
+   //let group_id = generate_group_id(); // add incrementing group id
+   //occupy_this_cell(&mut grid[x][y], group_id); // occupy the selected ap
+   //let core_cell = (x, y); // set the core cell
+   //make_core_cell(&mut grid[x][y], group_id);
+   //let desired_total_cells = 1600; // FIX ME DEBUG
 
-    groups.push(Groups {
-        group_id,
-        x,
-        y,
-        core_cell: Some(core_cell),
-        target_cell,
-        remaining_stay_time,
-        memory,
-        movement,
-        group_members,
-        daily_movement_distance,
-        max_size,
-    });
+   //circular_bfs(grid, x, y, group_id, desired_total_cells); // fill the territory with cells
+   //
+   //let presence_timer = 0;
+   //let memory = GroupMemory {
+   //    known_cells: HashSet::new(),
+   //    group_member_ids: Vec::new(),
+   //    known_cells_order: Vec::new(),
+   //    presence_timer,
+   //};
+   //let target_cell = None;
+   //let remaining_stay_time = 0;
+   //let movement = MovementMode::Foraging;
+   //let group_members = vec![];
+   //let daily_movement_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE; //<--------------------DEBUG FIX ME with actual values
+   //let max_size = calculate_max_group_size_for_group(grid, group_id);
+
+   //groups.push(Groups {
+   //    group_id,
+   //    x,
+   //    y,
+   //    core_cell: Some(core_cell),
+   //    target_cell,
+   //    remaining_stay_time,
+   //    memory,
+   //    movement,
+   //    group_members,
+   //    daily_movement_distance,
+   //    max_size,
+   //});
+   let group_id = generate_group_id(); // add incrementing group id
+   occupy_this_cell(&mut grid[x][y], group_id); // occupy the selected ap
+   let core_cell = (x, y); // set the core cell
+
+   // Expand territory around the core cell
+   let mut new_group = Groups {
+       group_id,
+       x,
+       y,
+       core_cell: Some(core_cell),
+       target_cell: None,
+       remaining_stay_time: 0,
+       memory: GroupMemory {
+           known_cells: HashSet::new(),
+           group_member_ids: Vec::new(),
+           known_cells_order: Vec::new(),
+           presence_timer: 0,
+       },
+       movement: MovementMode::Foraging,
+       group_members: Vec::new(),
+       daily_movement_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
+       max_size: calculate_max_group_size_for_group(grid, group_id),
+   };
+
+   new_group.expand_territory_with_natural_shape(grid); // fill the territory with cells
+   
+   groups.push(new_group);
+    
 }
 
 // function to check if a group has no members
 pub fn group_has_no_members(group: &Groups) -> bool {
     group.group_members.is_empty()
 }
-
-
 // take the groupid of the groups that have no members, find all cells taken by that group and free them
 pub fn free_group_cells(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>) {
     let group_ids: Vec<usize> = groups.iter().filter(|group| group_has_no_members(group)).map(|group| group.group_id).collect();

@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 89#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 103#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -171,6 +171,8 @@ animated_plot <- grp_path_bp +
 anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, ".gif"), animate(animated_plot)) # i get an eror here
 
 ```
+
+
 ```{r HRs}
 
 #RColorBrewer::display.brewer.all()
