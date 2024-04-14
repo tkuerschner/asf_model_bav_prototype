@@ -1563,6 +1563,7 @@ fn main() {
 
     remove_ap_on_cells_with_quality_0(&mut grid);
     
+    
     //create vector for dispersing individuals using the struct in dispersal.rs
     let disperser_vector: &mut Vec<DispersingIndividual> = &mut Vec::new();
     let dispersing_groups_vector: &mut Vec<DispersingFemaleGroup> = &mut Vec::new();
