@@ -167,31 +167,6 @@ pub fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usiz
     order.push(new_cell);
 }
 
-pub fn update_group_memory(group: &mut Vec<Groups>) {
-    // Get the indices of individuals
-   // let indices: Vec<usize> = (0..group.len()).collect();
-//
-   // // Iterate through indices to update group memory
-   // for &index in &indices {
-   //     let group_id = group[index].group_id;
-//
-   //     // Find indices of group members with the same group_id
-   //     let group_members_ids: Vec<usize> = indices
-   //         .iter()
-   //         .filter(|&&i| group[i].group_id == group_id)
-   //         .map(|&i| group[i].id)
-   //         .collect();
-//
-   //     // Update group memory with the IDs of group members
-   //     group[index].memory.group_member_ids = group_members_ids;
-//
-   //     // Print debug information
-   //     //println!(
-   //     //    "Individual {}: Group ID: {}, Group members: {:?}",
-   //     //    index, group_id, individuals[index].memory.group_member_ids
-   //     //);
-   // }
-}
 
 // function to add a new group at a specific set of coordinates
 pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>, x: usize, y: usize) {

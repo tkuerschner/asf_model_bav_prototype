@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 103#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 108           #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -52,8 +52,6 @@ groups <- read.csv("./output/all_groups.csv", header = T)
 dispersers <- read.csv("./output/all_dispersers.csv", header = T)
 
 ```
-
-
 
 ```{r data prep}
 g1 <- grid # %>% filter(iteration == 1)
