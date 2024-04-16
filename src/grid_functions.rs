@@ -208,29 +208,7 @@ pub fn remove_non_core_attraction_points(grid: &mut Vec<Vec<Cell>>) {
     }
 }
 
-<<<<<<< HEAD
-////function that returns a subset of the grid for each group containing only the groups territory
-
-pub fn get_group_territory(grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>) -> Vec<Vec<Cell>> {
-    let mut group_territory = Vec::new();
-
-    // Iterate over the grid cells and filter those claimed by the group
-    for row in grid.iter() {
-        let mut filtered_row = Vec::new();
-        for cell in row.iter() {
-            if groups.iter().any(|group| cell.territory.taken_by_group == group.group_id as usize) {
-                filtered_row.push(cell.clone());
-            }
-        }
-        group_territory.push(filtered_row);
-    }
-
-    group_territory
-}
-
-=======
 //function that returns a subset of the grid for each group containing only the groups territory
->>>>>>> 5e3b776537364a4acffed3a495cd684909eb1a65
 pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, num_points: usize, rng: &mut impl Rng) {
 
     //iterate through the groups
@@ -336,40 +314,6 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
                     ap_count += 1;
                 }
             }
-<<<<<<< HEAD
-        }
-        //println!("AP count: {}", ap_count);
-
-        if ap_count <= 2 {
-        
-        while ap_count < 4 {
-            
-           // create random ap in the groups territory
-           // filter cells_of_group to exclude is_ap == true
-            let territory_of_group: Vec<(usize, usize)> = cells_of_group.iter().filter(|(x, y)| grid[*x][*y].territory.is_ap == false).cloned().collect();
-            let random_ap = territory_of_group.choose(rng).unwrap();
-            grid[random_ap.0][random_ap.1].territory.is_ap = true;
-            ap_count += 1;
-         }
-        }
-
-    }
-}
-
-pub fn get_random_normal_int (mean: f64, std_dev: f64, rng: &mut impl Rng) -> i32 {
-
-    // Create a normal distribution with mean 4.5 and standard deviation 1.5
- 
-    let normal = Normal::new(mean, std_dev).expect("Invalid parameters");
-
-    // Generate a random number from the normal distribution
-    let mut num: f64;
-    loop {
-        num = rng.sample(normal);
-        if num >= 2.0 && num <= 7.0 {
-            break;
-=======
->>>>>>> 5e3b776537364a4acffed3a495cd684909eb1a65
         }
         //println!("AP count: {}", ap_count);
 

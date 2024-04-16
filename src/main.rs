@@ -1188,20 +1188,6 @@ pub fn reset_group_coordinates_to_core_cell(group: &mut Groups) -> (usize, usize
     (group.x, group.y)
 }
 
-<<<<<<< HEAD
-//TEST
-fn random_cell_with_quality(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize, usize) {
-    // Generate a random cell within the grid with quality > 0
-    loop {
-        let x = rng.gen_range(0..grid.len());
-        let y = rng.gen_range(0..grid[0].len());
-        if grid[x][y].quality > 0.0 {
-            return (x, y);
-        }
-    }
-}
-=======
->>>>>>> 5e3b776537364a4acffed3a495cd684909eb1a65
 
 //function that returns a random attraction point from the 10 closest attraction points to core cell that are not in the goups terriory
 
@@ -1433,11 +1419,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-<<<<<<< HEAD
-    let num_groups = 20; // FIX ME DEBUG CHANGE TO 1
-=======
     let num_groups = 30; // FIX ME DEBUG CHANGE TO 1
->>>>>>> 5e3b776537364a4acffed3a495cd684909eb1a65
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
