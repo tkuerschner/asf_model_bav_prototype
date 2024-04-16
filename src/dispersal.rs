@@ -273,8 +273,11 @@ fn merge_dispersing_group_back_to_origin(dispersing_group: &mut DispersingFemale
 
 pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleGroup>, grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng) {
         let mut groups_to_remove = Vec::new(); // Vector to store indices of groups to remove
+       // println!("Number of dispersing groups start: {}", dispersing_groups.len());
         for (index, disperser_group) in dispersing_groups.iter_mut().enumerate() {
             let mut reached_target = false;
+
+            
 
             while disperser_group.daily_distance > 0 && !reached_target {
                 // Randomly decide whether to move towards the target or move randomly
@@ -313,45 +316,49 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
             }
 
             if reached_target {
-
-                if !is_valid_territory(grid, disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1, 1600) {
-                    reached_target = false;
-                    redraw_dispersal_target(disperser_group, grid, rng,groups );
-                    
-                    break;
-                }
-
-                let (target_x, target_y) = disperser_group.target_cell.unwrap();
-                // Call add_new_group_at_location
-                let new_group_id: usize;
-
-                add_new_group_at_location(groups, grid, target_x, target_y);
-                new_group_id = groups.last().unwrap().group_id;
-                make_core_cell_an_ap(grid, groups.last().unwrap().core_cell.unwrap().0, groups.last().unwrap().core_cell.unwrap().1);
-                place_attraction_points_in_territory(grid, new_group_id, 8, rng);
-                remove_ap_on_cells_with_quality_0(grid);
-                // For each individual in dispersing group, create a group member and add to group
-                for disperser in &mut disperser_group.dispersing_individuals {
-                    let new_group_member = GroupMember {
-                        individual_id: disperser.individual_id,
-                        age: disperser.age,
-                        age_class: disperser.age_class.clone(),
-                        sex: disperser.sex.clone(),
-                        health_status: disperser.health_status.clone(),
-                        time_of_birth: disperser.time_of_birth,
-                        has_reproduced: disperser.has_reproduced,
-                        time_of_reproduction: disperser.time_of_reproduction,
-                        origin_group_id: disperser.origin_group_id,
-                        has_dispersed: true,
-                        current_group_id: new_group_id,
-                    };
-                    groups[new_group_id - 1].group_members.push(new_group_member);
-                }
-                // Add index to groups_to_remove vector
-                 groups_to_remove.push(index);
-                
+                handle_reached_target(disperser_group, grid, groups, rng, &mut groups_to_remove, index);
             }
-        }
+
+            //if reached_target {
+
+            //    if !is_valid_territory(grid, disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1, 1600) {
+            //        reached_target = false;
+            //        redraw_dispersal_target(disperser_group, grid, rng,groups );
+            //        
+            //        break;
+            //    }
+
+            //    let (target_x, target_y) = disperser_group.target_cell.unwrap();
+            //    // Call add_new_group_at_location
+            //    let new_group_id: usize;
+
+            //    add_new_group_at_location(groups, grid, target_x, target_y);
+            //    new_group_id = groups.last().unwrap().group_id;
+            //    make_core_cell_an_ap(grid, groups.last().unwrap().core_cell.unwrap().0, groups.last().unwrap().core_cell.unwrap().1);
+            //    place_attraction_points_in_territory(grid, new_group_id, 8, rng);
+            //    remove_ap_on_cells_with_quality_0(grid);
+            //    // For each individual in dispersing group, create a group member and add to group
+            //    for disperser in &mut disperser_group.dispersing_individuals {
+            //        let new_group_member = GroupMember {
+            //            individual_id: disperser.individual_id,
+            //            age: disperser.age,
+            //            age_class: disperser.age_class.clone(),
+            //            sex: disperser.sex.clone(),
+            //            health_status: disperser.health_status.clone(),
+            //            time_of_birth: disperser.time_of_birth,
+            //            has_reproduced: disperser.has_reproduced,
+            //            time_of_reproduction: disperser.time_of_reproduction,
+            //            origin_group_id: disperser.origin_group_id,
+            //            has_dispersed: true,
+            //            current_group_id: new_group_id,
+            //        };
+            //        groups[new_group_id - 1].group_members.push(new_group_member);
+            //    }
+            //    // Add index to groups_to_remove vector
+            //     groups_to_remove.push(index);
+            //    
+            //}
+        }//
       //println!("Groups to remove: {:?}", groups_to_remove);
       groups_to_remove.sort_unstable_by(|a, b| b.cmp(a));
       for &index in groups_to_remove.iter().rev() {
@@ -366,26 +373,75 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
     // only keep the groups not marked for removal
     dispersing_groups.retain(|dispersing_group| !dispersing_group.marked_for_removal);
     
-
+   // println!("Number of dispersing groups end: {}", dispersing_groups.len());
 
        // println!("Remaining dispersing groups: {:?}", dispersing_groups);
     }
 
-fn move_towards_target_cell_group(disperser_group: &mut DispersingFemaleGroup, grid: &Vec<Vec<Cell>>) {
-        if let Some((target_x, target_y)) = disperser_group.target_cell {
-            let dx = (target_x as isize - disperser_group.disp_grp_x as isize).signum();
-            let dy = (target_y as isize - disperser_group.disp_grp_y as isize).signum();
-
-            let new_x = (disperser_group.disp_grp_x as isize + dx) as usize;
-            let new_y = (disperser_group.disp_grp_y as isize + dy) as usize;
-
-            // Update disperser's position if within grid boundaries
-            if new_x < grid.len() && new_y < grid[0].len() && is_valid_cell(grid, new_x, new_y) {
-                disperser_group.disp_grp_x = new_x;
-                disperser_group.disp_grp_y = new_y;
-                disperser_group.daily_distance -= 1;
+fn handle_reached_target(
+        disperser_group: &mut DispersingFemaleGroup,
+        grid: &mut Vec<Vec<Cell>>,
+        groups: &mut Vec<Groups>,
+        rng: &mut impl Rng,
+        groups_to_remove: &mut Vec<usize>,
+        index: usize,
+    ) {
+        if !is_valid_territory(grid, disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1, 1600) {
+            // If the target is not a valid territory, redraw the dispersal target
+            redraw_dispersal_target(disperser_group, grid, rng, groups);
+            //println!("number of available cells: {}",dummy_expand_territory_with_natural_shape(disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1, grid));
+            //println!("Target is not a valid territory, redrawing target");
+            // Set reached_target to false to indicate that the disperser did not reach its target
+           // disperser_group.reached_target = false;
+           return;
+        } else {
+            println!("disperser reached target");
+            // Get the target cell coordinates
+            let (target_x, target_y) = disperser_group.target_cell.unwrap();
+            // Add a new group at the target location
+            add_new_group_at_location(groups, grid, target_x, target_y);
+            let new_group_id = groups.last().unwrap().group_id;
+            // Make the core cell an attraction point
+            make_core_cell_an_ap(grid, groups.last().unwrap().core_cell.unwrap().0, groups.last().unwrap().core_cell.unwrap().1);
+            // Place attraction points in the territory
+            place_attraction_points_in_territory(grid, new_group_id, 8, rng);
+            // Remove attraction points on cells with quality 0
+            remove_ap_on_cells_with_quality_0(grid);
+            // For each individual in the dispersing group, create a group member and add it to the group
+            for disperser in &mut disperser_group.dispersing_individuals {
+                let new_group_member = GroupMember {
+                    individual_id: disperser.individual_id,
+                    age: disperser.age,
+                    age_class: disperser.age_class.clone(),
+                    sex: disperser.sex.clone(),
+                    health_status: disperser.health_status.clone(),
+                    time_of_birth: disperser.time_of_birth,
+                    has_reproduced: disperser.has_reproduced,
+                    time_of_reproduction: disperser.time_of_reproduction,
+                    origin_group_id: disperser.origin_group_id,
+                    has_dispersed: true,
+                    current_group_id: new_group_id,
+                };
+                groups[new_group_id - 1].group_members.push(new_group_member);
             }
+            // Add the index to groups_to_remove vector
+            groups_to_remove.push(index);
         }
+    }
+
+fn move_towards_target_cell_group(disperser_group: &mut DispersingFemaleGroup, grid: &Vec<Vec<Cell>>) {
+    if let Some((target_x, target_y)) = disperser_group.target_cell {
+        let dx = (target_x as isize - disperser_group.disp_grp_x as isize).signum();
+        let dy = (target_y as isize - disperser_group.disp_grp_y as isize).signum();
+        let new_x = (disperser_group.disp_grp_x as isize + dx) as usize;
+        let new_y = (disperser_group.disp_grp_y as isize + dy) as usize;
+        // Update disperser's position if within grid boundaries
+        if new_x < grid.len() && new_y < grid[0].len() && is_valid_cell(grid, new_x, new_y) {
+            disperser_group.disp_grp_x = new_x;
+            disperser_group.disp_grp_y = new_y;
+            disperser_group.daily_distance -= 1;
+        }
+    }
 }
 
 fn move_randomly_group(disperser_group: &mut DispersingFemaleGroup, grid: &Vec<Vec<Cell>>) {
@@ -407,13 +463,15 @@ pub fn redraw_dispersal_target(dispersing_group: &mut DispersingFemaleGroup, gri
 
     let mut target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
     let mut ptc = 0;
-    while !check_surrounding(grid, target_cell.0, target_cell.1, 100) && ptc < 10{ // check 100 cells around the target cell if they are taken
+    //while !check_surrounding(grid, target_cell.0, target_cell.1, 100) && ptc < 10{ // check 100 cells around the target cell if they are taken
+        while !is_valid_territory(grid, target_cell.0, target_cell.1, 100) && ptc < 10{
         //println!("Target cell is isolated, looking for new target cell");
         //println!("Target cell: {:?}", target_cell);
         target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
         ptc += 1;
     }
-    if !check_surrounding(grid, target_cell.0, target_cell.1, 100)
+    if !is_valid_territory(grid, target_cell.0, target_cell.1, 100)
+    //if !check_surrounding(grid, target_cell.0, target_cell.1, 100)
     {
         //println!("Unable to find a suitable target cell, merging dispersing group");
         // function that tries to merge a dispersing group back into its oringal group if the original groups groups size is below the maximum group size, otherwise the individuals in the dispersing group die

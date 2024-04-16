@@ -1,8 +1,8 @@
 // Landscape / grid functions
 
 use crate::*;
-use core::num;
-use std::f64::consts::PI;
+//use core::num;
+//use std::f64::consts::PI;
 use rand_distr::{Distribution, Normal};
 
 
@@ -145,57 +145,6 @@ pub fn extract_cell_info(grid: &Vec<Vec<Cell>>) -> Vec<CellInfo> {
     cell_info_list
 }
 
-pub fn save_cellinfo_as_csv(filename: &str, cell_info_list: &Vec<CellInfo> ) -> io::Result<()> {
-    // Create or open the CSV file
-    let mut file = File::create(filename)?;
-
-    // Write the header line
-    writeln!(file, "x_grid_o,y_grid_o,quality")?;
-
-    // Write each iteration's global variables
-    for (iteration, cellinfo) in cell_info_list.iter().enumerate() {
-        writeln!(file, "{},{},{}",cellinfo.x_grid_o, cellinfo.y_grid_o, cellinfo.quality)?;
-        // Add more variables as needed
-    }
-
-    println!("Global variables saved to: {}", filename);
-    Ok(())
-}
-
-pub fn flip_grid(grid: &mut Vec<Vec<Cell>>) {
-    let nrows = grid.len();
-    let ncols = if nrows > 0 { grid[0].len() } else { 0 };
-
-    for i in 0..nrows {
-        for j in 0..ncols {
-            let new_x = j; // New x gets the column index
-            let new_y = nrows - i - 1; // New y gets the value max(old y) - old y
-
-            grid[i][j].x_grid = new_x;//cols
-            grid[i][j].y_grid = new_y;//rows
-        }
-    }
-}
-
-pub fn filter_grid(grid: &mut Vec<Vec<Cell>>) {
-    for row in grid.iter_mut() {
-        row.retain(|cell| cell.quality > 0.0);
-    }
-}
-
-pub fn filter_grid2(original_grid: &Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
-    original_grid
-        .iter()
-        .cloned()
-        .map(|row| {
-            row.into_iter()
-                .filter(|cell| cell.quality > 0.0)
-                .collect()
-        })
-        .filter(|row: &Vec<Cell>| !row.is_empty())
-        .collect()
-}
-
 //new function for checking if cell at xy is valid
 pub fn is_valid_cell(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> bool {
     if x >= grid.len() || y >= grid[0].len() {
@@ -207,7 +156,6 @@ pub fn is_valid_cell(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> bool {
 
 pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usize, max_ap_per_chunk: usize, chunk_size: usize) {
    
-
     // chunk the grid in 2x2km blocks and create n ap per chunk
     // cell is 50x50m >>> 2500m^2
     // chunk 4000000 meters^2
@@ -260,6 +208,7 @@ pub fn remove_non_core_attraction_points(grid: &mut Vec<Vec<Cell>>) {
     }
 }
 
+<<<<<<< HEAD
 ////function that returns a subset of the grid for each group containing only the groups territory
 
 pub fn get_group_territory(grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>) -> Vec<Vec<Cell>> {
@@ -279,6 +228,9 @@ pub fn get_group_territory(grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>) -> Vec<V
     group_territory
 }
 
+=======
+//function that returns a subset of the grid for each group containing only the groups territory
+>>>>>>> 5e3b776537364a4acffed3a495cd684909eb1a65
 pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, num_points: usize, rng: &mut impl Rng) {
 
     //iterate through the groups
@@ -384,6 +336,7 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
                     ap_count += 1;
                 }
             }
+<<<<<<< HEAD
         }
         //println!("AP count: {}", ap_count);
 
@@ -415,19 +368,25 @@ pub fn get_random_normal_int (mean: f64, std_dev: f64, rng: &mut impl Rng) -> i3
         num = rng.sample(normal);
         if num >= 2.0 && num <= 7.0 {
             break;
+=======
+>>>>>>> 5e3b776537364a4acffed3a495cd684909eb1a65
         }
+        //println!("AP count: {}", ap_count);
+
+        if ap_count <= 2 {
+        
+        while ap_count < 4 {
+            
+           // create random ap in the groups territory
+           // filter cells_of_group to exclude is_ap == true
+            let territory_of_group: Vec<(usize, usize)> = cells_of_group.iter().filter(|(x, y)| grid[*x][*y].territory.is_ap == false).cloned().collect();
+            let random_ap = territory_of_group.choose(rng).unwrap();
+            grid[random_ap.0][random_ap.1].territory.is_ap = true;
+            ap_count += 1;
+         }
+        }
+
     }
-
-    // Convert the floating-point number to an integer
-    let random_int = num.round() as i32;
-
-    random_int
-}
-
-pub fn set_ap_at_individual_position(grid: &mut Vec<Vec<Cell>>, group: &Groups) {
-    
-        grid[group.x][group.y].territory.is_ap = true;
-    
 }
 
 // Get a list of all existing attraction points
@@ -439,7 +398,6 @@ pub fn get_attraction_points(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)>{
     .collect();
 
     all_ap
-
 }
 
 // Get a list of all existing free attraction points
@@ -451,7 +409,6 @@ pub fn get_free_attraction_points(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)>{
     .collect();
 
     all_ap
-
 }
 
 // function that returns a list of the 10 attraction points closest a specific groups core cell but not taken by that group
@@ -474,31 +431,6 @@ pub fn get_closest_attraction_points_outside_territory(grid: &Vec<Vec<Cell>>, gr
 
 }
 
-//function to get all the attraction points not take by a specific group
-pub fn get_free_attraction_points_for_group(grid: &Vec<Vec<Cell>>, group_id: usize) -> Vec<(usize, usize)>{
-    let all_ap: Vec<(usize, usize)> = grid
-    .iter()
-    .enumerate()
-    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.is_ap == true && cell.territory.is_taken == false && cell.territory.taken_by_group != group_id).map(move |(j, _)| (i, j)))
-    .collect();
-
-    all_ap
-
-}
-
-//TESTER
-pub fn get_attraction_points2(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)> { // Test which function is faster
-   let mut attraction_points = Vec::new();
-   for (i, row) in grid.iter().enumerate() {
-       for (j, cell) in row.iter().enumerate() {
-           if cell.territory.is_ap {
-               attraction_points.push((i, j));
-           }
-       }
-   }
-   attraction_points
-}
-
 pub fn get_closest_attraction_point(group: &Groups, ap_list: &[(usize, usize)]) -> (usize, usize) {
     ap_list
         .iter()
@@ -518,15 +450,6 @@ pub fn distance_squared(x1: usize, y1: usize, x2: usize, y2: usize) -> usize {
     (dx * dx + dy * dy) as usize
 }
 
-// Occupy an attraction point as core cell and claim the surrounding ap
-pub fn occupy_cell_here(grid: &mut Vec<Vec<Cell>>, group: &Groups) {
-
-    grid[group.x][group.y].territory.is_taken = true;
-    grid[group.x][group.y].territory.taken_by_group = group.group_id;
-
-}
-
-
 pub fn occupy_this_cell(cell: &mut Cell, group_id: usize) {
     if cell.territory.is_taken || cell.quality == 0.0{
         return;
@@ -542,42 +465,12 @@ pub fn make_core_cell(cell: &mut Cell, group_id: usize) {
     cell.territory.core_cell_of_group = group_id;
 }
 
-// Use cells around individuals with radius 1600 to create a full territory
-pub fn occupy_territory(grid: &mut Vec<Vec<Cell>>, positions: Vec<(usize, usize)>, id:usize){
-
-    for (x, y) in positions {
-        if x < grid.len() && y < grid[0].len() && grid[x][y].quality > 0.0{
-            
-            grid[x][y].territory.is_taken = true;
-            grid[x][y].territory.taken_by_group = id;
-            
-        }
-    }
-}
-
 pub fn get_attraction_points_in_territory(grid: &Vec<Vec<Cell>>, group_id: usize) -> Vec<(usize, usize)> {
     // Assuming that get_free_attraction_points returns all attraction points, filter by group_id
     get_attraction_points(grid)
         .into_iter()
         .filter(|&(x, y)| grid[x][y].territory.taken_by_group == group_id)
         .collect()
-}
-
-// Returns all cells within a given radius around an individual
-pub fn get_cells_around_individual(group: &Groups, grid: &Vec<Vec<Cell>>, range: usize) -> Vec<(usize, usize)> {
-    let mut cells_around = Vec::new();
-    let current_x = group.x;
-    let current_y = group.y;
-
-    for i in (current_x.saturating_sub(range))..=(current_x + range) {
-        for j in (current_y.saturating_sub(range))..=(current_y + range) {
-            if i < grid.len() && j < grid[0].len() {
-                cells_around.push((i, j));
-            }
-        }
-    }
-
-    cells_around
 }
 
 //function to remove attraction points that are on cells with quality 0
@@ -695,19 +588,6 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
    // *random_cell
 }
 
-
-// take the return from select_random_free_cell_in_range and create a check function the runs circular bfs with dummy values to see if the resulting list of cells is empty
-pub fn check_if_cell_is_isolated(grid: &Vec<Vec<Cell>>, x: usize, y: usize, group_id: usize) -> bool {
-    let mut isolated = false;
-    let desired_total_cells = 1600;
-    let n_cells = circular_bfs_dummy(grid, x, y, desired_total_cells);
-    println!("Number of cells in territory: {}", n_cells);
-    if n_cells <= 10 {
-        isolated = true;
-    }
-    isolated
-}
-
 pub fn check_surrounding(cells: &Vec<Vec<Cell>>, x: usize, y: usize, extent: usize) -> bool {
     // Define boundaries for surrounding area
     let start_x = if x >= extent { x - extent } else { 0 };
@@ -731,7 +611,6 @@ pub fn check_surrounding(cells: &Vec<Vec<Cell>>, x: usize, y: usize, extent: usi
     }
     false
 }
-
 
 pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id: usize, num_points: usize, rng: &mut impl Rng) {
    
@@ -883,13 +762,3 @@ pub fn make_core_cell_an_ap(grid: &mut Vec<Vec<Cell>>, cx: usize, cy: usize) {
     
 }
 
-//function to remove ap from cells that are not taken
-pub fn remove_ap_from_freed_cells(grid: &mut Vec<Vec<Cell>>) {
-    for row in grid.iter_mut() {
-        for cell in row.iter_mut() {
-            if cell.territory.is_ap && !cell.territory.is_taken && cell.territory.taken_by_group == 0 {
-                cell.territory.is_ap = false;
-            }
-        }
-    }
-}
