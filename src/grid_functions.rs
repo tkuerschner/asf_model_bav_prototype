@@ -279,7 +279,7 @@ pub fn get_group_territory(grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>) -> Vec<V
     group_territory
 }
 
-pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, mut num_points: usize, rng: &mut impl Rng) {
+pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, num_points: usize, rng: &mut impl Rng) {
 
     //iterate through the groups
     for group in groups.iter_mut() {
@@ -374,6 +374,30 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
                 }
 
             }
+        }
+
+        //count the number of ap in the group
+        let mut ap_count = 0;
+        for row in grid.iter() {
+            for cell in row.iter() {
+                if cell.territory.taken_by_group == group.group_id && cell.territory.is_ap {
+                    ap_count += 1;
+                }
+            }
+        }
+        //println!("AP count: {}", ap_count);
+
+        if ap_count <= 2 {
+        
+        while ap_count < 4 {
+            
+           // create random ap in the groups territory
+           // filter cells_of_group to exclude is_ap == true
+            let territory_of_group: Vec<(usize, usize)> = cells_of_group.iter().filter(|(x, y)| grid[*x][*y].territory.is_ap == false).cloned().collect();
+            let random_ap = territory_of_group.choose(rng).unwrap();
+            grid[random_ap.0][random_ap.1].territory.is_ap = true;
+            ap_count += 1;
+         }
         }
 
     }
@@ -809,6 +833,32 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
 
         }
     }
+
+            //count the number of ap in the group
+            let mut ap_count = 0;
+            for &(i, j) in &cells_of_group {
+                if grid[i][j].territory.is_ap {
+                    ap_count += 1;
+                }
+            }
+            //println!("AP count: {}", ap_count);
+    
+            if ap_count <= 2 {
+                //print number of cells ing group
+                println!("Number of cells in group: {}", cells_of_group.len());
+                println!("Number of ap in group: {}", ap_count);
+            
+            while ap_count < 4 {
+                
+               // create random ap in the groups territory
+               // filter cells_of_group to exclude is_ap == true
+                let territory_of_group: Vec<(usize, usize)> = cells_of_group.iter().filter(|(x, y)| grid[*x][*y].territory.is_ap == false).cloned().collect();
+                let random_ap = territory_of_group.choose(rng).unwrap();
+                grid[random_ap.0][random_ap.1].territory.is_ap = true;
+                ap_count += 1;
+             }
+             println!("Number of ap in group after adding new ones: {}", ap_count);
+            }
 
 
 }

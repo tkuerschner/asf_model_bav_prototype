@@ -1302,8 +1302,6 @@ pub fn reset_group_coordinates_to_core_cell(group: &mut Groups) -> (usize, usize
     (group.x, group.y)
 }
 
-
-   
 //TEST
 fn random_cell_with_quality(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize, usize) {
     // Generate a random cell within the grid with quality > 0
@@ -1548,7 +1546,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-    let num_groups = 10; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 20; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
