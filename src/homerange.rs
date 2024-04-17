@@ -73,6 +73,7 @@ pub fn circular_bfs_dummy(grid: &Vec<Vec<Cell>>, x: usize, y: usize, desired_tot
 
 pub fn is_valid_territory(grid: &Vec<Vec<Cell>>, x: usize, y: usize, desired_total_cells: usize) -> bool {
     if dummy_expand_territory_with_natural_shape(x, y, grid) < 400 {
+        //println!("Not a valid territory");
         false
     } else {
         true
@@ -96,7 +97,7 @@ pub fn dummy_expand_territory_with_natural_shape(x: usize, y: usize, grid: &Vec<
     let mut iterations = 0;
 
     // Expand territory until desired number of cells is reached or max iterations exceeded
-    while claimed_cells < max_desired_cells && iterations < 10000 {
+    while claimed_cells < max_desired_cells && iterations < 1000 {
          // Increment iterations count
          iterations += 1;
         // Clone the current set of territory cells
@@ -135,9 +136,11 @@ pub fn dummy_expand_territory_with_natural_shape(x: usize, y: usize, grid: &Vec<
             }
         }
     }
-
+    //println!("claimed_cells: {}", claimed_cells);
     // Return the number of cells claimed
-    territory_cells.len()
+    //territory_cells.len()
+    claimed_cells
+   
 }
 
 //pub fn territory_has_attraction_points(grid: &Vec<Vec<Cell>>, group_id: usize) -> bool {

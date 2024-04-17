@@ -395,7 +395,7 @@ fn handle_reached_target(
            // disperser_group.reached_target = false;
            return;
         } else {
-            println!("disperser reached target");
+            //println!("disperser reached target");
             // Get the target cell coordinates
             let (target_x, target_y) = disperser_group.target_cell.unwrap();
             // Add a new group at the target location

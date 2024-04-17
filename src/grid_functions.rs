@@ -668,8 +668,8 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     
             if ap_count <= 2 {
                 //print number of cells ing group
-                println!("Number of cells in group: {}", cells_of_group.len());
-                println!("Number of ap in group: {}", ap_count);
+               // println!("Number of cells in group: {}", cells_of_group.len());
+               // println!("Number of ap in group: {}", ap_count);
             
             while ap_count < 4 {
                 
@@ -680,7 +680,7 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
                 grid[random_ap.0][random_ap.1].territory.is_ap = true;
                 ap_count += 1;
              }
-             println!("Number of ap in group after adding new ones: {}", ap_count);
+           //  println!("Number of ap in group after adding new ones: {}", ap_count);
             }
 
 
