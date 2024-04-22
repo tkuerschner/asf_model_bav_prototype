@@ -37,6 +37,9 @@ use group_functions::*;
 mod dispersal;
 use dispersal::*;
 
+mod mortality;
+use mortality::*;
+
 // Define a struct to represent a group
 #[derive(Debug, Clone)]
 pub struct Groups {
@@ -602,6 +605,7 @@ pub struct CellInfo {
 pub struct GlobalVariables {
     age_mortality: u32,
     random_mortality: u32,
+    overcapacity_mortality: u32,
     n_individuals: usize,
     day: u32,
     month: u32,
@@ -705,39 +709,7 @@ const MIN_STAY_TIME: usize = 1;
 const MAX_STAY_TIME: usize = 14;
 const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
 
-// Mortality
 
-fn mortality(surv_prob: &SurvivalProbability, group: &mut Vec<Groups>, random_mortality: &mut u32){
-
-    //mortality function that checks each groups group_members age their age class survival probability and removes them from the group if they die
-    for group in group.iter_mut() {
-        let mut retained_group_members: Vec<GroupMember> = group.group_members
-            .drain(..)// remove all elements
-            .filter(|member| { // and add back the ones that survive
-                let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0); // random floating point number
-                let rounded_number = (random_number * 1e4).round() / 1e4; // rounded to 4 digits
-
-                if member.age_class != AgeClass::Piglet {   // if the age class is not piglet i.e. adult or yearling
-                    if rounded_number < surv_prob.adult {
-                        true
-                    } else {
-                        *random_mortality += 1; // increase the random mortality counter
-                        false // remove the individual
-                    }
-                } else {
-                    if rounded_number < surv_prob.piglet { // if the age class is piglet
-                        true
-                    } else {
-                        *random_mortality += 1; // increase the random mortality counter
-                        false // remove the individual
-                    }
-                }
-            })
-            .collect(); // collect the retained group members
-        group.group_members.extend_from_slice(&retained_group_members); // add the retained group members back to the group
-    }
-
-}
 
 // Memory functions
 
@@ -1419,7 +1391,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-    let num_groups = 20; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 40; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
@@ -1457,6 +1429,7 @@ fn main() {
        let mut global_variables = GlobalVariables {
         age_mortality: 0,
         random_mortality: 0,
+        overcapacity_mortality: 0,
         n_individuals: groups.iter().map(|group| group.group_members.len()).sum(),
         day: 1,   // Initialize with 1
         month: 1, // Initialize with 1
@@ -1562,6 +1535,7 @@ fn main() {
          all_global_variables.push(GlobalVariables {
             age_mortality: global_variables.age_mortality,
             random_mortality: global_variables.random_mortality,
+            overcapacity_mortality: global_variables.overcapacity_mortality,
             n_individuals: global_variables.n_individuals,
             day: global_variables.day,
             month: global_variables.month,

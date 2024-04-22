@@ -464,7 +464,7 @@ pub fn redraw_dispersal_target(dispersing_group: &mut DispersingFemaleGroup, gri
     let mut target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
     let mut ptc = 0;
     //while !check_surrounding(grid, target_cell.0, target_cell.1, 100) && ptc < 10{ // check 100 cells around the target cell if they are taken
-        while !is_valid_territory(grid, target_cell.0, target_cell.1, 100) && ptc < 10{
+        while !is_valid_territory(grid, target_cell.0, target_cell.1, 100) && ptc < 5{
         //println!("Target cell is isolated, looking for new target cell");
         //println!("Target cell: {:?}", target_cell);
         target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);

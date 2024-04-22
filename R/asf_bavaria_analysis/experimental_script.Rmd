@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 113          #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 114          #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -141,8 +141,8 @@ grp_path_bp <- ggplot() +
   new_scale_fill() +
   geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
   new_scale_color() +
-  geom_point(data = disp_event, aes(disperser_group_x, disperser_group_y, color = as.factor(disperser_id)),size = 1)+
-  geom_path(data = disp_event, aes(disperser_group_x, disperser_group_y, color =  as.factor(disperser_id)),size = 1)+
+  geom_point(data = disp_event, aes(disperser_group_x, disperser_group_y, color = as.factor(disperser_id)), size = 1) +
+  geom_path(data = disp_event, aes(disperser_group_x, disperser_group_y, color =  as.factor(disperser_id)), size = 1) +
   #labs(title = "Day: {frame_along}", color = "Movement") +
   theme_minimal() +
   theme(
@@ -150,7 +150,8 @@ grp_path_bp <- ggplot() +
     axis.title = element_blank(),
     axis.ticks = element_blank(),
     panel.grid = element_blank(),
-    plot.title = element_text(hjust = 0.5, size = 20)
+    plot.title = element_text(hjust = 0.5, size = 20),
+    legend.position = "none"
   )
 
 
@@ -166,7 +167,7 @@ animated_plot <- grp_path_bp +
 
 # summary(mpz_data)
 # summary(gr2)
-anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, ".gif"), animate(animated_plot)) # i get an eror here
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, ".gif"), animate(animated_plot)) 
 
 ```
 
