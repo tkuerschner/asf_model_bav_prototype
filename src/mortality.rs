@@ -7,10 +7,10 @@ pub fn execute_mortality(surv_prob: &SurvivalProbability, group: &mut Vec<Groups
 }
 
 
-pub fn mortality(surv_prob: &SurvivalProbability, group: &mut Vec<Groups>, random_mortality: &mut u32){
+pub fn mortality(surv_prob: &SurvivalProbability, groups: &mut Vec<Groups>, random_mortality: &mut u32){
 
     //mortality function that checks each groups group_members age their age class survival probability and removes them from the group if they die
-    for group in group.iter_mut() {
+    for group in groups.iter_mut() {
         let mut retained_group_members: Vec<GroupMember> = group.group_members
             .drain(..)// remove all elements
             .filter(|member| { // and add back the ones that survive
@@ -40,8 +40,8 @@ pub fn mortality(surv_prob: &SurvivalProbability, group: &mut Vec<Groups>, rando
 }
 
 // increase mortality if number of group members exceed max group size
-pub fn max_group_size_mortality(surv_prob: &SurvivalProbability,group: &mut Vec<Groups>, overcap_mortality: &mut u32) {
-    for group in group.iter_mut() {
+pub fn max_group_size_mortality(surv_prob: &SurvivalProbability,groups: &mut Vec<Groups>, overcap_mortality: &mut u32) {
+    for group in groups.iter_mut() {
         let current_group_size = group.group_members.len();
         let max_group_size = group.max_size;
         let diff = current_group_size as i32 - max_group_size as i32;
@@ -90,4 +90,59 @@ pub fn max_group_size_mortality(surv_prob: &SurvivalProbability,group: &mut Vec<
 }
 
 
-//pub fn combined_mortality
+pub fn combined_mortality(surv_prob: &SurvivalProbability,groups: &mut Vec<Groups>, overcap_mortality: &mut u32,  random_mortality: &mut u32){
+    for group in groups.iter_mut() {
+        let current_group_size = group.group_members.len();
+        let max_group_size = group.max_size;
+        let diff = current_group_size as i32 - max_group_size as i32;
+        let mut surv_prob_adult = 0.0;
+        let mut surv_prob_piglet = 0.0;
+        let mut overcap_check = false;
+        
+
+        if diff > 0 { // if the group size is greater than the max group size
+            let decrease = diff as f64 * 0.001; // decrease the survival probability by 0.1% for each individual over the max group size
+            surv_prob_adult =   surv_prob.adult - (surv_prob.adult * decrease); 
+            surv_prob_piglet =  surv_prob.piglet - (surv_prob.piglet * decrease);
+            overcap_check = true;
+            
+        } else { // if the group size is less than the max group size
+            surv_prob_adult = surv_prob.adult;
+            surv_prob_piglet = surv_prob.piglet;
+        }
+
+        let retained_group_members: Vec<GroupMember> = group.group_members
+        .drain(..)
+        .filter(|member| {
+            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
+            let rounded_number = (random_number * 1e4).round() / 1e4;
+
+            if member.age_class != AgeClass::Piglet {
+                if rounded_number < surv_prob_adult {
+                    true
+                } else {
+                    if overcap_check {
+                        *overcap_mortality += 1;
+                    } else {
+                        *random_mortality += 1;
+                    }   
+                    false
+                }
+            } else {
+                if rounded_number < surv_prob_piglet {
+                    true
+                } else {
+                    if overcap_check {
+                        *overcap_mortality += 1;
+                    } else {
+                        *random_mortality += 1;
+                    }
+                    false
+                }
+            }
+        })
+        .collect();
+    group.group_members.extend_from_slice(&retained_group_members);
+    }
+}
+

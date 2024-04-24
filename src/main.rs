@@ -464,7 +464,7 @@ impl fmt::Display for MovementMode {
     }
 }
 
-// Static counter for individual_id
+// e Display trait for MovementMode
 static mut INDIVIDUAL_COUNTER: usize = 0;
 
 // Function to generate a unique individual_id
@@ -1499,7 +1499,8 @@ fn main() {
 
         if global_variables.day == 15 {
 
-         mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
+         //mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
+            combined_mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality);
         }
 
         //age individuals by one day

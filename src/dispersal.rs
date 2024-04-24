@@ -15,7 +15,6 @@ pub fn generate_disperser_id() -> usize {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct DispersingIndividual {
     //pub ageclass: AgeClass,
