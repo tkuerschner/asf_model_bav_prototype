@@ -66,10 +66,12 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
             group_members: vec![],
             daily_movement_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE, //<--------------------DEBUG FIX ME with actual values
             max_size: 10000,
+            current_ap: Vec::new(),
         };
         //new_group.expand_territory_within_range(grid);
         //new_group.expand_territory_with_natural_shape_and_radius(grid);
         new_group.expand_territory_with_natural_shape(grid);
+        new_group.current_ap = get_attraction_points_in_territory(grid, new_group.group_id);
         //new_group.expand_territory(grid); // Fill the territory with cells
         //new_group.claim_territory(grid); // Claim the territory
 
@@ -227,6 +229,7 @@ pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Ce
        group_members: Vec::new(),
        daily_movement_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
        max_size: calculate_max_group_size_for_group(grid, group_id),
+       current_ap: Vec::new(),
    };
 
    new_group.expand_territory_with_natural_shape(grid); // fill the territory with cells
@@ -271,3 +274,4 @@ pub fn check_for_empty_groups(groups: &Vec<Groups>)  {
         println!("Empty groups found: {:?}", empty_groups);
     }
 }
+

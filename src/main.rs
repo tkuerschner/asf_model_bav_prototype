@@ -54,6 +54,7 @@ pub struct Groups {
     movement: MovementMode,
     daily_movement_distance: usize,
     max_size: usize,
+    current_ap: Vec<(usize, usize)>,
 }
 
 // implementation of the group struct
@@ -156,6 +157,7 @@ impl Groups {
         origin_group_id,
         has_dispersed,
         current_group_id,
+        
     };
 
     // Add the new group member to the group
@@ -1472,7 +1474,7 @@ fn main() {
            // println!("Dispersal triggered: year {}, month {}, day {}", global_variables.year, global_variables.month, global_variables.day);
             dispersal_assignment(&mut groups, disperser_vector, dispersing_groups_vector);
             //assign_dispersal_targets_individuals( disperser_vector, &groups);
-             assign_dispersal_targets_groups(dispersing_groups_vector, &mut groups, &mut grid, &mut rng);
+            assign_dispersal_targets_groups(dispersing_groups_vector, &mut groups, &mut grid, &mut rng);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
             move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng, global_variables.month);

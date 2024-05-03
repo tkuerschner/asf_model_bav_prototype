@@ -787,10 +787,14 @@ pub fn dynamic_ap(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut
         
             if globals.year > 2 && globals.month == 7 && globals.day == 1 {
                 remove_non_core_attraction_points_this_group(grid, group.group_id);
+                remove_non_core_attraction_points_this_group(grid, group.group_id);
                 place_attraction_points_in_territory(grid, group.group_id, 6, rng);
+                group.current_ap = get_attraction_points_in_territory(grid, group.group_id);
             } else if globals.year > 2 && globals.month == 10 && globals.day == 1  {
                 remove_non_core_attraction_points_this_group(grid, group.group_id);
+                remove_non_core_attraction_points_this_group(grid, group.group_id);
                 place_attraction_points_in_territory(grid, group.group_id, 3, rng);
+                group.current_ap = get_attraction_points_in_territory(grid, group.group_id);
             }
 
         }
@@ -799,11 +803,27 @@ pub fn dynamic_ap(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut
 }
 
 pub fn remove_non_core_attraction_points_this_group(grid: &mut Vec<Vec<Cell>>, group_id: usize) {
-    for row in grid.iter_mut() {
-        for cell in row.iter_mut() {
-            if cell.territory.taken_by_group == group_id && cell.territory.core_cell_of_group == 0 {
-                cell.territory.is_ap = false;
-            }
+    
+    let terr: Vec<(usize, usize)> = grid
+    .iter()
+    .enumerate()
+    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group_id).map(move |(j, _)| (i, j)))
+    .collect();
+    
+    for (i, j) in terr {
+        if grid[i][j].territory.core_cell_of_group != group_id {
+            grid[i][j].territory.is_ap = false;
         }
     }
+    
+    
+    
+    
+  //  for row in grid.iter_mut() {
+  //      for cell in row.iter_mut() {
+  //          if cell.territory.taken_by_group == group_id && cell.territory.core_cell_of_group != group_id {
+  //              cell.territory.is_ap = false;
+  //          }
+  //      }
+  //  }
 }

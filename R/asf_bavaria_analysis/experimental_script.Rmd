@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 122         #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 123         #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -715,31 +715,6 @@ disp_event <- dispersers
 #  group_by(iteration) %>%
 #  sample_n(1)
 
-
-for(i in 1:length(unique(groups$group_id))){
-  gr1 <- groups %>% filter(group_id == i) %>% group_by(iteration) #%>%
-  #sample_n(1)
-
-
-#gr1 <- groups %>% filter(group_id == i) %>% group_by(iteration) #%>%
-#  sample_n(1)
-
-# head(gr1)
-
-# gr1$target_cell
-
-gr1 <- gr1 %>%
-  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
-  separate_rows(target, sep = ";") %>%
-  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE) %>%
-  mutate(core = gsub("\\[|\\]", "", core_cell)) %>%
-  separate(core, into = c("cx", "cy"), sep = "_", convert = TRUE)
-
-
-gr2 <- gr1 %>%
-  ungroup() %>%
-  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id, year, cx, cy)
-
 buffer_size <- 20
 
 mpz_data <- g2 %>%
@@ -768,6 +743,33 @@ terr_data <- g4 %>%
       y <= max(gr2$y) + buffer_size
   ) %>%
   dplyr::select(x, y, quality,iteration, territory_of_group)
+
+
+for(i in 1:length(unique(groups$group_id))){
+  gr1 <- groups %>% filter(group_id == i) %>% group_by(iteration) #%>%
+  #sample_n(1)
+
+
+#gr1 <- groups %>% filter(group_id == i) %>% group_by(iteration) #%>%
+#  sample_n(1)
+
+# head(gr1)
+
+# gr1$target_cell
+
+gr1 <- gr1 %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE) %>%
+  mutate(core = gsub("\\[|\\]", "", core_cell)) %>%
+  separate(core, into = c("cx", "cy"), sep = "_", convert = TRUE)
+
+
+gr2 <- gr1 %>%
+  ungroup() %>%
+  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id, year, cx, cy)
+
+
 
 
 grp_path_bp <- ggplot() +
@@ -807,38 +809,17 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_hr_group_",i,".
 
 ```
 
-```{r}
+```{r hr by year}
 
 groups2 <- groups %>%
   mutate(year = as.numeric(round(iteration / 365)) + 1)
   disp_event <- dispersers
-  gr1 <- groups2 %>% filter(group_id == 1) %>% group_by(year) #%>%
-  #sample_n(1)
+  gr2 <- groups2 %>% filter(group_id == 1) %>% group_by(year) %>%
+  sample_n(1)
 
   maxYear <- max(groups2$year)
 
-#gr1 <- groups %>% filter(group_id == i) %>% group_by(iteration) #%>%
-#  sample_n(1)
-
-# head(gr1)
-
-# gr1$target_cell
-for(i in 1:maxYear){
-
-grx <- gr1 %>% filter(year == i)
-
-grx1 <- grx %>%
-  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
-  separate_rows(target, sep = ";") %>%
-  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)%>%
-  mutate(core = gsub("\\[|\\]", "", core_cell)) %>%
-  separate(core, into = c("cx", "cy"), sep = "_", convert = TRUE)
-
-gr2 <- grx1 %>%
-  ungroup() %>%
-  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id, year, cx ,cy)
-
-buffer_size <- 20
+  buffer_size <- 20
 
 mpz_data <- g2 %>%
   filter(
@@ -867,6 +848,30 @@ terr_data <- g4 %>%
   ) %>%
   dplyr::select(x, y, quality,iteration, territory_of_group)
 
+
+#gr1 <- groups %>% filter(group_id == i) %>% group_by(iteration) #%>%
+#  sample_n(1)
+
+# head(gr1)
+
+# gr1$target_cell
+for(i in 1:maxYear){
+
+grx <- gr1 %>% filter(year == i)
+
+grx1 <- grx %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)%>%
+  mutate(core = gsub("\\[|\\]", "", core_cell)) %>%
+  separate(core, into = c("cx", "cy"), sep = "_", convert = TRUE)
+
+gr2 <- grx1 %>%
+  ungroup() %>%
+  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id, year, cx ,cy)
+
+
+
 grp_path_bp <- ggplot() +
   geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
@@ -891,6 +896,102 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_hr_year_",i,".p
 }
 ```
 
+```{r ap list}
+
+
+groups2 <- groups %>%
+  mutate(year = as.numeric(round(iteration / 365)) + 1)
+  disp_event <- dispersers
+  gr2 <- groups2 %>% filter(group_id == 1) %>% group_by(year) %>%
+  sample_n(1)
+
+ap_list_p <- gr2 %>%
+  dplyr::select(ap_list, year) 
+
+ap_list <- ap_list_p %>%
+  group_by(year) %>%
+  mutate(ap_list = gsub("\\[|\\]", "", ap_list)) %>%
+  mutate(x = strsplit(as.character(ap_list), ";")) %>%
+  unnest(x) %>%
+  separate(x, into = c("apx", "apy"), sep = "_", convert = TRUE) %>%
+  dplyr::select(-ap_list)
+
+  maxYear <- max(groups2$year)
+
+  buffer_size <- 20
+
+mpz_data <- g2 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
+
+ap_data <- g3 %>%
+ filter(
+   x >= min(gr2$x) - buffer_size &
+     x <= max(gr2$x) + buffer_size &
+     y >= min(gr2$y) - buffer_size &
+     y <= max(gr2$y) + buffer_size
+ ) %>%
+  dplyr::select(x, y,iteration)
+
+terr_data <- g4 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality,iteration, territory_of_group)
+
+for(i in 1:maxYear){
+
+grx <- gr1 %>% filter(year == i)
+
+apx <- ap_list %>% filter(year == i)
+apx$group_id <- 1
+
+grx1 <- grx %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)%>%
+  mutate(core = gsub("\\[|\\]", "", core_cell)) %>%
+  separate(core, into = c("cx", "cy"), sep = "_", convert = TRUE)
+
+gr2 <- grx1 %>%
+  ungroup() %>%
+  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id, year, cx ,cy)
+
+
+
+grp_path_bp <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = as.factor(territory_of_group)), alpha = .5) +
+  geom_point(data = apx, aes(apx, apy, group = group_id), fill = "#2ab1d3", colour = "#0d5a6d", size = 2, shape = 22) +
+  new_scale_fill() +
+  geom_point(data = gr2, aes(x = cx, y = cy), size = 2, color = "#003cff", fill = "blue", shape = 22)+ 
+  #geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  new_scale_color() +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+ggsave(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_hr_year_",i,".png"), grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
+}
+
+
+```
 
 ```{r}
 
