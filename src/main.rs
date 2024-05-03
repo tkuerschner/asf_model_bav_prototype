@@ -1391,7 +1391,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-    let num_groups = 40; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 1; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
@@ -1402,7 +1402,9 @@ fn main() {
     let (mut grid, mut groups) = setup(file_path, num_groups);
 
     // adjust attraction points
-    place_additional_attraction_points(&mut grid, &mut groups, 10, &mut rng);
+    place_additional_attraction_points(&mut grid, &mut groups, 3, &mut rng);
+
+    //place_dynamic_attraction_points(&mut grid, &mut groups, 10, &mut rng, "winter");
 
     remove_ap_on_cells_with_quality_0(&mut grid);
     
@@ -1473,7 +1475,7 @@ fn main() {
              assign_dispersal_targets_groups(dispersing_groups_vector, &mut groups, &mut grid, &mut rng);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
-            move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng);
+            move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng, global_variables.month);
         }
 
         // Free territory of groups with no members
@@ -1482,9 +1484,12 @@ fn main() {
           //  remove_ap_from_freed_cells(&mut grid);
         }
 
-        // Simulate movement of individuals
        
-        check_attraction_points_in_territory(&mut grid, &mut groups, 8, &mut rng);
+
+
+        // Simulate movement of individuals
+        dynamic_ap(&mut grid, &mut groups, &mut rng, &mut global_variables);
+        check_attraction_points_in_territory(&mut grid, &mut groups, 3, &mut rng);
         move_groups(&grid, &mut groups, &mut rng);
 
         //check dispersers if their target cell == none

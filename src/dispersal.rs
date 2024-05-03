@@ -270,7 +270,7 @@ fn merge_dispersing_group_back_to_origin(dispersing_group: &mut DispersingFemale
   //  }
 }
 
-pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleGroup>, grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng) {
+pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleGroup>, grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng, month: u32) {
         let mut groups_to_remove = Vec::new(); // Vector to store indices of groups to remove
        // println!("Number of dispersing groups start: {}", dispersing_groups.len());
         for (index, disperser_group) in dispersing_groups.iter_mut().enumerate() {
@@ -315,7 +315,7 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
             }
 
             if reached_target {
-                handle_reached_target(disperser_group, grid, groups, rng, &mut groups_to_remove, index);
+                handle_reached_target(disperser_group, grid, groups, rng, &mut groups_to_remove, index, month );
             }
 
             //if reached_target {
@@ -384,6 +384,7 @@ fn handle_reached_target(
         rng: &mut impl Rng,
         groups_to_remove: &mut Vec<usize>,
         index: usize,
+        month: u32,
     ) {
         if !is_valid_territory(grid, disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1, 1600) {
             // If the target is not a valid territory, redraw the dispersal target
@@ -403,7 +404,16 @@ fn handle_reached_target(
             // Make the core cell an attraction point
             make_core_cell_an_ap(grid, groups.last().unwrap().core_cell.unwrap().0, groups.last().unwrap().core_cell.unwrap().1);
             // Place attraction points in the territory
-            place_attraction_points_in_territory(grid, new_group_id, 8, rng);
+            
+            // if month is between 6 and 10
+            if month > 6 && month < 10 {
+                place_attraction_points_in_territory(grid, new_group_id, 6, rng);
+            } else {
+                place_attraction_points_in_territory(grid, new_group_id, 3, rng);
+            }
+
+           //place_attraction_points_in_territory(grid, new_group_id, 8, rng);
+           // place_dynamic_attraction_points(grid, new_group_id, 8, rng, "winter");
             // Remove attraction points on cells with quality 0
             remove_ap_on_cells_with_quality_0(grid);
             // For each individual in the dispersing group, create a group member and add it to the group

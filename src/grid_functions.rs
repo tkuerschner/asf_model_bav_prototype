@@ -333,6 +333,78 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
     }
 }
 
+pub fn place_dynamic_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, num_points: usize, rng: &mut impl Rng, season: &str) {
+
+    //iterate through the groups
+    for group in groups.iter_mut() {
+        //take all the cells occupied by this group
+        let cells_of_group: Vec<(usize, usize)> = grid // FIX ME: This is a very inefficient way to get the cells of a group
+            .iter()
+            .enumerate()
+            .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group.group_id).map(move |(j, _)| (i, j)))
+            .collect();
+
+        // get the core cell of the group
+        let core_cell = group.core_cell.unwrap();
+        let mut ap_to_place = 1;
+
+        if season == "summer" {
+        ap_to_place = 6;
+        } else {
+        ap_to_place = 3;
+        }
+
+            // take 3 cells from the group cells that are equidistant from the core cell and each other (min distance 15 cells), jitter them and place an attraction point on them
+            let mut cells_to_place_ap: Vec<(usize, usize)> = Vec::new();
+            let mut cells_to_place_ap_jittered: Vec<(usize, usize)> = Vec::new();
+
+            // get the distance between the core cell and each cell in the group
+            let mut distances: Vec<(usize, usize, usize)> = Vec::new();
+            for cell in cells_of_group.iter() {
+                let distance = distance_squared(core_cell.0, core_cell.1, cell.0, cell.1);
+                distances.push((cell.0, cell.1, distance));
+            }
+
+            // sort the distances
+            distances.sort_by(|a, b| a.2.cmp(&b.2));
+
+            // get the 3 cells that are equidistant from the core cell and each other
+            let mut i = 0;
+            while cells_to_place_ap.len() < ap_to_place {
+                let cell = distances[i];
+                let mut is_equidistant = true;
+                for cell_to_place in cells_to_place_ap.iter() {
+                    if distance_squared(cell.0, cell.1, cell_to_place.0, cell_to_place.1) < 15 * 15 {
+                        is_equidistant = false;
+                        break;
+                    }
+                }
+                if is_equidistant {
+                    cells_to_place_ap.push((cell.0, cell.1));
+                }
+                i += 1;
+            }
+
+            // jitter the cells
+
+            for cell in cells_to_place_ap.iter() {
+                let x = cell.0 as f64;
+                let y = cell.1 as f64;
+                let x_offset = rng.gen_range(-4..=4) as f64;
+                let y_offset = rng.gen_range(-4..=4) as f64;
+                let x_jittered = (x + x_offset).max(0.0).min(grid.len() as f64 - 1.0);
+                let y_jittered = (y + y_offset).max(0.0).min(grid[0].len() as f64 - 1.0);
+                cells_to_place_ap_jittered.push((x_jittered as usize, y_jittered as usize));
+            }
+
+            // place the attraction points on the jittered cells
+            for cell in cells_to_place_ap_jittered.iter() {
+                grid[cell.0][cell.1].territory.is_ap = true;
+            }
+        }
+
+    }
+
 // Get a list of all existing attraction points
 pub fn get_attraction_points(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)>{
     let all_ap: Vec<(usize, usize)> = grid
@@ -706,3 +778,32 @@ pub fn make_core_cell_an_ap(grid: &mut Vec<Vec<Cell>>, cx: usize, cy: usize) {
     
 }
 
+
+pub fn dynamic_ap(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng, globals: &mut GlobalVariables) {
+    
+    if globals.year > 2 && ((globals.day == 1 && globals.month == 7) || (globals.day == 1 && globals.month == 10)){
+       // println!("Dynamic AP placement");
+        for group in groups.iter_mut() {
+        
+            if globals.year > 2 && globals.month == 7 && globals.day == 1 {
+                remove_non_core_attraction_points_this_group(grid, group.group_id);
+                place_attraction_points_in_territory(grid, group.group_id, 6, rng);
+            } else if globals.year > 2 && globals.month == 10 && globals.day == 1  {
+                remove_non_core_attraction_points_this_group(grid, group.group_id);
+                place_attraction_points_in_territory(grid, group.group_id, 3, rng);
+            }
+
+        }
+        //println!("Dynamic AP placement done");
+    }
+}
+
+pub fn remove_non_core_attraction_points_this_group(grid: &mut Vec<Vec<Cell>>, group_id: usize) {
+    for row in grid.iter_mut() {
+        for cell in row.iter_mut() {
+            if cell.territory.taken_by_group == group_id && cell.territory.core_cell_of_group == 0 {
+                cell.territory.is_ap = false;
+            }
+        }
+    }
+}
