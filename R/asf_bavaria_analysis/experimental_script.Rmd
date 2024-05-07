@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 125         #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 126         #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -814,7 +814,7 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_hr_group_",i,".
 groups2 <- groups %>%
   mutate(year = as.numeric(round(iteration / 365)) + 1)
   disp_event <- dispersers
-  gr2 <- groups2 %>% filter(group_id == 1) %>% group_by(year) %>%
+  gr2 <- groups2 %>% filter(group_id == 4) %>% group_by(year) %>%
   sample_n(1)
 
   maxYear <- max(groups2$year)
@@ -896,11 +896,155 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_hr_year_",i,".p
 }
 ```
 
-```{r ap list}
+```{r ap list month}
 
 
 groups2 <- groups %>%
-  mutate(year = as.numeric(round(iteration / 365)) + 1)
+  mutate(year = as.numeric(round(iteration / (29*12))) + 1, month = ((iteration - 1) %% (29*12)) %/% 29 + 1)
+  #add a month column for each year
+  
+
+  disp_event <- dispersers
+  gr2 <- groups2 %>% filter(group_id == 1) %>% group_by(month, year) %>%
+  sample_n(1)
+
+  gsu <- groups2 %>% filter(group_id == 1) %>% group_by(iteration) %>%
+  sample_n(1)
+
+ap_list_p <- gr2 %>%
+  dplyr::select(ap_list, month, year) 
+
+ap_list <- ap_list_p %>%
+  group_by(month) %>%
+  mutate(ap_list = gsub("\\[|\\]", "", ap_list)) %>%
+  mutate(x = strsplit(as.character(ap_list), ";")) %>%
+  unnest(x) %>%
+  separate(x, into = c("apx", "apy"), sep = "_", convert = TRUE) %>%
+  dplyr::select(-ap_list)
+
+  maxYear <- max(groups2$year)
+
+  buffer_size <- 20
+
+mpz_data <- g2 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
+
+ap_data <- g3 %>%
+ filter(
+   x >= min(gr2$x) - buffer_size &
+     x <= max(gr2$x) + buffer_size &
+     y >= min(gr2$y) - buffer_size &
+     y <= max(gr2$y) + buffer_size
+ ) %>%
+  dplyr::select(x, y,iteration)
+
+terr_data <- g4 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality,iteration, territory_of_group)
+
+for(i in 1:maxYear){
+  for(j in 9:10){
+grx <- gr2 %>% filter(year == i) %>% filter(month == j)
+
+gsux <- gsu %>% filter(year == i) %>% filter(month == j)
+
+apx <- ap_list %>% filter(year == i) %>% filter(month == j)
+apx$group_id <- 1
+
+grx1 <- grx %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)%>%
+  mutate(core = gsub("\\[|\\]", "", core_cell)) %>%
+  separate(core, into = c("cx", "cy"), sep = "_", convert = TRUE)
+
+grx2 <- grx1 %>%
+  ungroup() %>%
+  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id, year, cx ,cy, month)
+
+
+
+grp_path_bp <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = as.factor(territory_of_group)), alpha = .5) +
+  geom_point(data = apx, aes(apx, apy, group = group_id), fill = "#2ab1d3", colour = "#0d5a6d", size = 2, shape = 22) +
+  new_scale_fill() +
+  geom_point(data = grx2, aes(x = cx, y = cy), size = 2, color = "#003cff", fill = "blue", shape = 22)+ 
+  #geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  new_scale_color() +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+  detailed_path_df <- gsux %>%
+  group_by(iteration) %>%
+  mutate(known_cells = gsub("\\[|\\]", "", known_cells)) %>%
+  mutate(x = strsplit(as.character(known_cells), ";")) %>%
+  unnest(x) %>%
+  separate(x, into = c("x", "y"), sep = "_", convert = TRUE) %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE) %>%
+  dplyr::select(-known_cells)
+
+  space_use <- detailed_path_df %>%
+  count(x, y)
+
+  spuseplot <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = as.factor(territory_of_group)), alpha = .5) +
+  #new_scale_fill() +
+  #scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  guides(fill = "none") +
+  new_scale_fill() +
+  geom_tile(data = space_use, aes(x = x, y = y, fill = log(n)), alpha = .5) +
+  scale_fill_scico(palette = "berlin") +
+  #labs(fill = "Space use", title = "Day: {current_frame}") #+
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+
+ggsave(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_hr_month_",j,"_year_",i,".png"), grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
+ggsave(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_spaceUse_month_",j,"_year_",i,".png"), spuseplot, width = 25, height = 25, units = "cm", dpi = 300)
+
+  }
+}
+
+
+```
+```{r ap list year}
+
+
+groups2 <- groups %>%
+  mutate(year = as.numeric(round(iteration / 365)) + 1) %>%
   disp_event <- dispersers
   gr2 <- groups2 %>% filter(group_id == 1) %>% group_by(year) %>%
   sample_n(1)
@@ -1036,7 +1180,6 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_spaceUse_year_"
 
 
 ```
-
 
 ```{r}
 
@@ -1267,6 +1410,12 @@ anim_save(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_movement_3",
 
 ```{r clusters}
 
+cl10 <- read.csv("C:/Users/kuerschner/OneDrive/Projects/asf_bavaria/Prototype/Elodie/Movement data/n_clusters_th10.csv", header = TRUE)
+
+
+cd1 <- cl10 #%>% 
+  #filter()
+
 
 cd1 <- read.csv("./R/asf_bavaria_analysis/clusterData.csv", header = TRUE)
 
@@ -1276,13 +1425,14 @@ cd2 <- cd1 %>%
 
 #summarise cd2 by month
 cd3 <- cd2 %>%
-  group_by(month) %>%
+  group_by(month, sex) %>%
   summarise(meanAP = mean(n_clusters), sdAP = sd(n_clusters))
 
 #plot the data
-ggplot(cd3, aes(x = as.factor(month), y = meanAP)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = meanAP - sdAP, ymax = meanAP + sdAP), width = 0.2) +
+ggplot(cd3, aes(x = as.factor(month), y = meanAP, color = sex)) +
+  geom_point(position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = meanAP - sdAP, ymax = meanAP + sdAP), width = 0.2, position = position_dodge(width = 0.5)) +
+  #facet_wrap(~sex) +
   labs(title = "Mean number of AP per month", x = "Month", y = "Mean number of AP") +
   theme_minimal()
 
@@ -1290,14 +1440,15 @@ ggplot(cd3, aes(x = as.factor(month), y = meanAP)) +
 
 # mean of clusters in cd2 per year and month
 cd4 <- cd2 %>%
-  group_by(year, month) %>%
+  group_by(year, month, sex) %>%
   summarise(meanAP = mean(n_clusters), sdAP = sd(n_clusters))
 
 
   #plot the data with year as color and position dodge
-ggplot(cd4, aes(x = as.factor(month), y = meanAP, color = as.factor(year))) +
+ggplot(cd4, aes(x = as.factor(month), y = meanAP, color = as.factor(sex))) +
   geom_point(position = position_dodge(width = 0.5)) +
   geom_errorbar(aes(ymin = meanAP - sdAP, ymax = meanAP + sdAP), position = position_dodge(width = 0.5), width = 0.2) +
+  facet_wrap(~year) +
   labs(title = "Mean number of AP per month", x = "Month", y = "Mean number of AP") +
   theme_minimal()
 
@@ -1311,7 +1462,7 @@ ggplot(cd4, aes(x = as.factor(month), y = meanAP, color = as.factor(year), group
 
 #summarise cd2 by year and month with the max number of clusters
 cd5 <- cd2 %>%
-  group_by(year, month) %>%
+  group_by(year, month, sex) %>%
   summarise(maxAP = max(n_clusters))
 
   #plot the data as area across the month with year as color and fill by year
@@ -1338,10 +1489,10 @@ cd5 <- cd2 %>%
 
 
 cd6 <- cd2 %>%
-  group_by(month) %>%
+  group_by(month, sex) %>%
   mutate(total_rows = n()) %>%
   ungroup() %>%
-  group_by(month, n_clusters) %>%
+  group_by(month, n_clusters, sex) %>%
   summarise(n_clusters_group = n(), 
   total_rows = unique(total_rows)) %>%
   mutate(prob_cluster = n_clusters_group / total_rows) 
@@ -1359,10 +1510,11 @@ cd6 <- cd2 %>%
 
  # plot the monthly probability curves
 
-ggplot(cd6, aes(x = n_clusters, y = prob_cluster, color = as.factor(month))) +
+ggplot(cd6 %>% filter(sex == "f"), aes(x = n_clusters, y = prob_cluster, color = as.factor(month))) +
   geom_line() +
   labs(title = "Monthly probability distribution of ap", x = "Number ap", y = "Probability") +
-  theme_minimal()
+  theme_minimal()#+
+  #facet_wrap(~sex)
 
 ggplot(cd6, aes(x = n_clusters, y = prob_cluster)) +
   geom_smooth() +
@@ -1397,6 +1549,19 @@ ggplot(cd6, aes(x = (month), y = prob_cluster, fill = as.factor(n_clusters))) +
    scale_x_continuous(breaks = seq(1, 12, 1)) +
   theme_minimal()
 
+
+  cd2x <- cd2 %>% filter(sex == "f")
+
+  #plot the data as a point with error across the month with age as color
+ggplot(cd2x, aes(x = as.factor(month), y = n_clusters, color = age)) +
+  geom_point(position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = n_clusters - sd(n_clusters), ymax = n_clusters + sd(n_clusters)), width = 0.2, position = position_dodge(width = 0.5)) +
+  labs(title = "Number of AP per month", x = "Month", y = "Number of AP") +
+  theme_minimal()
+
+cd3x <- cd2x %>% filter(age == "Juvenil")
+ mean(cd2x$n_clusters)
+ sd(cd3x$n_clusters)
 ```
 
 ```{r}
