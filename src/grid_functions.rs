@@ -154,6 +154,16 @@ pub fn is_valid_cell(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> bool {
     cell.quality > 0.0
 }
 
+pub fn random_valid_cell(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize, usize) {
+    loop {
+        let x = rng.gen_range(0..grid.len());
+        let y = rng.gen_range(0..grid[0].len());
+        if is_valid_cell(grid, x, y) {
+            return (x, y);
+        }
+    }
+}
+
 pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usize, max_ap_per_chunk: usize, chunk_size: usize) {
    
     // chunk the grid in 2x2km blocks and create n ap per chunk

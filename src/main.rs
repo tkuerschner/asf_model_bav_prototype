@@ -40,6 +40,10 @@ use dispersal::*;
 mod mortality;
 use mortality::*;
 
+mod roamers;
+use roamers::*;
+
+
 // Define a struct to represent a group
 #[derive(Debug, Clone)]
 pub struct Groups {
@@ -157,7 +161,6 @@ impl Groups {
         origin_group_id,
         has_dispersed,
         current_group_id,
-        
     };
 
     // Add the new group member to the group
@@ -1415,6 +1418,9 @@ fn main() {
     let disperser_vector: &mut Vec<DispersingIndividual> = &mut Vec::new();
     let dispersing_groups_vector: &mut Vec<DispersingFemaleGroup> = &mut Vec::new();
 
+    //create vector for roaming individuals using the struct in roamers.rs
+    let roamer_vector: &mut Vec<RoamingIndividual> = &mut Vec::new();
+
     
    // place_new_attraction_points(&mut grid, &mut groups, 5);
 
@@ -1426,6 +1432,9 @@ fn main() {
 
     // Vector to store disperser states for all iterations
     let mut all_disperser_states: Vec<(usize, Vec<DispersingFemaleGroup>)> = Vec::new();
+
+    // Vector to store roamer states for all iterations
+    let mut all_roamer_states: Vec<(usize, Vec<RoamingIndividual>)> = Vec::new();
 
     // Vector to store global variables for all iterations
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
@@ -1475,11 +1484,15 @@ fn main() {
             dispersal_assignment(&mut groups, disperser_vector, dispersing_groups_vector);
             //assign_dispersal_targets_individuals( disperser_vector, &groups);
             assign_dispersal_targets_groups(dispersing_groups_vector, &mut groups, &mut grid, &mut rng);
+            //assign male individuals as roamers
+            roamer_assignemnt( roamer_vector,&mut groups);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
             move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng, global_variables.month);
-        }
 
+        }
+        initial_roamer_dispersal_target(roamer_vector, &mut groups, &mut grid, &mut rng);
+        initial_roamer_dispersal_movement(roamer_vector, &mut grid);
         // Free territory of groups with no members
         if global_variables.day == 1 {
           //  free_group_cells(&mut groups, &mut grid);
@@ -1530,6 +1543,9 @@ fn main() {
 
             // Save the disperser state for the current iteration
             all_disperser_states.push((iteration, dispersing_groups_vector.clone()));
+
+            // Save the roamer state for the current iteration
+            all_roamer_states.push((iteration, roamer_vector.clone()));
 
         // Stop the sim when all individuals are dead
 
@@ -1585,6 +1601,9 @@ fn main() {
     // Save all disperser states to a single CSV file
     save_disperser_group_as_csv("output/all_dispersers.csv", &all_disperser_states).expect("Failed to save disperser as CSV");
     
+    // Save all roamer states to a single CSV file
+    save_roamers_as_csv("output/all_roamers.csv", &all_roamer_states).expect("Failed to save roamer as CSV");
+
     // variable that is set to the system time when the save is complete
     let save_time = Instant::now();
     //variable showing the difference between the end time and the save time

@@ -178,8 +178,47 @@ pub fn save_disperser_group_as_csv(filename: &str, disperser_states: &[(usize, V
 }
 
 
+pub fn save_roamers_as_csv(filename: &str, roamer_states: &[(usize, Vec<RoamingIndividual>)]) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
 
+    writeln!(file, "iteration,roamer_id,individual_id,age,age_class,sex,health_status,origin_group_id,roamer_x,roamer_y,known_groups,target_group,daily_distance,target_group")?;
 
+    // Write each roamer's data for each iteration
+    for (iteration, roamers) in roamer_states {
+        for roamer in roamers {
+            let known_groups_str: String = roamer
+                .known_groups
+                .iter()
+                .map(|&id| id.to_string())
+                .collect::<Vec<String>>()
+                .join(";");
+
+            writeln!(
+                file,
+                "{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                iteration,
+                roamer.roamer_id,
+                roamer.individual_id,
+                roamer.age,
+                roamer.age_class,
+                roamer.sex,
+                roamer.health_status,
+                roamer.origin_group_id,
+                roamer.roamer_x,
+                roamer.roamer_y,
+                known_groups_str,
+                roamer.target_group.unwrap_or(0),
+                roamer.daily_distance,
+                roamer.target_group_id.unwrap_or(0)
+            )?;
+        }
+    }
+
+    println!("Roamers saved to: {}", filename);
+    Ok(())
+
+}
 
 
 

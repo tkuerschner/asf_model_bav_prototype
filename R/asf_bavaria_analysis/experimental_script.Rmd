@@ -1593,4 +1593,5 @@ result <- inner_join(grid, gr3, by = c("x" = "corex", "y" = "corey"))
 
 
 
+
 ```
