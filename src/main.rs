@@ -59,6 +59,7 @@ pub struct Groups {
     daily_movement_distance: usize,
     max_size: usize,
     current_ap: Vec<(usize, usize)>,
+    active: bool,
 }
 
 // implementation of the group struct
@@ -1396,7 +1397,7 @@ fn main() {
     let start_time = Instant::now();
 
     let mut rng = rand::thread_rng();
-    let num_groups = 1; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 10; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
@@ -1492,7 +1493,7 @@ fn main() {
 
         }
         initial_roamer_dispersal_target(roamer_vector, &mut groups, &mut grid, &mut rng);
-        initial_roamer_dispersal_movement(roamer_vector, &mut grid);
+        initial_roamer_dispersal_movement(roamer_vector, &mut grid, &mut groups);
         // Free territory of groups with no members
         if global_variables.day == 1 {
           //  free_group_cells(&mut groups, &mut grid);
@@ -1505,6 +1506,7 @@ fn main() {
         // Simulate movement of individuals
         dynamic_ap(&mut grid, &mut groups, &mut rng, &mut global_variables);
         check_attraction_points_in_territory(&mut grid, &mut groups, 3, &mut rng);
+        execute_roaming(roamer_vector, &mut groups, &mut grid, &mut rng);
         move_groups(&grid, &mut groups, &mut rng);
 
         //check dispersers if their target cell == none

@@ -151,7 +151,11 @@ pub fn is_valid_cell(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> bool {
         return false;
     }
     let cell = &grid[x][y];
-    cell.quality > 0.0
+    if cell.quality > 0.0 {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 pub fn random_valid_cell(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize, usize) {

@@ -182,7 +182,7 @@ pub fn save_roamers_as_csv(filename: &str, roamer_states: &[(usize, Vec<RoamingI
     // Create or open the CSV file
     let mut file = File::create(filename)?;
 
-    writeln!(file, "iteration,roamer_id,individual_id,age,age_class,sex,health_status,origin_group_id,roamer_x,roamer_y,known_groups,target_group,daily_distance,target_group")?;
+    writeln!(file, "iteration,roamer_id,individual_id,age,age_class,sex,health_status,origin_group_id,roamer_x,roamer_y,known_groups,target_group,daily_distance,target_group_id,reached_target,stay_time,staying_with_target_group,target_cell,initial_dispersal")?;
 
     // Write each roamer's data for each iteration
     for (iteration, roamers) in roamer_states {
@@ -194,9 +194,16 @@ pub fn save_roamers_as_csv(filename: &str, roamer_states: &[(usize, Vec<RoamingI
                 .collect::<Vec<String>>()
                 .join(";");
 
+            let target_cell_string: String = roamer
+                .target_cell
+                .iter()
+                .map(|&(x, y)| format!("[{}_{}]", x, y))
+                .collect::<Vec<String>>()
+                .join(";");
+
             writeln!(
                 file,
-                "{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
                 iteration,
                 roamer.roamer_id,
                 roamer.individual_id,
@@ -210,7 +217,13 @@ pub fn save_roamers_as_csv(filename: &str, roamer_states: &[(usize, Vec<RoamingI
                 known_groups_str,
                 roamer.target_group.unwrap_or(0),
                 roamer.daily_distance,
-                roamer.target_group_id.unwrap_or(0)
+                roamer.target_group_id.unwrap_or(0),
+                roamer.reached_target,
+                roamer.stay_time,
+                roamer.staying_with_target_group,
+                target_cell_string,
+                roamer.initial_dispersal
+                
             )?;
         }
     }

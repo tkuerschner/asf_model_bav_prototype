@@ -40,6 +40,8 @@ pub struct RoamingIndividual {
     pub initial_dispersal: bool,
     pub target_group_id: Option<usize>,
     pub reached_target: bool,
+    pub stay_time: usize,
+    pub staying_with_target_group: bool,
 }
 
 pub fn roamer_assignemnt(roamers: &mut Vec<RoamingIndividual>, groups: &mut Vec<Groups>) {
@@ -82,6 +84,8 @@ pub fn roamer_assignemnt(roamers: &mut Vec<RoamingIndividual>, groups: &mut Vec<
                 initial_dispersal: true,
                 target_group_id: None,
                 reached_target: false,
+                stay_time: 5 + rand::thread_rng().gen_range(0..10), // Random stay time between 5 and 15 days
+                staying_with_target_group: false,
             };
             // Add the dispersing individual to the dispersing_by_group map
            //let roamer_group = roaming_by_group.entry(group.group_id as u64).or_insert_with(Vec::new);
@@ -127,45 +131,50 @@ pub fn initial_roamer_dispersal_target(roamers: &mut Vec<RoamingIndividual>, gro
     for roamer in roamers.iter_mut() {
         if roamer.initial_dispersal == true {
        //select a target cell that is at least 100 cells away from any cell belonging to this roamers origin group and is_valid_cell using the grid_functions.rs
-        let mut distance = 0;
+        let distance = 0;
         while roamer.target_cell.is_none() {
 
-            //use the random valid cell function to get a random cell
-            let mut r_cell = random_valid_cell(grid, rng);
-            let my_group = roamer.origin_group_id;
+         //   //use the random valid cell function to get a random cell
+         //   let mut r_cell = random_valid_cell(grid, rng);
+         //   let my_group = roamer.origin_group_id;
 
-            while grid[r_cell.0][r_cell.1].territory.taken_by_group != my_group {
-                r_cell = random_valid_cell(grid, rng);
-            }
+         //   while grid[r_cell.0][r_cell.1].territory.taken_by_group != my_group {
+         //       r_cell = random_valid_cell(grid, rng);
+         //   }
+         //   
+         //   roamer.target_cell = Some(r_cell);
+         //   //roamer.target_cell.unwrap().0 = r_cell.0;
+         //   //roamer.target_cell.unwrap().1 = r_cell.1;
+         //   //check if the cell is at least 100 cells away from any cell belonging to this roamers origin group
+         //   //let mut valid = true;
 
-            roamer.target_cell.unwrap().0 = r_cell.0;
-            roamer.target_cell.unwrap().1 = r_cell.1;
-            //check if the cell is at least 100 cells away from any cell belonging to this roamers origin group
-            //let mut valid = true;
+         //   //put all cells around the target cell in a 100 cell radius into a vector
+         //   let mut cells_in_radius = Vec::new();
+         //   for i in 0..100 {
+         //       for j in 0..100 {
+         //           cells_in_radius.push((r_cell.0 + i, r_cell.1 + j));
+         //           cells_in_radius.push((r_cell.0 - i, r_cell.1 - j));
+         //           cells_in_radius.push((r_cell.0 + i, r_cell.1 - j));
+         //           cells_in_radius.push((r_cell.0 - i, r_cell.1 + j));
+         //       }
+         //   }
+         //            
+         //   // as long as there is a cell in the vector taken by the same group as the roamer, generate a new target cell
+         //   while cells_in_radius.iter().any(|(x, y)| grid[*x][*y].territory.taken_by_group == my_group) {
+         //       let new_target_cell = random_valid_cell(grid, rng);
+         //       roamer.target_cell = Some(new_target_cell);
+            // select a random valid cell that is not owned by the origin group
+            let target_cell = random_valid_cell(grid, rng);
+            roamer.target_cell = Some(target_cell);
 
-            //put all cells around the target cell in a 100 cell radius into a vector
-            let mut cells_in_radius = Vec::new();
-            for i in 0..100 {
-                for j in 0..100 {
-                    cells_in_radius.push((r_cell.0 + i, r_cell.1 + j));
-                    cells_in_radius.push((r_cell.0 - i, r_cell.1 - j));
-                    cells_in_radius.push((r_cell.0 + i, r_cell.1 - j));
-                    cells_in_radius.push((r_cell.0 - i, r_cell.1 + j));
-                }
-            }
-                     
-            // as long as there is a cell in the vector taken by the same group as the roamer, generate a new target cell
-            while cells_in_radius.iter().any(|(x, y)| grid[*x][*y].territory.taken_by_group == my_group) {
-                let new_target_cell = random_valid_cell(grid, rng);
-                roamer.target_cell = Some(new_target_cell);
             }
         }
     }
  }
-}
+//}
 
 
-pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>) {
+pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>) {
     for roamer in roamers.iter_mut() {
         while roamer.daily_distance > 0 && roamer.initial_dispersal == true{
             let move_towards_target = rand::thread_rng().gen_bool(0.25);
@@ -176,6 +185,7 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
                         roamer.initial_dispersal = false;
+                        set_list_of_target_group(roamer, groups);
                         break;
                     }
                 }
@@ -185,11 +195,13 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
                         roamer.initial_dispersal = false;
+                        set_list_of_target_group(roamer, groups);
                         break;
                     }
                 }
             }
         }
+        roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
     }
 }
 
@@ -224,9 +236,9 @@ fn move_randomly_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
     }
 }
 
-pub fn move_roamers(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>) {
-    for roamer in roamers.iter_mut() {
-        while roamer.daily_distance > 0 {
+pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
+  
+        while roamer.daily_distance > 0 && roamer.staying_with_target_group == false{
             let move_towards_target = rand::thread_rng().gen_bool(0.25);
 
             if move_towards_target {
@@ -234,19 +246,28 @@ pub fn move_roamers(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>)
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
+                        roamer.reached_target = true;
                         break;
                     }
                 }
             } else {
                 move_randomly_roamer(roamer, grid);
+                if let Some((target_x, target_y)) = roamer.target_cell {
+                    if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
+                        // Roamer reached target
+                        roamer.reached_target = true;
+                        break;
+                    }
+                }
+
             }
         }
-    }
+    
 }
-fn select_list_of_target_group(roamer: &mut RoamingIndividual, groups: &Vec<Groups>) {
+fn set_list_of_target_group(roamer: &mut RoamingIndividual, groups: &Vec<Groups>) {
  // take the 5 closet groups to the current x/y and write their group_id into known_groups
     let mut known_groups = Vec::new();
-    let mut groups_sorted = groups.clone();
+    let mut groups_sorted = groups.iter().filter(|g| g.active == true && g.group_id != roamer.origin_group_id).cloned().collect::<Vec<Groups>>();
     groups_sorted.sort_by(|a, b| {
         let dist_a = (a.x as isize - roamer.roamer_x as isize).abs() + (a.y as isize - roamer.roamer_y as isize).abs();
         let dist_b = (b.x as isize - roamer.roamer_x as isize).abs() + (b.y as isize - roamer.roamer_y as isize).abs();
@@ -262,10 +283,11 @@ fn select_list_of_target_group(roamer: &mut RoamingIndividual, groups: &Vec<Grou
 }
 
 
-fn select_target_group(roamer: &mut RoamingIndividual, rng: &mut impl Rng) {
+fn select_target_group(roamer: &mut RoamingIndividual, rng: &mut impl Rng) -> Option<usize> {
     // Select a random group from the known groups
     let target_group = roamer.known_groups.choose(rng);
     roamer.target_group = Some(*target_group.unwrap());
+    roamer.target_group
 }
 
 fn evaluate_and_set_target_cell(roamer: &mut RoamingIndividual, groups: &Vec<Groups>) {
@@ -279,3 +301,78 @@ fn evaluate_and_set_target_cell(roamer: &mut RoamingIndividual, groups: &Vec<Gro
 }
 
 
+fn roaming_check(roamer: &mut RoamingIndividual, groups: &Vec<Groups>, rng: &mut impl Rng) {
+
+        if roamer.reached_target == true && roamer.stay_time <= 0 {
+            let old_target_group = roamer.target_group.unwrap();
+            let mut ptc = 0;
+            while roamer.target_group.unwrap() == old_target_group && ptc < 10 {
+                select_target_group(roamer, rng);
+                ptc += 1;
+                if ptc == 9 {
+                    set_list_of_target_group(roamer, groups);
+                    select_target_group(roamer, rng);
+                    
+                }
+                
+            }
+            evaluate_and_set_target_cell(roamer, groups);
+            roamer.stay_time = 5 + rand::thread_rng().gen_range(0..10);
+            roamer.reached_target = false;
+            roamer.staying_with_target_group = false;
+        }
+}
+
+fn stay_with_target_group(roamer: &mut RoamingIndividual) {
+    roamer.stay_time -= 1;
+}
+
+fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, groups: &Vec<Groups>, grid: &Vec<Vec<Cell>>){
+    let target_group: &Groups = groups.iter().find(|g| g.group_id == roamer.target_group.unwrap()).unwrap();
+    let tx = target_group.x;
+    let ty = target_group.y;
+    let tcell = (tx, ty);
+    roamer.target_cell = Some(tcell);
+
+    while roamer.daily_distance > 0 {
+        let move_towards_target = rand::thread_rng().gen_bool(0.25);
+
+        if move_towards_target {
+            move_towards_target_cell_roamer(roamer, grid);
+            if let Some((target_x, target_y)) = roamer.target_cell {
+                if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
+                    // Roamer reached target
+                    roamer.reached_target = true;
+                    break;
+                }
+            }
+        } else {
+            move_randomly_roamer(roamer, grid);
+            if let Some((target_x, target_y)) = roamer.target_cell {
+                if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
+                    // Roamer reached target
+                    roamer.reached_target = true;
+                    break;
+                }
+            }
+
+        }
+    }
+    stay_with_target_group(roamer);
+  
+}
+
+pub fn execute_roaming(roamers: &mut Vec<RoamingIndividual>, groups: &Vec<Groups>, grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) {
+    
+    for roamer in roamers.iter_mut() {
+        roaming_check(roamer, groups, rng);
+        move_roamer(roamer, grid);
+        
+        if roamer.staying_with_target_group == true {
+            move_roamer_with_target_group(roamer, groups, grid);
+            if roamer.stay_time == 0 {
+                roamer.staying_with_target_group = false;
+            }
+        }
+    }     
+}
