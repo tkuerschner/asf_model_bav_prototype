@@ -22,3 +22,6 @@ output/all_dispersers.csv
 temp_functions.txt
 R/asf_bavaria_analysis/data_clusters.xlsx
 R/asf_bavaria_analysis/clusterData.csv
+logs/outputLog.log
+output/all_roamers.csv
+/logs

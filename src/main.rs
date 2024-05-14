@@ -24,6 +24,8 @@ use save_functions::*;
 // Some individual related functions
 mod ageing;
 use ageing::ageing;
+use std::fs;
+use chrono::Local;
 
 mod reproduction;
 use reproduction::*;
@@ -42,6 +44,8 @@ use mortality::*;
 
 mod roamers;
 use roamers::*;
+
+  // Register Ctrl+C handler
 
 
 // Define a struct to represent a group
@@ -1380,6 +1384,12 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
 // Main model
 
 fn main() {
+
+
+    
+
+
+
     // Define grid dimensions
     //let grid_size = 25;
 
@@ -1393,8 +1403,15 @@ fn main() {
 //
     //assign_to_constants(&input);
 
+    // Initialize the logger
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+
     // variable that is set to the system time when the simulation starts
+    
+  
     let start_time = Instant::now();
+
+    log::info!("--------------------------->>> Starting simulation at time: {:?}", start_time);
 
     let mut rng = rand::thread_rng();
     let num_groups = 10; // FIX ME DEBUG CHANGE TO 1
@@ -1408,10 +1425,11 @@ fn main() {
     let (mut grid, mut groups) = setup(file_path, num_groups);
 
     // adjust attraction points
+    log::info!("Adjusting attraction points");
     place_additional_attraction_points(&mut grid, &mut groups, 3, &mut rng);
 
     //place_dynamic_attraction_points(&mut grid, &mut groups, 10, &mut rng, "winter");
-
+    log::info!("Removing attraction points with quality 0");
     remove_ap_on_cells_with_quality_0(&mut grid);
     
     
@@ -1482,17 +1500,23 @@ fn main() {
         //println!("Dispersal triggered");
         if global_variables.day == 1 {
            // println!("Dispersal triggered: year {}, month {}, day {}", global_variables.year, global_variables.month, global_variables.day);
+            log::info!("Dispersal triggered: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
             dispersal_assignment(&mut groups, disperser_vector, dispersing_groups_vector);
             //assign_dispersal_targets_individuals( disperser_vector, &groups);
+            log::info!("Assigning dispersal targets to individuals: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
             assign_dispersal_targets_groups(dispersing_groups_vector, &mut groups, &mut grid, &mut rng);
             //assign male individuals as roamers
+            log::info!("Assigning roamer targets to individuals: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
             roamer_assignemnt( roamer_vector,&mut groups);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
+            log::info!("Moving dispersers: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
             move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng, global_variables.month);
 
         }
+        log::info!("Initial roamer target assignment: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
         initial_roamer_dispersal_target(roamer_vector, &mut groups, &mut grid, &mut rng);
+        log::info!("Initial roamer movement: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
         initial_roamer_dispersal_movement(roamer_vector, &mut grid, &mut groups);
         // Free territory of groups with no members
         if global_variables.day == 1 {
@@ -1504,9 +1528,13 @@ fn main() {
 
 
         // Simulate movement of individuals
+        log::info!("AP dynamic: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
         dynamic_ap(&mut grid, &mut groups, &mut rng, &mut global_variables);
+        log::info!("Check AP of groups: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
         check_attraction_points_in_territory(&mut grid, &mut groups, 3, &mut rng);
+        log::info!("Roaming movement: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
         execute_roaming(roamer_vector, &mut groups, &mut grid, &mut rng);
+        log::info!("Group movement: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
         move_groups(&grid, &mut groups, &mut rng);
 
         //check dispersers if their target cell == none
@@ -1515,17 +1543,19 @@ fn main() {
         if global_variables.day == 5 {
             //debug print REMOVE ME
             //print!("reproduction is triggered");
-
+            log::info!("Reproduction triggered: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
           reproduction(global_variables.month, &mut groups, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
         }
 
         if global_variables.day == 15 {
 
          //mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
+         log::info!("Mortality triggered: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
             combined_mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality);
         }
 
         //age individuals by one day
+        log::info!("Ageing triggered: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
         ageing(&mut groups, &mut global_variables.age_mortality);                                         //   <-----------------temp OFF
 
         //Updating various counters such as number of individuals
@@ -1600,17 +1630,23 @@ fn main() {
     // Save all global variables to a single CSV file
     save_global_variables_as_csv("output/all_global_variables.csv", &all_global_variables).expect("Failed to save global variables as CSV");
 
-    // Save all disperser states to a single CSV file
     save_disperser_group_as_csv("output/all_dispersers.csv", &all_disperser_states).expect("Failed to save disperser as CSV");
+
     
-    // Save all roamer states to a single CSV file
     save_roamers_as_csv("output/all_roamers.csv", &all_roamer_states).expect("Failed to save roamer as CSV");
 
     // variable that is set to the system time when the save is complete
+    let save_time = Local::now();
     let save_time = Instant::now();
     //variable showing the difference between the end time and the save time
     let time_taken_save = save_time.duration_since(end_time);
     println!("Time taken to save output: {:?}", time_taken_save);
+
+    //rename the log file to include date and time to the minute
+    let now = Local::now();
+    let log_file = format!("logs/log_{}.log", now.format("%Y-%m-%d_%H-%M"));
+    fs::rename("logs/outputLog.log", log_file).expect("Failed to rename log file");
+
 
 }
 
