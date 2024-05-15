@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 129         #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 134       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -52,6 +52,7 @@ groups <- read.csv("./output/all_groups.csv", header = T)
 dispersers <- read.csv("./output/all_dispersers.csv", header = T)
 
 roamers <- read.csv("./output/all_roamers.csv", header = T)
+
 
 ```
 
@@ -190,8 +191,8 @@ grp_path_bp <- ggplot() +
   #guides(fill = "none") +
   #geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
   #geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 1) +
-  geom_point(data = gr2, aes(tx, ty, group = group_id), fill = "#c02ad3", colour = "#c02ad3", size = 2, shape = 8) +
-  new_scale_fill() +
+  #geom_point(data = gr2, aes(tx, ty, group = group_id), fill = "#c02ad3", colour = "#c02ad3", size = 2, shape = 8) +
+  #new_scale_fill() +
   geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
   new_scale_color() +
   #geom_point(data = disp_event, aes(disperser_group_x, disperser_group_y, color = as.factor(disperser_id)),size = 1)+
@@ -1598,7 +1599,7 @@ result <- inner_join(grid, gr3, by = c("x" = "corex", "y" = "corey"))
 ```{r}
 
 r1 <- roamers %>%
-  filter(roamer_id == 5) %>%
+  filter(roamer_id == 15) %>%
   group_by(iteration) 
 
 r2 <- r1 %>%
@@ -1647,8 +1648,8 @@ r_path_bp <- ggplot() +
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
   labs(fill = "Habitat quality") +
   new_scale_fill() +
-  geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
-  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = as.factor(territory_of_group)), alpha = .5) +
+  #scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
   #guides(fill = "none") +
   geom_path(data =  r3, aes(x = roamer_x, y = roamer_y, group = roamer_id), linewidth = 1, , color = "black", linetype = "dashed") +
   geom_point(data = r3, aes(roamer_x, roamer_y, group = seq_along(iteration)), size = 1) +
@@ -1670,14 +1671,53 @@ r_path_bp <- ggplot() +
   )
 
 
-
 r1$known_groups
 r1$origin_group_id
 r1$initial_dispersal
+r1$target_group_id
+r1$staying_with_target_group
+r1$target_group
+r1$roamer_x
+r1$roamer_y
+r1$individual_id
+r1$reached_target
+r1$target_cell
 
 
 
 
+
+
+
+#i1 <- groups %>%
+#  filter(group_id == 4) %>%
+#  filter(individual_id == 62)
+#
+#  i1$iteration
+#
+#  head(i1)
+#max(i1$iteration)
+#
+#
+#gx <- groups %>%
+#  filter(group_id == 7) %>%
+#  group_by(iteration) 
+#
+#
+#
+#  head(dispersers)
+#
+#d1 <- dispersers %>% filter(individual_id == 212)
+#
+#gt1 <- groups %>% filter(group_id == 10) 
+#
+#head(gt1)
+#
+#gt2 <- gt1 %>%
+#  filter(individual_id == 212) 
+#
+#head(gt2)
+#max(gt2$iteration)
 
 
 ```

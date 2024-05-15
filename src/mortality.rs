@@ -146,3 +146,59 @@ pub fn combined_mortality(surv_prob: &SurvivalProbability,groups: &mut Vec<Group
     }
 }
 
+pub fn disperser_mortality(surv_prob: &SurvivalProbability, dispersing_groups: &mut Vec<DispersingFemaleGroup>){
+    for d_group in dispersing_groups.iter_mut() {
+        let retained_d_group_members: Vec<DispersingIndividual> = d_group.dispersing_individuals
+        .drain(..)
+        .filter(|member| {
+            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
+            let rounded_number = (random_number * 1e4).round() / 1e4;
+
+            if member.age_class != AgeClass::Piglet {
+                if rounded_number < surv_prob.adult {
+                    true
+                } else {
+                    false
+                }
+            } else {
+                if rounded_number < surv_prob.piglet {
+                    true
+                } else {
+                    false
+                }
+            }
+        })
+        .collect();
+    d_group.dispersing_individuals.extend_from_slice(&retained_d_group_members);
+    }
+}
+
+//pub fn roamer_mortality(surv_prob: &SurvivalProbability, roaming_individuals: &mut RoamingIndividual){
+//    for r_group in roaming_individuals
+//    {
+//        let retained_r_group_members: Vec<RoamingIndividual> = r_group.roaming_individuals
+//        .drain(..)
+//        .filter(|member| {
+//            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
+//            let rounded_number = (random_number * 1e4).round() / 1e4;
+//
+//            if member.age_class != AgeClass::Piglet {
+//                if rounded_number < surv_prob.adult {
+//                    true
+//                } else {
+//                    false
+//                }
+//            } else {
+//                if rounded_number < surv_prob.piglet {
+//                    true
+//                } else {
+//                    false
+//                }
+//            }
+//        })
+//        .collect();
+//    r_group.roaming_individuals.extend_from_slice(&retained_r_group_members);
+//    
+//    }
+//}
+

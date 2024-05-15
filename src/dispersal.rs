@@ -66,8 +66,6 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
            // println!("Number of dispersers: {}", members_to_disperse_indices.len());
        // }
 
-        
-
         // Iterate over indices in reverse order to remove elements safely
         for &index in members_to_disperse_indices.iter().rev() {
             // Remove the member from the group and collect it as a dispersing individual

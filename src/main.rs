@@ -710,7 +710,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 10; 
+const RUNTIME: usize = 365 * 5; 
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -1385,10 +1385,9 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
 
 fn main() {
 
-
+    //purge old log file if it exists and was not saved
+    let _ = std::fs::remove_file("logs/outputLog.log");
     
-
-
 
     // Define grid dimensions
     //let grid_size = 25;
@@ -1517,7 +1516,7 @@ fn main() {
         log::info!("Initial roamer target assignment: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
         initial_roamer_dispersal_target(roamer_vector, &mut groups, &mut grid, &mut rng);
         log::info!("Initial roamer movement: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        initial_roamer_dispersal_movement(roamer_vector, &mut grid, &mut groups);
+        initial_roamer_dispersal_movement(roamer_vector, &mut grid, &mut groups, &mut rng);
         // Free territory of groups with no members
         if global_variables.day == 1 {
           //  free_group_cells(&mut groups, &mut grid);
@@ -1620,6 +1619,7 @@ fn main() {
     //variable showing the difference between the start and end time
     let time_taken = end_time.duration_since(start_time);
     println!("Time taken to run simulation: {:?}", time_taken);
+    log::info!("Time taken to run simulation: {:?}", time_taken);
 
     // Save all grid states to a single CSV file
     save_grid_as_csv("output/all_grid_states.csv", &all_grid_states).expect("Failed to save grid states as CSV");                //   <-----------------temp OFF
@@ -1636,14 +1636,17 @@ fn main() {
     save_roamers_as_csv("output/all_roamers.csv", &all_roamer_states).expect("Failed to save roamer as CSV");
 
     // variable that is set to the system time when the save is complete
-    let save_time = Local::now();
+    //let save_time = Local::now();
     let save_time = Instant::now();
     //variable showing the difference between the end time and the save time
     let time_taken_save = save_time.duration_since(end_time);
     println!("Time taken to save output: {:?}", time_taken_save);
+    log::info!("Time taken to save output: {:?}", time_taken_save);
+    
 
     //rename the log file to include date and time to the minute
     let now = Local::now();
+    log::info!("--------------------------->>> Simulation complete at time: {:?}", now);
     let log_file = format!("logs/log_{}.log", now.format("%Y-%m-%d_%H-%M"));
     fs::rename("logs/outputLog.log", log_file).expect("Failed to rename log file");
 

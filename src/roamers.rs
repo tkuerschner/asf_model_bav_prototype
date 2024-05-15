@@ -55,7 +55,7 @@ pub fn roamer_assignemnt(roamers: &mut Vec<RoamingIndividual>, groups: &mut Vec<
             .group_members
             .iter()
             .enumerate()
-            .filter(|(_, mem)| mem.age_class == AgeClass::Yearling && mem.sex == Sex::Male && !mem.has_dispersed)
+            .filter(|(_, mem)| (mem.age_class == AgeClass::Yearling || mem.age_class == AgeClass::Adult) && mem.sex == Sex::Male && !mem.has_dispersed)
             .map(|(i, _)| i)
             .collect();
 
@@ -92,6 +92,9 @@ pub fn roamer_assignemnt(roamers: &mut Vec<RoamingIndividual>, groups: &mut Vec<
            //roamer_group.push(roamer.clone());
               roamers.push(roamer);
         }
+        //delete the members from the group that are dispersing
+       // group.group_members.retain(|m| m.age_class != AgeClass::Yearling && m.age_class != AgeClass::Adult && m.sex != Sex::Male);
+
     }
     
     // if there are more then 2 roamers in a group, add each roamer into the roamers vector and remove theese individuals from their group
@@ -128,8 +131,8 @@ pub fn roamer_assignemnt(roamers: &mut Vec<RoamingIndividual>, groups: &mut Vec<
 }
 
 pub fn initial_roamer_dispersal_target(roamers: &mut Vec<RoamingIndividual>, groups: &Vec<Groups>, grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) {
-    for roamer in roamers.iter_mut() {
-        if roamer.initial_dispersal == true {
+    for roamer in roamers.iter_mut().filter(|roamer| roamer.initial_dispersal == true){
+       // if roamer.initial_dispersal == true {
        //select a target cell that is at least 100 cells away from any cell belonging to this roamers origin group and is_valid_cell using the grid_functions.rs
         let distance = 0;
         while roamer.target_cell.is_none() {
@@ -170,15 +173,14 @@ pub fn initial_roamer_dispersal_target(roamers: &mut Vec<RoamingIndividual>, gro
             break;
             }
            
-        }
+       // }
     }
  }
 //}
 
-
-pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>) {
+pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>, rng: &mut impl Rng) {
     
-    for roamer in roamers.iter_mut() {
+    for roamer in roamers.iter_mut().filter(|roamer| roamer.initial_dispersal == true) {
         while roamer.daily_distance > 0 && roamer.initial_dispersal == true{
             let move_towards_target = rand::thread_rng().gen_bool(0.25);
 
@@ -191,7 +193,10 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                         // Roamer reached target
                        // log::info!("Roamer {:?} reached target", roamer.roamer_id);                        
                         roamer.initial_dispersal = false;
-                        set_list_of_target_group(roamer, groups);
+                        set_list_of_target_groups(roamer, groups);
+                        select_target_group(roamer, rng);
+                        roamer.target_group_id = roamer.target_group;
+                        evaluate_and_set_target_cell(roamer, groups);
                         break;
                     }
                 }
@@ -202,17 +207,21 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                         // Roamer reached target
                        // log::info!("Roamer {:?} reached target", roamer.roamer_id);
                         roamer.initial_dispersal = false;
-                        set_list_of_target_group(roamer, groups);
+                        set_list_of_target_groups(roamer, groups);
+                        select_target_group(roamer, rng);
+                        roamer.target_group_id = roamer.target_group;
+                        evaluate_and_set_target_cell(roamer, groups);
                         break;
                     }
                 }
             }
         }
         //log::info!("Dispersing roamer {:?} finished moving towards target for today", roamer.roamer_id);
-        roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+        if roamer.initial_dispersal == true {
+            roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+        }
     }
 }
-
 
 fn move_towards_target_cell_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
     if let Some((target_x, target_y)) = roamer.target_cell {
@@ -246,7 +255,7 @@ fn move_randomly_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
 
 pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
   
-        while roamer.daily_distance > 0 && roamer.staying_with_target_group == false{
+        while roamer.daily_distance > 0 && roamer.staying_with_target_group == false && roamer.initial_dispersal == false && roamer.reached_target == false{
             let move_towards_target = rand::thread_rng().gen_bool(0.25);
             //log::info!("Roamer {:?} is moving towards target: {:?}", roamer.roamer_id, move_towards_target);
             if move_towards_target {
@@ -254,7 +263,11 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
+                        log::info!("Roamer {:?} reached target", roamer.roamer_id);
                         roamer.reached_target = true;
+                       // log::info!("Roamer {:?} target reached? {:?} ",roamer.roamer_id, roamer.reached_target);
+                        roamer.staying_with_target_group = true;
+                        roamer.daily_distance = 0;
                         break;
                     }
                 }
@@ -263,7 +276,10 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
+                        log::info!("Roamer {:?} reached target", roamer.roamer_id);
                         roamer.reached_target = true;
+                        roamer.staying_with_target_group = true;
+                        roamer.daily_distance = 0;
                         break;
                     }
                 }
@@ -271,11 +287,13 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
             }
         }
         //log::info!("Roamer {:?} finished moving for today", roamer.roamer_id);
+        if roamer.reached_target == false {
         roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
-
+        }
     
 }
-fn set_list_of_target_group(roamer: &mut RoamingIndividual, groups: &Vec<Groups>) {
+
+fn set_list_of_target_groups(roamer: &mut RoamingIndividual, groups: &Vec<Groups>) {
  // take the 5 closet groups to the current x/y and write their group_id into known_groups
     let mut known_groups = Vec::new();
     let mut groups_sorted = groups.iter().filter(|g| g.active == true && g.group_id != roamer.origin_group_id).cloned().collect::<Vec<Groups>>();
@@ -293,10 +311,10 @@ fn set_list_of_target_group(roamer: &mut RoamingIndividual, groups: &Vec<Groups>
     //roamer.target_group = Some(*target_group.unwrap());
 }
 
-
 fn select_target_group(roamer: &mut RoamingIndividual, rng: &mut impl Rng) -> Option<usize> {
     // Select a random group from the known groups
     let target_group = roamer.known_groups.choose(rng);
+    //log::info!("Roamer {:?} selected target group: {:?}", roamer.roamer_id, target_group.unwrap());
     roamer.target_group = Some(*target_group.unwrap());
     roamer.target_group
 }
@@ -311,18 +329,19 @@ fn evaluate_and_set_target_cell(roamer: &mut RoamingIndividual, groups: &Vec<Gro
     }
 }
 
-
 fn roaming_check(roamer: &mut RoamingIndividual, groups: &Vec<Groups>, rng: &mut impl Rng) {
-            if roamer.reached_target == true && roamer.stay_time <= 0 {
+            if roamer.stay_time <= 0 && roamer.initial_dispersal == false {
+            log::info!("Roamer {:?} has reached target group {:?} and its stay time is up", roamer.roamer_id, roamer.target_group_id);
             let old_target_group = roamer.target_group.unwrap();
             let mut ptc = 0;
             while roamer.target_group.unwrap() == old_target_group && ptc < 10 {
                 select_target_group(roamer, rng);
+                roamer.target_group_id = roamer.target_group;
                 ptc += 1;
                 if ptc == 9 {
-                    set_list_of_target_group(roamer, groups);
+                    set_list_of_target_groups(roamer, groups);
                     select_target_group(roamer, rng);
-                    
+                    roamer.target_group_id = roamer.target_group;
                 }
                 
             }
@@ -334,17 +353,25 @@ fn roaming_check(roamer: &mut RoamingIndividual, groups: &Vec<Groups>, rng: &mut
 }
 
 fn stay_with_target_group(roamer: &mut RoamingIndividual) {
+    if roamer.stay_time > 0 {
     roamer.stay_time -= 1;
+    } else {
+    roamer.stay_time = 0;   
+    }
 }
 
 fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, groups: &Vec<Groups>, grid: &Vec<Vec<Cell>>){
-    let target_group: &Groups = groups.iter().find(|g| g.group_id == roamer.target_group.unwrap()).unwrap();
-    let tx = target_group.x;
-    let ty = target_group.y;
-    let tcell = (tx, ty);
-    roamer.target_cell = Some(tcell);
+    //let target_group: &Groups = groups.iter().find(|g| g.group_id == roamer.target_group.unwrap()).unwrap();
+    //let tx = target_group.x;
+    //let ty = target_group.y;
+    //let tcell = (tx, ty);
+    //roamer.target_cell = Some(tcell);
 
-    while roamer.daily_distance > 0 {
+    if roamer.daily_distance < DEFAULT_DAILY_MOVEMENT_DISTANCE {
+        roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+    }
+
+    while roamer.daily_distance > 0 && roamer.staying_with_target_group == true && roamer.reached_target == false{
         //log::info!("Roamer {:?} is moving with group: {:?}", roamer.roamer_id, true);
         let move_towards_target = rand::thread_rng().gen_bool(0.25);
 
@@ -376,16 +403,25 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, groups: &Vec<Gr
 }
 
 pub fn execute_roaming(roamers: &mut Vec<RoamingIndividual>, groups: &Vec<Groups>, grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) {
-    
-    for roamer in roamers.iter_mut() {
+    for roamer in roamers.iter_mut().filter(|roamer| roamer.initial_dispersal == false) {
         roaming_check(roamer, groups, rng);
-        move_roamer(roamer, grid);
+        let mut just_moved_with_group = false;
         
         if roamer.staying_with_target_group == true {
             move_roamer_with_target_group(roamer, groups, grid);
-            if roamer.stay_time == 0 {
+            if roamer.stay_time <= 0 {
                 roamer.staying_with_target_group = false;
+                roamer.reached_target = false;
+                just_moved_with_group = true;
+                //log::info!("Roamer {:?} has finished staying with target group", roamer.roamer_id);
+                
             }
         }
+        
+        if just_moved_with_group == false {
+            move_roamer(roamer, grid);
+        }
+        
+   
     }     
 }
