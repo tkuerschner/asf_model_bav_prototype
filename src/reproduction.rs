@@ -23,7 +23,7 @@ pub fn reproduction(month: u32, groups: &mut Vec<Groups>, current_tick: usize) {
             .group_members
             .iter()
             .enumerate()
-            .filter(|(_, mem)| mem.has_reproduced)
+            .filter(|(_, mem)| mem.has_reproduced && mem.age_class == AgeClass::Adult && mem.sex == Sex::Female)
             .map(|(i, _)| i)
             .collect();
 

@@ -1,5 +1,4 @@
 use crate::*;
-use crate::group_functions::*;
 use std::collections::HashMap;
 
 //struct for dispersal with all fields of the group_member struct and new fields x and y coordinates
@@ -143,23 +142,6 @@ pub fn assign_dispersal_targets_groups(dispersing_groups: &mut Vec<DispersingFem
    // let mut groups_to_remove = Vec::new(); // Vector to store indices of groups to remove
     let mut indices_to_remove = Vec::new();
     for (index, dispersing_group) in dispersing_groups.iter_mut().enumerate() {
-        // Find the closest groups that are not the origin group
-     //   let closest_groups = find_closest_groups(&dispersing_group.dispersing_individuals[0], groups);
-//
-     //   // Randomly select a target group from the closest groups
-     //   let selected_group_index = rand::thread_rng().gen_range(0..closest_groups.len());
-     //   let selected_group_id = closest_groups[selected_group_index];
-//
-     //   // Find the coordinates of the selected group
-     //   if let Some(selected_group) = groups.iter().find(|group| group.group_id == selected_group_id) {
-     //       // Assign the coordinates of the selected group as the target cell for each dispersing individual in the group
-     //       for disperser in &mut dispersing_group.dispersing_individuals {
-     //           disperser.target_cell = Some((selected_group.core_cell.unwrap().0, selected_group.core_cell.unwrap().1));
-     //       }
-     //   } else {
-     //       // Handle the case where the selected group cannot be found
-     //       println!("Error: Selected group not found!");
-     //   }
 
         if dispersing_group.target_cell.is_none() {
             let mut target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
@@ -168,23 +150,10 @@ pub fn assign_dispersal_targets_groups(dispersing_groups: &mut Vec<DispersingFem
             while !check_surrounding(grid, target_cell.0, target_cell.1, 100) && ptc < 10{ // check 100 cells around the target cell if they are taken
                 //println!("Target cell is isolated, looking for new target cell");
                 //println!("Target cell: {:?}", target_cell);
-                //while check_surrounding(grid, target_cell.0, target_cell.1, 100) {
-                //    target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
-                //}
-
-                
 
                 target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
                 ptc += 1;
             }
-           // if check_if_cell_is_isolated(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, dispersing_group.disp_grp_id){
-           //     println!("Cell is isolated, looking for new target cell");
-           //     while check_if_cell_is_isolated(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, dispersing_group.disp_grp_id) {
-           //       //  println!("Cell is isolated");
-           //         target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
-           //     }
-           // }
-           //
 
            if !check_surrounding(grid, target_cell.0, target_cell.1, 100)
            {
@@ -192,31 +161,11 @@ pub fn assign_dispersal_targets_groups(dispersing_groups: &mut Vec<DispersingFem
                 // function that tries to merge a dispersing group back into its oringal group if the original groups groups size is below the maximum group size, otherwise the individuals in the dispersing group die
                 merge_dispersing_group_back_to_origin(dispersing_group, groups);
                 indices_to_remove.push(index);
-               // groups_to_remove.push(dispersing_group);
-               // continue;
-                //delete this group
-               //let index = groups.iter().position(|group| group.group_id == dispersing_group.disp_grp_id);
-               //if let Some(index) = index {
-               //    groups.remove(index);
-               //}
-            
-
-                
+   
            }else{
            
-           // for disperser in &mut dispersing_group.dispersing_individuals {
-           //     disperser.target_cell = Some(target_cell);
-           // }
             dispersing_group.target_cell = Some(target_cell);
            }
-
-          // if circular_bfs_dummy(grid, target_cell.0, target_cell.1, 1600) < 1000 {
-          //  //println!("number of possible cells to low");
-          //  merge_dispersing_group_back_to_origin(dispersing_group, groups);
-          //  return;
-          //  }
-
-
         }
     }
 
@@ -252,20 +201,11 @@ fn merge_dispersing_group_back_to_origin(dispersing_group: &mut DispersingFemale
                 origin_group.group_members.push(group_member);
 
             }
-      //  } else {
-      //      // Handle the case where the origin group's size is already at the maximum
-      //      println!("Error: Origin group size is already at the maximum! Individuals in the dispersing group will die!");
-      //  }
     } else {
         // Handle the case where the origin group cannot be found
         println!("Error: Origin group not found!");
     }
 
-    // delete the dispersing group
-  //  let index = groups.iter().position(|group| group.group_id == dispersing_group.disp_grp_id);
-  //  if let Some(index) = index {
-  //      groups.remove(index);
-  //  }
 }
 
 pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleGroup>, grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng, month: u32) {
@@ -273,8 +213,6 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
        // println!("Number of dispersing groups start: {}", dispersing_groups.len());
         for (index, disperser_group) in dispersing_groups.iter_mut().enumerate() {
             let mut reached_target = false;
-
-            
 
             while disperser_group.daily_distance > 0 && !reached_target {
                 // Randomly decide whether to move towards the target or move randomly
@@ -315,47 +253,7 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
             if reached_target {
                 handle_reached_target(disperser_group, grid, groups, rng, &mut groups_to_remove, index, month );
             }
-
-            //if reached_target {
-
-            //    if !is_valid_territory(grid, disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1, 1600) {
-            //        reached_target = false;
-            //        redraw_dispersal_target(disperser_group, grid, rng,groups );
-            //        
-            //        break;
-            //    }
-
-            //    let (target_x, target_y) = disperser_group.target_cell.unwrap();
-            //    // Call add_new_group_at_location
-            //    let new_group_id: usize;
-
-            //    add_new_group_at_location(groups, grid, target_x, target_y);
-            //    new_group_id = groups.last().unwrap().group_id;
-            //    make_core_cell_an_ap(grid, groups.last().unwrap().core_cell.unwrap().0, groups.last().unwrap().core_cell.unwrap().1);
-            //    place_attraction_points_in_territory(grid, new_group_id, 8, rng);
-            //    remove_ap_on_cells_with_quality_0(grid);
-            //    // For each individual in dispersing group, create a group member and add to group
-            //    for disperser in &mut disperser_group.dispersing_individuals {
-            //        let new_group_member = GroupMember {
-            //            individual_id: disperser.individual_id,
-            //            age: disperser.age,
-            //            age_class: disperser.age_class.clone(),
-            //            sex: disperser.sex.clone(),
-            //            health_status: disperser.health_status.clone(),
-            //            time_of_birth: disperser.time_of_birth,
-            //            has_reproduced: disperser.has_reproduced,
-            //            time_of_reproduction: disperser.time_of_reproduction,
-            //            origin_group_id: disperser.origin_group_id,
-            //            has_dispersed: true,
-            //            current_group_id: new_group_id,
-            //        };
-            //        groups[new_group_id - 1].group_members.push(new_group_member);
-            //    }
-            //    // Add index to groups_to_remove vector
-            //     groups_to_remove.push(index);
-            //    
-            //}
-        }//
+        }
       //println!("Groups to remove: {:?}", groups_to_remove);
       groups_to_remove.sort_unstable_by(|a, b| b.cmp(a));
       for &index in groups_to_remove.iter().rev() {
@@ -384,7 +282,7 @@ fn handle_reached_target(
         index: usize,
         month: u32,
     ) {
-        if !is_valid_territory(grid, disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1, 1600) {
+        if !is_valid_territory(grid, disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1) {
             // If the target is not a valid territory, redraw the dispersal target
             redraw_dispersal_target(disperser_group, grid, rng, groups);
             //println!("number of available cells: {}",dummy_expand_territory_with_natural_shape(disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1, grid));
@@ -471,13 +369,13 @@ pub fn redraw_dispersal_target(dispersing_group: &mut DispersingFemaleGroup, gri
     let mut target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
     let mut ptc = 0;
     //while !check_surrounding(grid, target_cell.0, target_cell.1, 100) && ptc < 10{ // check 100 cells around the target cell if they are taken
-        while !is_valid_territory(grid, target_cell.0, target_cell.1, 100) && ptc < 5{
+        while !is_valid_territory(grid, target_cell.0, target_cell.1) && ptc < 5{
         //println!("Target cell is isolated, looking for new target cell");
         //println!("Target cell: {:?}", target_cell);
         target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
         ptc += 1;
     }
-    if !is_valid_territory(grid, target_cell.0, target_cell.1, 100)
+    if !is_valid_territory(grid, target_cell.0, target_cell.1)
     //if !check_surrounding(grid, target_cell.0, target_cell.1, 100)
     {
         //println!("Unable to find a suitable target cell, merging dispersing group");

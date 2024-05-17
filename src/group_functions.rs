@@ -5,7 +5,7 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
 
     // Create individuals with unique IDs, group IDs, and memory
     let mut group: Vec<Groups> = Vec::with_capacity(num_groups);
-    let grid_size = grid.len();  
+    //let grid_size = grid.len();  
 
     for group_id in 0..num_groups {
 
@@ -29,18 +29,18 @@ pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, n
         let core_cell = (x, y); // set the core cell
         make_core_cell(&mut grid[x][y], group_id);
 
-        let desired_total_cells = 1600;     
+        //let desired_total_cells = 1600;     
  
         //circular_bfs(grid, x, y, group_id, desired_total_cells); // fill the territory with cells
         
-        let presence_timer = 0; 
+        //let presence_timer = 0; 
 
-        let memory = GroupMemory { // create memory for the group
-            known_cells: HashSet::new(),
-            group_member_ids: Vec::new(),
-            known_cells_order: Vec::new(),
-            presence_timer,
-        };
+        //let memory = GroupMemory { // create memory for the group
+        //    known_cells: HashSet::new(),
+        //    group_member_ids: Vec::new(),
+        //    known_cells_order: Vec::new(),
+        //    presence_timer,
+        //};
 
         //let target_cell = None; 
         //let remaining_stay_time = 0;
@@ -110,7 +110,7 @@ pub fn fill_initial_groups(groups: &mut Vec<Groups>, grid: &Vec<Vec<Cell>>) {
         group.max_size = tmp_size as usize;
 
         for _ in 0..tmp_size {
-            group.create_new_initial_group_member();
+          let _ = group.create_new_initial_group_member();
         }
     }
 }
@@ -257,12 +257,15 @@ pub fn free_group_cells(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>) {
             }
         }
     }
+
 }
 
 
 pub fn free_this_cell(cell: &mut Cell) {
     cell.territory.is_taken = false;
     cell.territory.taken_by_group = 0;
+    cell.territory.is_ap = false;
+    cell.territory.core_cell_of_group = 0;
 }
 
 //function to delete groups without members
@@ -277,3 +280,29 @@ pub fn check_for_empty_groups(groups: &Vec<Groups>)  {
     }
 }
 
+// function to return all group ids of groups without members
+pub fn get_empty_group_ids(groups: &Vec<Groups>) -> Vec<usize> {
+    groups.iter().filter(|group| group_has_no_members(group)).map(|group| group.group_id).collect()
+}
+
+
+// function that takes the vector of group ids of empty groups and goes though the grid freeing all cells taken by those groups
+pub fn free_cells_of_empty_groups(groups: &Vec<Groups>, grid: &mut Vec<Vec<Cell>>) {
+    let empty_group_ids = get_empty_group_ids(groups);
+    log::info!("Empty groups found: {:?}, groups will be deleted", empty_group_ids);
+
+    for group_id in empty_group_ids {
+        for row in grid.iter_mut() {
+            for cell in row.iter_mut() {
+                if cell.territory.is_taken && cell.territory.taken_by_group == group_id {
+                    free_this_cell(cell);
+                }
+            }
+        }
+    }
+}
+
+pub fn handle_empty_groups(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>) {
+    delete_groups_without_members(groups);
+    free_cells_of_empty_groups(groups, grid);
+}

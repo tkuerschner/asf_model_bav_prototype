@@ -3,7 +3,7 @@
 use crate::*;
 //use core::num;
 //use std::f64::consts::PI;
-use rand_distr::{Distribution, Normal};
+//use rand_distr::{Distribution, Normal};
 
 
 pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>, LandscapeMetadata)> {
@@ -27,7 +27,7 @@ pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>
 
     // Determine grid size from the file
     let nrows = metadata.nrows;
-    let ncols = metadata.ncols;
+    //let ncols = metadata.ncols;
 
     // Initialize the grid with quality values from the ASCII file
     let mut grid: Vec<Vec<Cell>> = Vec::with_capacity(nrows);
@@ -185,7 +185,7 @@ pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usiz
         .collect();
 
     // Determine the number of chunks needed
-    let num_chunks = (cells_with_quality.len() + chunk_size - 1) / chunk_size;
+    //let num_chunks = (cells_with_quality.len() + chunk_size - 1) / chunk_size;
 
     // Shuffle the cells to randomize chunk distribution
     let mut rng = rand::thread_rng();
@@ -252,9 +252,9 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
         let height = max_y - min_y;
 
 
-        let center_x = min_x  + (width ) / 2;
-        let center_y = min_y  + (height) / 2;
-        let n_ap = rng.gen_range(4..8);
+        //let center_x = min_x  + (width ) / 2;
+        //let center_y = min_y  + (height) / 2;
+        //let n_ap = rng.gen_range(4..8);
         let num_points_sqrt = (num_points as f64).sqrt() as usize;
 
         let mut max_jitter: isize = 4;
@@ -269,11 +269,11 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
         let min_x = *min_x;
         let min_y = *min_y;
 
-        let min_x_f64 = min_x as f64;
-        let max_x_f64 = *max_x as f64;
+        //let min_x_f64 = min_x as f64;
+        //let max_x_f64 = *max_x as f64;
 
-        let min_y_f64 = min_y as f64;
-        let max_y_f64 = *max_y as f64;
+        //let min_y_f64 = min_y as f64;
+        //let max_y_f64 = *max_y as f64;
 
         // Calculate the width and height of the bounding box as floating-point numbers
         let width_f64 = width as f64;
@@ -347,77 +347,77 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
     }
 }
 
-pub fn place_dynamic_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, num_points: usize, rng: &mut impl Rng, season: &str) {
-
-    //iterate through the groups
-    for group in groups.iter_mut() {
-        //take all the cells occupied by this group
-        let cells_of_group: Vec<(usize, usize)> = grid // FIX ME: This is a very inefficient way to get the cells of a group
-            .iter()
-            .enumerate()
-            .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group.group_id).map(move |(j, _)| (i, j)))
-            .collect();
-
-        // get the core cell of the group
-        let core_cell = group.core_cell.unwrap();
-        let mut ap_to_place = 1;
-
-        if season == "summer" {
-        ap_to_place = 6;
-        } else {
-        ap_to_place = 3;
-        }
-
-            // take 3 cells from the group cells that are equidistant from the core cell and each other (min distance 15 cells), jitter them and place an attraction point on them
-            let mut cells_to_place_ap: Vec<(usize, usize)> = Vec::new();
-            let mut cells_to_place_ap_jittered: Vec<(usize, usize)> = Vec::new();
-
-            // get the distance between the core cell and each cell in the group
-            let mut distances: Vec<(usize, usize, usize)> = Vec::new();
-            for cell in cells_of_group.iter() {
-                let distance = distance_squared(core_cell.0, core_cell.1, cell.0, cell.1);
-                distances.push((cell.0, cell.1, distance));
-            }
-
-            // sort the distances
-            distances.sort_by(|a, b| a.2.cmp(&b.2));
-
-            // get the 3 cells that are equidistant from the core cell and each other
-            let mut i = 0;
-            while cells_to_place_ap.len() < ap_to_place {
-                let cell = distances[i];
-                let mut is_equidistant = true;
-                for cell_to_place in cells_to_place_ap.iter() {
-                    if distance_squared(cell.0, cell.1, cell_to_place.0, cell_to_place.1) < 15 * 15 {
-                        is_equidistant = false;
-                        break;
-                    }
-                }
-                if is_equidistant {
-                    cells_to_place_ap.push((cell.0, cell.1));
-                }
-                i += 1;
-            }
-
-            // jitter the cells
-
-            for cell in cells_to_place_ap.iter() {
-                let x = cell.0 as f64;
-                let y = cell.1 as f64;
-                let x_offset = rng.gen_range(-4..=4) as f64;
-                let y_offset = rng.gen_range(-4..=4) as f64;
-                let x_jittered = (x + x_offset).max(0.0).min(grid.len() as f64 - 1.0);
-                let y_jittered = (y + y_offset).max(0.0).min(grid[0].len() as f64 - 1.0);
-                cells_to_place_ap_jittered.push((x_jittered as usize, y_jittered as usize));
-            }
-
-            // place the attraction points on the jittered cells
-            for cell in cells_to_place_ap_jittered.iter() {
-                grid[cell.0][cell.1].territory.is_ap = true;
-            }
-        }
-
-    }
+//pub fn place_dynamic_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, num_points: usize, rng: &mut impl Rng, season: &str) {
+//
+//    //iterate through the groups
+//    for group in groups.iter_mut() {
+//        //take all the cells occupied by this group
+//        let cells_of_group: Vec<(usize, usize)> = grid // FIX ME: This is a very inefficient way to get the cells of a group
+//            .iter()
+//            .enumerate()
+//            .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group.group_id).map(move |(j, _)| (i, j)))
+//            .collect();
+//
+//        // get the core cell of the group
+//        let core_cell = group.core_cell.unwrap();
+//        let mut ap_to_place = 1;
+//
+//        if season == "summer" {
+//        ap_to_place = 6;
+//        } else {
+//        ap_to_place = 3;
+//        }
+//
+//            // take 3 cells from the group cells that are equidistant from the core cell and each other (min distance 15 cells), jitter them and place an attraction point on them
+//            let mut cells_to_place_ap: Vec<(usize, usize)> = Vec::new();
+//            let mut cells_to_place_ap_jittered: Vec<(usize, usize)> = Vec::new();
+//
+//            // get the distance between the core cell and each cell in the group
+//            let mut distances: Vec<(usize, usize, usize)> = Vec::new();
+//            for cell in cells_of_group.iter() {
+//                let distance = distance_squared(core_cell.0, core_cell.1, cell.0, cell.1);
+//                distances.push((cell.0, cell.1, distance));
+//            }
+//
+//            // sort the distances
+//            distances.sort_by(|a, b| a.2.cmp(&b.2));
+//
+//            // get the 3 cells that are equidistant from the core cell and each other
+//            let mut i = 0;
+//            while cells_to_place_ap.len() < ap_to_place {
+//                let cell = distances[i];
+//                let mut is_equidistant = true;
+//                for cell_to_place in cells_to_place_ap.iter() {
+//                    if distance_squared(cell.0, cell.1, cell_to_place.0, cell_to_place.1) < 15 * 15 {
+//                        is_equidistant = false;
+//                        break;
+//                    }
+//                }
+//                if is_equidistant {
+//                    cells_to_place_ap.push((cell.0, cell.1));
+//                }
+//                i += 1;
+//            }
+//
+//            // jitter the cells
+//
+//            for cell in cells_to_place_ap.iter() {
+//                let x = cell.0 as f64;
+//                let y = cell.1 as f64;
+//                let x_offset = rng.gen_range(-4..=4) as f64;
+//                let y_offset = rng.gen_range(-4..=4) as f64;
+//                let x_jittered = (x + x_offset).max(0.0).min(grid.len() as f64 - 1.0);
+//                let y_jittered = (y + y_offset).max(0.0).min(grid[0].len() as f64 - 1.0);
+//                cells_to_place_ap_jittered.push((x_jittered as usize, y_jittered as usize));
+//            }
+//
+//            // place the attraction points on the jittered cells
+//            for cell in cells_to_place_ap_jittered.iter() {
+//                grid[cell.0][cell.1].territory.is_ap = true;
+//            }
+//        }
+//
+//    }
 
 // Get a list of all existing attraction points
 pub fn get_attraction_points(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)>{
@@ -675,9 +675,9 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     let height = max_y - min_y;
 
 
-    let center_x = min_x  + (width ) / 2;
-    let center_y = min_y  + (height) / 2;
-    let n_ap = rng.gen_range(4..8);
+    //let center_x = min_x  + (width ) / 2;
+    //let center_y = min_y  + (height) / 2;
+    //let n_ap = rng.gen_range(4..8);
     let num_points_sqrt = (num_points as f64).sqrt() as usize;
 
     let mut max_jitter: isize = 4;
@@ -692,11 +692,11 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     let min_x = *min_x;
     let min_y = *min_y;
 
-    let min_x_f64 = min_x as f64;
-    let max_x_f64 = *max_x as f64;
-
-    let min_y_f64 = min_y as f64;
-    let max_y_f64 = *max_y as f64;
+    //let min_x_f64 = min_x as f64;
+    //let max_x_f64 = *max_x as f64;
+//
+    //let min_y_f64 = min_y as f64;
+    //let max_y_f64 = *max_y as f64;
 
     // Calculate the width and height of the bounding box as floating-point numbers
     let width_f64 = width as f64;

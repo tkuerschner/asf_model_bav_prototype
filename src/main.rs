@@ -620,6 +620,7 @@ pub struct GlobalVariables {
     day: u32,
     month: u32,
     year: u32,
+    n_groups: usize,
 }
 
 // Define a struct to represent the landscape
@@ -1465,6 +1466,7 @@ fn main() {
         day: 1,   // Initialize with 1
         month: 1, // Initialize with 1
         year: 1,  // Initialize with 1
+        n_groups: 0,
         // Add more variables as needed here
     };
 
@@ -1487,7 +1489,10 @@ fn main() {
         //check_for_empty_groups(&mut groups);
 
         
-
+       // if iteration > 25{
+       //     log::info!("Checking for empty groups: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
+       //     handle_empty_groups(&mut groups, &mut grid);
+       // }
 
         //dispersal
         if iteration > 100 {
@@ -1514,7 +1519,7 @@ fn main() {
 
         }
         log::info!("Initial roamer target assignment: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        initial_roamer_dispersal_target(roamer_vector, &mut groups, &mut grid, &mut rng);
+        initial_roamer_dispersal_target(roamer_vector,  &mut grid, &mut rng);
         log::info!("Initial roamer movement: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
         initial_roamer_dispersal_movement(roamer_vector, &mut grid, &mut groups, &mut rng);
         // Free territory of groups with no members
@@ -1550,7 +1555,8 @@ fn main() {
 
          //mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
          log::info!("Mortality triggered: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-            combined_mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality);
+           // combined_mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality);
+            execute_mortality(&survival_prob, &mut groups, dispersing_groups_vector, roamer_vector, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality)
         }
 
         //age individuals by one day
@@ -1595,6 +1601,7 @@ fn main() {
             day: global_variables.day,
             month: global_variables.month,
             year: global_variables.year,
+            n_groups: global_variables.n_groups,
         });
 
 

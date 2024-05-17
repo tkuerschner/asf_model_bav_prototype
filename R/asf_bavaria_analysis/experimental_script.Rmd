@@ -1599,7 +1599,7 @@ result <- inner_join(grid, gr3, by = c("x" = "corex", "y" = "corey"))
 ```{r}
 
 r1 <- roamers %>%
-  filter(roamer_id == 15) %>%
+  filter(roamer_id == 16) %>%
   group_by(iteration) 
 
 r2 <- r1 %>%
@@ -1642,13 +1642,21 @@ terr_data <- g4 %>%
   ) %>%
   dplyr::select(x, y, quality,iteration, territory_of_group)
 
+#gid: the known groups of r1 converted to a vector 
+gid <- unique(r1$known_groups)
+# convert gid into numbers example:  ""            "4;5;7;11;10" -> 4,5,7,11,10
+gid <- as.numeric(unlist(strsplit(gid, ";")))
+
+
+
+terr_data2 <- terr_data %>% filter( territory_of_group %in% gid)
 
 r_path_bp <- ggplot() +
   geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
   labs(fill = "Habitat quality") +
   new_scale_fill() +
-  geom_tile(data = terr_data, aes(x = x, y = y, fill = as.factor(territory_of_group)), alpha = .5) +
+  geom_tile(data = terr_data2, aes(x = x, y = y, fill = as.factor(territory_of_group)), alpha = .5) +
   #scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
   #guides(fill = "none") +
   geom_path(data =  r3, aes(x = roamer_x, y = roamer_y, group = roamer_id), linewidth = 1, , color = "black", linetype = "dashed") +
