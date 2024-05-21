@@ -841,3 +841,4 @@ pub fn remove_non_core_attraction_points_this_group(grid: &mut Vec<Vec<Cell>>, g
   //      }
   //  }
 }
+

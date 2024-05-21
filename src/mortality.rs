@@ -141,7 +141,7 @@ pub fn combined_mortality(surv_prob: &SurvivalProbability,groups: &mut Vec<Group
     }
 }
 
-pub fn disperser_mortality(surv_prob: &SurvivalProbability, dispersing_groups: &mut Vec<DispersingFemaleGroup>){
+pub fn disperser_mortality(surv_prob: &SurvivalProbability, dispersing_groups: &mut Vec<DispersingFemaleGroup>, random_mortality: &mut u32){
     for d_group in dispersing_groups.iter_mut() {
         let retained_d_group_members: Vec<DispersingIndividual> = d_group.dispersing_individuals
         .drain(..)
@@ -153,12 +153,14 @@ pub fn disperser_mortality(surv_prob: &SurvivalProbability, dispersing_groups: &
                 if rounded_number < surv_prob.adult {
                     true
                 } else {
+                    *random_mortality += 1;
                     false
                 }
             } else {
                 if rounded_number < surv_prob.piglet {
                     true
                 } else {
+                    *random_mortality += 1;
                     false
                 }
             }
@@ -168,7 +170,7 @@ pub fn disperser_mortality(surv_prob: &SurvivalProbability, dispersing_groups: &
     }
 }
 
-pub fn roamer_mortality(surv_prob: &SurvivalProbability, roaming_individuals: &mut Vec<RoamingIndividual>){
+pub fn roamer_mortality(surv_prob: &SurvivalProbability, roaming_individuals: &mut Vec<RoamingIndividual>, random_mortality: &mut u32){
  
         let retained_r_group_members: Vec<RoamingIndividual> = roaming_individuals
         .drain(..)
@@ -180,12 +182,14 @@ pub fn roamer_mortality(surv_prob: &SurvivalProbability, roaming_individuals: &m
                 if rounded_number < surv_prob.adult {
                     true
                 } else {
+                    *random_mortality += 1;
                     false
                 }
             } else {
                 if rounded_number < surv_prob.piglet {
                     true
                 } else {
+                    *random_mortality += 1;
                     false
                 }
             }
@@ -198,6 +202,6 @@ pub fn roamer_mortality(surv_prob: &SurvivalProbability, roaming_individuals: &m
 
 pub fn execute_mortality(surv_prob: &SurvivalProbability, groups: &mut Vec<Groups>, dispersing_groups: &mut Vec<DispersingFemaleGroup>, roaming_individuals: &mut Vec<RoamingIndividual>, random_mortality: &mut u32, overcap_mortality: &mut u32){
     combined_mortality(surv_prob, groups, overcap_mortality, random_mortality);
-    disperser_mortality(surv_prob, dispersing_groups);
-    roamer_mortality(surv_prob, roaming_individuals);
+    disperser_mortality(surv_prob, dispersing_groups, random_mortality);
+    roamer_mortality(surv_prob, roaming_individuals, random_mortality);
 }

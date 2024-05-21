@@ -1596,10 +1596,10 @@ result <- inner_join(grid, gr3, by = c("x" = "corex", "y" = "corey"))
 
 ```
 
-```{r}
+```{r roamer}
 
 r1 <- roamers %>%
-  filter(roamer_id == 16) %>%
+  filter(roamer_id == 24) %>%
   group_by(iteration) 
 
 r2 <- r1 %>%
