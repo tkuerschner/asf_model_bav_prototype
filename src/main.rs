@@ -3,9 +3,18 @@ use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result, Read,};
+use std::path::Path;
 use std::collections::VecDeque;
 use std::time::Instant;
 use serde::{de, Deserialize, Serialize};
+use chrono::Datelike;
+use chrono::Timelike;
+use std::fs;
+use chrono::Local;
+use zip::{ZipWriter, write::FileOptions, CompressionMethod};
+use std::thread;
+use std::time::Duration;
+
 
 //use lazy_static::lazy_static;
 //use std::sync::Mutex;
@@ -24,8 +33,6 @@ use save_functions::*;
 // Some individual related functions
 mod ageing;
 use ageing::ageing;
-use std::fs;
-use chrono::Local;
 
 mod reproduction;
 use reproduction::*;
@@ -1389,7 +1396,40 @@ fn main() {
     //purge old log file if it exists and was not saved
     let _ = std::fs::remove_file("logs/outputLog.log");
     
+    // check the logs folder, if there is 10 ore more files in there zip them and move them to the archive folder
+   // let log_folder = Path::new("logs");
+   // let archive_folder = Path::new("logs/archive");
+   // let log_files = fs::read_dir(log_folder).unwrap();
+   // let mut log_files_count = 0;
+   // let mut has_archived = false;
+   // for _ in log_files {
+   //     log_files_count += 1;
+   // }
+//
+   // if log_files_count >= 10 {
+   //     has_archived = true;
+   //     let now = Local::now();
+   //     let zip_name = format!("log_archive_{}_{}_{}_{}_{}.zip", now.year(), now.month(), now.day(), now.hour(), now.minute());
+   //     let zip_path = archive_folder.join(zip_name);
+   //     let mut zip = ZipWriter::new(fs::File::create(zip_path).unwrap());
+   //     let options = FileOptions::default().compression_method(CompressionMethod::Stored);
+   //     let log_files = fs::read_dir(log_folder).unwrap();
+   //     for file in log_files {
+   //         let file = file.unwrap();
+   //         let path = file.path();
+   //         let file_name = path.file_name().unwrap().to_str().unwrap();
+   //         zip.start_file(file_name, options).unwrap();
+   //         let mut file = fs::File::open(path).unwrap();
+   //         io::copy(&mut file, &mut zip).unwrap();
+   //     }
+   // }
 
+    // pause execution for 30 second to allow the zip file to be created
+    //thread::sleep(Duration::from_secs(30));
+
+     // Initialize the logger
+     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+    
     // Define grid dimensions
     //let grid_size = 25;
 
@@ -1403,13 +1443,15 @@ fn main() {
 //
     //assign_to_constants(&input);
 
-    // Initialize the logger
-    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+   
 
     // variable that is set to the system time when the simulation starts
     
   
     let start_time = Instant::now();
+    //if has_archived {
+    //    log::info!("Archived log files");
+    //}
 
     log::info!("--------------------------->>> Starting simulation at time: {:?}", start_time);
 
