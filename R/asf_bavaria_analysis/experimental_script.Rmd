@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 134       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 135       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -1599,7 +1599,7 @@ result <- inner_join(grid, gr3, by = c("x" = "corex", "y" = "corey"))
 ```{r roamer}
 
 r1 <- roamers %>%
-  filter(roamer_id == 24) %>%
+  filter(roamer_id == 45) %>%
   group_by(iteration) 
 
 r2 <- r1 %>%

@@ -1,6 +1,6 @@
 use crate::*;
 
-// Static counter for disperser_id
+// Static counter for roamer_id
 static mut ROAMER_COUNTER: usize = 0;
 
 // Function to generate a unique individual_id
@@ -25,7 +25,6 @@ pub struct RoamingIndividual {
     pub has_reproduced: bool,
     pub time_of_reproduction: usize,
     pub origin_group_id: usize,
-    pub disperser_id: usize,
     pub target_cell:Option<(usize,usize)>,
     pub daily_distance: usize,
     pub target_group: Option<usize>,
@@ -68,7 +67,6 @@ pub fn roamer_assignemnt(roamers: &mut Vec<RoamingIndividual>, groups: &mut Vec<
                 has_reproduced: member.has_reproduced,
                 time_of_reproduction: member.time_of_reproduction,
                 origin_group_id: group.group_id,
-                disperser_id: generate_disperser_id(),
                 target_cell: None,
                 daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
                 target_group: None,
