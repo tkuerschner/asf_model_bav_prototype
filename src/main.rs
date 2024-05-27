@@ -1456,7 +1456,7 @@ fn main() {
     log::info!("--------------------------->>> Starting simulation at time: {:?}", start_time);
 
     let mut rng = rand::thread_rng();
-    let num_groups = 5; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 30; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";

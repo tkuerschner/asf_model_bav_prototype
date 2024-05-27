@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 136       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 137       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -1189,7 +1189,7 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/by_group/example_spaceUse_year_"
 groups2 <- groups %>%
   mutate(year = as.numeric(round(iteration / 365)) + 1)
   disp_event <- dispersers
-  gr2 <- groups2 %>% filter(group_id == 1) %>% group_by(iteration) %>%
+  gr2 <- groups2 %>% filter(group_id == 56) %>% group_by(iteration) %>%
   sample_n(1)
 
   detailed_path_df <- gr2 %>%
@@ -1730,7 +1730,7 @@ r1$target_cell
 
 ```
 
-```{r}
+```{r all ramoers LARGE}
 
 
 for (i in 1:length(unique(roamers$roamer_id))) {
@@ -1823,3 +1823,51 @@ r_path_bp <- ggplot() +
   }
 
   ```
+
+```{r}
+
+# subset groups to only have group_id 1
+
+gr1 <- groups %>%
+  filter(group_id == 1) %>%
+  group_by(iteration) %>%
+  sample_n(1)
+
+gr2 <- gr1 %>% dplyr::select(group_id, iteration,x,y,sex,age_class)
+
+
+#save as csv
+
+write.csv(gr2, file = "./R/asf_bavaria_analysis/group1.csv")
+
+
+
+gr1 <- groups %>%
+  filter(group_id == 23) %>%
+  group_by(iteration) %>%
+  sample_n(1)
+
+gr2 <- gr1 %>% dplyr::select(group_id, iteration,x,y,sex,age_class)
+
+
+#save as csv
+
+write.csv(gr2, file = "./R/asf_bavaria_analysis/group23.csv")
+
+
+
+
+gr1 <- groups %>%
+  filter(group_id == 51) %>%
+  group_by(iteration) %>%
+  sample_n(1)
+
+gr2 <- gr1 %>% dplyr::select(group_id, iteration,x,y,sex,age_class)
+
+
+#save as csv
+
+write.csv(gr2, file = "./R/asf_bavaria_analysis/group51.csv")
+
+
+ ```
