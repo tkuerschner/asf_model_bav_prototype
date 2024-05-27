@@ -255,23 +255,21 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
             }
         }
       //println!("Groups to remove: {:?}", groups_to_remove);
-      groups_to_remove.sort_unstable_by(|a, b| b.cmp(a));
-      for &index in groups_to_remove.iter().rev() {
-        //println!("Removing group at index {}", index);
-        if index < dispersing_groups.len() {
-            dispersing_groups.remove(index);
-        } else {
-            println!("Index {} is out of bounds (length: {})", index , dispersing_groups.len());
-        }
-    }
-
+     // groups_to_remove.sort_unstable_by(|a, b| b.cmp(a));
+     // for &index in groups_to_remove.iter().rev() {
+     //   //println!("Removing group at index {}", index);
+     //   if index < dispersing_groups.len() {
+     //       dispersing_groups.remove(index);
+     //   } else {
+     //       println!("Index {} is out of bounds (length: {})", index , dispersing_groups.len());
+     //   }
+     //}
+     
     // only keep the groups not marked for removal
     dispersing_groups.retain(|dispersing_group| !dispersing_group.marked_for_removal);
     
-   // println!("Number of dispersing groups end: {}", dispersing_groups.len());
-
-       // println!("Remaining dispersing groups: {:?}", dispersing_groups);
-    }
+    
+}
 
 fn handle_reached_target(
         disperser_group: &mut DispersingFemaleGroup,
@@ -331,6 +329,7 @@ fn handle_reached_target(
             }
             // Add the index to groups_to_remove vector
             groups_to_remove.push(index);
+            disperser_group.marked_for_removal = true;
         }
     }
 
