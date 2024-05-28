@@ -264,12 +264,12 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
      //       println!("Index {} is out of bounds (length: {})", index , dispersing_groups.len());
      //   }
      //}
-
+     
     // only keep the groups not marked for removal
     dispersing_groups.retain(|dispersing_group| !dispersing_group.marked_for_removal);
     
-
-    }
+    
+}
 
 fn handle_reached_target(
         disperser_group: &mut DispersingFemaleGroup,
