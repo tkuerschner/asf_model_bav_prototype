@@ -166,7 +166,8 @@ pub fn initial_roamer_dispersal_target(roamers: &mut Vec<RoamingIndividual>, gri
 pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>, rng: &mut impl Rng) {
     
     for roamer in roamers.iter_mut().filter(|roamer| roamer.initial_dispersal == true) {
-        while roamer.daily_distance > 0 && roamer.initial_dispersal == true{
+        let mut ptt = 0;
+        while roamer.daily_distance > 0 && roamer.initial_dispersal == true && ptt < 1000{
             let move_towards_target = rand::thread_rng().gen_bool(0.25);
 
             //log::info!("Dispersing roamer {:?} is moving towards target: {:?}", roamer.roamer_id, move_towards_target);
@@ -200,6 +201,7 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                     }
                 }
             }
+            ptt += 1;
         }
         //log::info!("Dispersing roamer {:?} finished moving towards target for today", roamer.roamer_id);
         if roamer.initial_dispersal == true {
