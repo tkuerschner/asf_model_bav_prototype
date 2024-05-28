@@ -203,6 +203,9 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
             }
             ptt += 1;
         }
+        if ptt == 1000 {
+            log::info!("Roamer {:?} movement loop timeout", roamer.roamer_id);
+        }
         //log::info!("Dispersing roamer {:?} finished moving towards target for today", roamer.roamer_id);
         if roamer.initial_dispersal == true {
             roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
