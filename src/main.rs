@@ -1526,9 +1526,13 @@ fn main() {
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
 
-        //check_for_empty_groups(&mut groups);
-        //delete_groups_without_members(&mut groups);
-        //check_for_empty_groups(&mut groups);
+        
+        check_for_empty_groups(&mut groups);
+        log::info!("Checking for empty groups: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
+        free_cells_of_empty_groups(&groups, &mut grid);
+        log::info!("Freeing cells of empty groups and deleting group: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
+        delete_groups_without_members(&mut groups);
+        check_for_empty_groups(&mut groups);
 
         
        // if iteration > 25{
