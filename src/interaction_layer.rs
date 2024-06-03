@@ -117,4 +117,9 @@ pub fn get_number_of_dispersers_that_have_been_at_coordinate(interaction_layer: 
     interaction_layer[x][y].individuals.iter().filter(|individual| individual.individual_type == "disperser").count()
 }
 
+//function to get the number of individuals that have been at a specific x and y coordinate at a specific time
+pub fn get_number_of_individuals_that_have_been_at_coordinate_at_time(interaction_layer: &Vec<Vec<InteractionCell>>, x: usize, y: usize, time: usize) -> usize {
+    interaction_layer[x][y].individuals.iter().filter(|individual| individual.time <= time && individual.time_left >= time).count()
+}
+
 
