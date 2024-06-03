@@ -1704,6 +1704,32 @@ fn main() {
     fs::rename("logs/outputLog.log", log_file).expect("Failed to rename log file");
 
 
+    // check the logs folder, if there is 10 ore more files in there zip them and move them to the archive folder
+    //let log_folder = Path::new("logs");
+    //let archive_folder = Path::new("logs/archive");
+    //let log_files = fs::read_dir(log_folder).unwrap();
+    //let mut log_files_count = 0;
+    //for _ in log_files {
+    //    log_files_count += 1;
+    //}
+//
+    // if log_files_count >= 10 {
+    //    let now = Local::now();
+    //    let zip_name = format!("log_archive_{}_{}_{}_{}_{}.zip", now.year(), now.month(), now.day(), now.hour(), now.minute());
+    //    let zip_path = archive_folder.join(zip_name);
+    //    let mut zip = ZipWriter::new(fs::File::create(zip_path).unwrap());
+    //    let options = FileOptions::default().compression_method(CompressionMethod::Stored);
+    //    let log_files = fs::read_dir(log_folder).unwrap();
+    //    for file in log_files {
+    //        let file = file.unwrap();
+    //        let path = file.path();
+    //        let file_name = path.file_name().unwrap().to_str().unwrap();
+    //        zip.start_file(file_name, options).unwrap();
+    //        let mut file = fs::File::open(path).unwrap();
+    //        io::copy(&mut file, &mut zip).unwrap();
+    //    }
+    //}
+
 }
 
 
