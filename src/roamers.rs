@@ -222,7 +222,9 @@ fn move_towards_target_cell_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Ve
         let new_x = (roamer.roamer_x as isize + dx) as usize;
         let new_y = (roamer.roamer_y as isize + dy) as usize;
         // Update roamer's position if within grid boundaries
-        if new_x < grid.len() && new_y < grid[0].len() && is_valid_cell(grid, new_x, new_y) {
+        if new_x < grid.len() && new_y < grid[0].len() 
+        //&& is_valid_cell(grid, new_x, new_y) 
+        {
             roamer.roamer_x = new_x;
             roamer.roamer_y = new_y;
             roamer.daily_distance -= 1;
