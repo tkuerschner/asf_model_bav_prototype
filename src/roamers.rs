@@ -179,7 +179,8 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                         // Roamer reached target
                        // log::info!("Roamer {:?} reached target", roamer.roamer_id);                        
                         roamer.initial_dispersal = false;
-                        set_list_of_target_groups(roamer, groups);
+                        //set_list_of_target_groups(roamer, groups);
+                        get_3_groups_in_range(roamer, groups);
                         select_target_group(roamer, rng);
                         roamer.target_group_id = roamer.target_group;
                         evaluate_and_set_target_cell(roamer, groups);
@@ -193,7 +194,8 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                         // Roamer reached target
                        // log::info!("Roamer {:?} reached target", roamer.roamer_id);
                         roamer.initial_dispersal = false;
-                        set_list_of_target_groups(roamer, groups);
+                         //set_list_of_target_groups(roamer, groups);
+                         get_3_groups_in_range(roamer, groups);
                         select_target_group(roamer, rng);
                         roamer.target_group_id = roamer.target_group;
                         evaluate_and_set_target_cell(roamer, groups);
@@ -292,7 +294,7 @@ fn set_list_of_target_groups(roamer: &mut RoamingIndividual, groups: &Vec<Groups
         let dist_b = (b.x as isize - roamer.roamer_x as isize).abs() + (b.y as isize - roamer.roamer_y as isize).abs();
         dist_a.cmp(&dist_b)
     });
-    for group in groups_sorted.iter().take(5) {
+    for group in groups_sorted.iter().take(3) {
         known_groups.push(group.group_id);
     }
     roamer.known_groups = known_groups;
@@ -300,6 +302,51 @@ fn set_list_of_target_groups(roamer: &mut RoamingIndividual, groups: &Vec<Groups
     //let target_group = known_groups.choose(rng);
     //roamer.target_group = Some(*target_group.unwrap());
 }
+
+fn get_3_groups_in_range(roamer: &mut RoamingIndividual, groups: &Vec<Groups>)  {
+    let mut target_groups = Vec::new();
+    //subset the grid to a 75 cell radius around the roamer
+    let mut grid_subset = Vec::new();
+    for i in 0..75 {
+        for j in 0..75 {
+            if let Some(x) = roamer.roamer_x.checked_add(i) {
+                if let Some(y) = roamer.roamer_y.checked_add(j) {
+                    grid_subset.push((x, y));
+                }
+            }
+            if let Some(x) = roamer.roamer_x.checked_sub(i) {
+                if let Some(y) = roamer.roamer_y.checked_sub(j) {
+                    grid_subset.push((x, y));
+                }
+            }
+            if let Some(x) = roamer.roamer_x.checked_add(i) {
+                if let Some(y) = roamer.roamer_y.checked_sub(j) {
+                    grid_subset.push((x, y));
+                }
+            }
+            if let Some(x) = roamer.roamer_x.checked_sub(i) {
+                if let Some(y) = roamer.roamer_y.checked_add(j) {
+                    grid_subset.push((x, y));
+                }
+            }
+        }
+    }
+    //check if any group is in the subset
+    for group in groups.iter() {
+        if grid_subset.iter().any(|(x, y)| group.x == *x && group.y == *y) {
+            target_groups.push(group.group_id);
+        }
+    }
+    // secet up to 3 target groups
+    let mut target_groups_final = Vec::new();
+    for group in target_groups.iter().take(3) {
+        target_groups_final.push(*group);
+    }
+    
+    roamer.known_groups = target_groups_final;
+ 
+}
+
 
 fn select_target_group(roamer: &mut RoamingIndividual, rng: &mut impl Rng) -> Option<usize> {
     // Select a random group from the known groups
@@ -332,7 +379,8 @@ fn roaming_check(roamer: &mut RoamingIndividual, groups: &Vec<Groups>, rng: &mut
                 roamer.target_group_id = roamer.target_group;
                 ptc += 1;
                 if ptc == 9 {
-                    set_list_of_target_groups(roamer, groups);
+                     //set_list_of_target_groups(roamer, groups);
+                     get_3_groups_in_range(roamer, groups);
                     select_target_group(roamer, rng);
                     roamer.target_group_id = roamer.target_group;
                 }
