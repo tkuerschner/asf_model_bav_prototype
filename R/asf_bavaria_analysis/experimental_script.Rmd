@@ -1730,7 +1730,7 @@ r1$target_cell
 
 ```
 
-```{r all ramoers LARGE}
+```{r all roamers LARGE}
 
 
 for (i in 1:length(unique(roamers$roamer_id))) {
