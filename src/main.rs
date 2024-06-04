@@ -53,8 +53,8 @@ use mortality::*;
 mod roamers;
 use roamers::*;
 
-//mod interaction_layer;
-//use interaction_layer::*;
+mod interaction_layer;
+use interaction_layer::*;
 
   // Register Ctrl+C handler
 
@@ -67,7 +67,7 @@ pub struct Model {
     pub global_variables: GlobalVariables,
     pub roamers: Vec<RoamingIndividual>,
     pub dispersers: Vec<DispersingFemaleGroup>,
-    //pub interaction_layer: Vec<Interaction>,
+    pub interaction_layer: Vec<Vec<InteractionCell>>,
 }
 
 #[derive(Debug, Clone)]
@@ -1526,6 +1526,8 @@ fn main() {
         // Add more variables as needed here
     };
 
+    let interaction_layer_tmp = create_interaction_layer(&grid);
+
     
      // create the model
      let mut model = Model {
@@ -1534,6 +1536,7 @@ fn main() {
         dispersers: dispersing_groups_vector.clone(),
         roamers: roamer_vector.clone(),
         global_variables: global_variables,
+        interaction_layer: interaction_layer_tmp,
     };
     
 
