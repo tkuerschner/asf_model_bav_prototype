@@ -1,5 +1,6 @@
 use rand::{rngs, Rng};
 use rand::seq::SliceRandom;
+use rand_distr::num_traits::int;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result, Read,};
@@ -52,17 +53,30 @@ use mortality::*;
 mod roamers;
 use roamers::*;
 
+//mod interaction_layer;
+//use interaction_layer::*;
+
   // Register Ctrl+C handler
 
 
 // Define a struct to represent a group
 #[derive(Debug, Clone)]
+pub struct Model {
+    pub groups: Vec<Groups>,
+    pub grid: Vec<Vec<Cell>>,
+    pub global_variables: GlobalVariables,
+    pub roamers: Vec<RoamingIndividual>,
+    pub dispersers: Vec<DispersingFemaleGroup>,
+    //pub interaction_layer: Vec<Interaction>,
+}
+
+#[derive(Debug, Clone)]
 pub struct Groups {
     group_id: usize,
     x: usize,
     y: usize,
-    core_cell:Option<(usize,usize)>,
-    target_cell:Option<(usize,usize)>,
+    core_cell: Option<(usize, usize)>,
+    target_cell: Option<(usize, usize)>,
     remaining_stay_time: usize,
     memory: GroupMemory,
     group_members: Vec<GroupMember>,
@@ -618,7 +632,7 @@ pub struct CellInfo {
 }
 
 // Define a struct to represent global variables
-#[derive(Clone)] 
+#[derive(Debug, Clone)]
 pub struct GlobalVariables {
     age_mortality: u32,
     random_mortality: u32,
@@ -1461,10 +1475,10 @@ fn main() {
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
    // let file_path = "input/landscape/wb_50x50_prob_pred_s18.asc";
-   
+
     // Setup the landscape and individuals
 
-    let (mut grid, mut groups) = setup(file_path, num_groups);
+    let (mut grid, mut groups) = setup(file_path, num_groups); 
 
     // adjust attraction points
     log::info!("Adjusting attraction points");
@@ -1500,7 +1514,7 @@ fn main() {
     // Vector to store global variables for all iterations
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
 
-       let mut global_variables = GlobalVariables {
+       let global_variables = GlobalVariables {
         age_mortality: 0,
         random_mortality: 0,
         overcapacity_mortality: 0,
@@ -1512,12 +1526,23 @@ fn main() {
         // Add more variables as needed here
     };
 
+    
+     // create the model
+     let mut model = Model {
+        grid: grid,
+        groups: groups,
+        dispersers: dispersing_groups_vector.clone(),
+        roamers: roamer_vector.clone(),
+        global_variables: global_variables,
+    };
+    
+
     // Allocate survival probabilities
     let survival_prob = SurvivalProbability {
         adult: ADULT_SURVIVAL_DAY,
         piglet: PIGLET_SURVIVAL_DAY,
     };
-
+    
    // place_attraction_points(&mut grid, 3,6,1600);
 
     //Debug print:
@@ -1527,12 +1552,12 @@ fn main() {
     for iteration in 1..= RUNTIME {
 
         
-        check_for_empty_groups(&mut groups);
-        log::info!("Checking for empty groups: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        free_cells_of_empty_groups(&groups, &mut grid);
-        log::info!("Freeing cells of empty groups and deleting group: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        delete_groups_without_members(&mut groups);
-        check_for_empty_groups(&mut groups);
+        check_for_empty_groups(&mut model.groups);
+        log::info!("Checking for empty groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        free_cells_of_empty_groups(&model.groups, &mut model.grid);
+        log::info!("Freeing cells of empty groups and deleting group: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        delete_groups_without_members(&mut model.groups);
+        check_for_empty_groups(&mut model.groups);
 
         
        // if iteration > 25{
@@ -1548,28 +1573,28 @@ fn main() {
         //delete_groups_without_members(&mut groups);
             
         //println!("Dispersal triggered");
-        if global_variables.day == 1 {
+        if model.global_variables.day == 1 {
            // println!("Dispersal triggered: year {}, month {}, day {}", global_variables.year, global_variables.month, global_variables.day);
-            log::info!("Dispersal triggered: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-            dispersal_assignment(&mut groups, disperser_vector, dispersing_groups_vector);
+            log::info!("Dispersal triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+            dispersal_assignment(&mut model.groups, disperser_vector, &mut model.dispersers);
             //assign_dispersal_targets_individuals( disperser_vector, &groups);
-            log::info!("Assigning dispersal targets to individuals: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-            assign_dispersal_targets_groups(dispersing_groups_vector, &mut groups, &mut grid, &mut rng);
+            log::info!("Assigning dispersal targets to individuals: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+            assign_dispersal_targets_groups(&mut model.dispersers, &mut model.groups, &mut model.grid, &mut rng);
             //assign male individuals as roamers
-            log::info!("Assigning roamer targets to individuals: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-            roamer_assignemnt( roamer_vector,&mut groups);
+            log::info!("Assigning roamer targets to individuals: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+            roamer_assignemnt(&mut model.roamers,&mut model.groups);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
-            log::info!("Moving dispersers: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-            move_female_disperser_group(dispersing_groups_vector, &mut grid, &mut groups, &mut rng, global_variables.month);
+            log::info!("Moving dispersers: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+            move_female_disperser_group(&mut model.dispersers, &mut model.grid, &mut model.groups, &mut rng, model.global_variables.month);
 
         }
-        log::info!("Initial roamer target assignment: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        initial_roamer_dispersal_target(roamer_vector,  &mut grid, &mut rng);
-        log::info!("Initial roamer movement: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        initial_roamer_dispersal_movement(roamer_vector, &mut grid, &mut groups, &mut rng);
+        log::info!("Initial roamer target assignment: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        initial_roamer_dispersal_target(&mut model.roamers,  &mut model.grid, &mut rng);
+        log::info!("Initial roamer movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        initial_roamer_dispersal_movement(&mut model.roamers, &mut model.grid, &mut model.groups, &mut rng);
         // Free territory of groups with no members
-        if global_variables.day == 1 {
+        if model.global_variables.day == 1 {
           //  free_group_cells(&mut groups, &mut grid);
           //  remove_ap_from_freed_cells(&mut grid);
         }
@@ -1578,39 +1603,39 @@ fn main() {
 
 
         // Simulate movement of individuals
-        log::info!("AP dynamic: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        dynamic_ap(&mut grid, &mut groups, &mut rng, &mut global_variables);
-        log::info!("Check AP of groups: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        check_attraction_points_in_territory(&mut grid, &mut groups, 3, &mut rng);
-        log::info!("Roaming movement: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        execute_roaming(roamer_vector, &mut groups, &mut grid, &mut rng);
-        log::info!("Group movement: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        move_groups(&grid, &mut groups, &mut rng);
+        log::info!("AP dynamic: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        dynamic_ap(&mut model.grid, &mut model.groups, &mut rng, &mut model.global_variables);
+        log::info!("Check AP of groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        check_attraction_points_in_territory(&mut model.grid, &mut model.groups, 3, &mut rng);
+        log::info!("Roaming movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        execute_roaming(&mut model.roamers, &mut model.groups, &mut model.grid, &mut rng);
+        log::info!("Group movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        move_groups(&model.grid, &mut model.groups, &mut rng);
 
         //check dispersers if their target cell == none
 
 
-        if global_variables.day == 5 {
+        if model.global_variables.day == 5 {
             //debug print REMOVE ME
             //print!("reproduction is triggered");
-            log::info!("Reproduction triggered: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-          reproduction(global_variables.month, &mut groups, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
+            log::info!("Reproduction triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+          reproduction(model.global_variables.month, &mut model.groups, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
         }
 
-        if global_variables.day == 15 {
+        if model.global_variables.day == 15 {
 
          //mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
-         log::info!("Mortality triggered: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
+         log::info!("Mortality triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
            // combined_mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality);
-            execute_mortality(&survival_prob, &mut groups, dispersing_groups_vector, roamer_vector, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality)
+            execute_mortality(&survival_prob, &mut model.groups, &mut model.dispersers, &mut model.roamers, &mut model.global_variables.random_mortality, &mut model.global_variables.overcapacity_mortality)
         }
 
         //age individuals by one day
-        log::info!("Ageing triggered: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-        ageing(&mut groups, &mut global_variables.age_mortality);                                         //   <-----------------temp OFF
+        log::info!("Ageing triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        ageing(&mut model.groups, &mut model.global_variables.age_mortality);                                         //   <-----------------temp OFF
 
         //Updating various counters such as number of individuals
-        update_counter(&mut global_variables.n_individuals, &mut groups, &disperser_vector);
+        update_counter(&mut model.global_variables.n_individuals, &mut model.groups, &disperser_vector);
 
         // Update group memory
         //update_group_memory(&mut individuals); // turned off for speed
@@ -1618,50 +1643,50 @@ fn main() {
         if iteration == (RUNTIME) {
             // Save the grid state for the current (last) iteration
             //println!("its happening");
-            all_grid_states.push((iteration, grid.clone()));
+            all_grid_states.push((iteration, model.grid.clone()));
             }
     
             // Save the individual state for the current iteration
-            all_group_states.push((iteration, groups.clone()));
+            all_group_states.push((iteration, model.groups.clone()));
 
             // Save the disperser state for the current iteration
-            all_disperser_states.push((iteration, dispersing_groups_vector.clone()));
+            all_disperser_states.push((iteration, model.dispersers.clone()));
 
             // Save the roamer state for the current iteration
-            all_roamer_states.push((iteration, roamer_vector.clone()));
+            all_roamer_states.push((iteration, model.roamers.clone()));
 
         // Stop the sim when all individuals are dead
 
-        if global_variables.n_individuals == 0 {
+        if model.global_variables.n_individuals == 0 {
             println!("Simulation terminated: No individuals remaining.");
             println!("Simulation terminated at timeindex: {}", iteration);
-            all_grid_states.push((iteration, grid.clone())); // update gridstates wen simulation finished
+            all_grid_states.push((iteration, model.grid.clone())); // update gridstates wen simulation finished
             break;
         }
 
          all_global_variables.push(GlobalVariables {
-            age_mortality: global_variables.age_mortality,
-            random_mortality: global_variables.random_mortality,
-            overcapacity_mortality: global_variables.overcapacity_mortality,
-            n_individuals: global_variables.n_individuals,
-            day: global_variables.day,
-            month: global_variables.month,
-            year: global_variables.year,
-            n_groups: global_variables.n_groups,
+            age_mortality: model.global_variables.age_mortality,
+            random_mortality: model.global_variables.random_mortality,
+            overcapacity_mortality: model.global_variables.overcapacity_mortality,
+            n_individuals: model.global_variables.n_individuals,
+            day: model.global_variables.day,
+            month: model.global_variables.month,
+            year: model.global_variables.year,
+            n_groups: model.global_variables.n_groups,
         });
 
 
         // Debug print time
 
         //print!("Day:{}, Month:{}, Year:{}, Individuals:{}\n", global_variables.day, global_variables.month, global_variables.year, global_variables.n_individuals);
-        if global_variables.month == 1 && global_variables.day == 1{
+        if model.global_variables.month == 1 && model.global_variables.day == 1{
             let perc = (iteration as f64 / RUNTIME as f64 * 100.0).round();
             let elapsed_time = start_time.elapsed().as_secs();
         println!("Simulation {}% complete! - Elapsed time: {}s", perc, elapsed_time);
         }
         // Progress time 
         
-        progress_time(&mut global_variables);
+        progress_time(&mut model.global_variables);
  
 
     }
