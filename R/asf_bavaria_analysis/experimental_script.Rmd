@@ -329,8 +329,11 @@ anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, "_spa
 head(globals)
 
 globals %>%
-  ggplot(aes(iteration, n_individuals)) +
-  geom_line() +
+  ggplot() +
+  geom_line(aes(iteration, n_individuals)) +
+  geom_line(aes(iteration, n_groups), color= "blue") +
+  geom_line(aes(iteration, n_roamers), color= "red") +
+  geom_line(aes(iteration, n_dispersers), color= "green") +
   labs(title = "Population size over time", x = "Day", y = "Population size") +
   theme_minimal()
 
@@ -1982,7 +1985,7 @@ il <- iLayer %>%
   group_by(iteration) %>%
   summarise(x = x, y = y, interaction_strength = mean(interaction_strength))
 
-
+head(il)
 
 ggplot()+
 geom_tile(data = g2, aes(x = x, y = y, fill = quality))+

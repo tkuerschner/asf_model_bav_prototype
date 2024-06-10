@@ -97,6 +97,40 @@ pub fn record_movement_in_interaction_layer(interaction_layer: &mut HashMap<Posi
     }
 }
 
+// Function to record movement in the interaction layer for roamers only in the cell that they are in
+pub fn record_movement_in_interaction_layer_for_roamers(interaction_layer: &mut HashMap<PositionTimeKey, InteractionCell>, x: usize, y: usize, time: usize, group_id: usize, individual_type: &str, individual_id: usize) {
+    let directions = [
+        (0, 0, 1.0), // Target cell
+    ];
+
+    let mut added_positions = std::collections::HashSet::new();
+
+    for &(dx, dy, strength) in &directions {
+        let nx = x.wrapping_add(dx as usize);
+        let ny = y.wrapping_add(dy as usize);
+        
+        let key = (nx, ny, time);
+        if added_positions.insert(key) {
+            let entity = Entity {
+                group_id,
+                individual_type: individual_type.to_string(),
+                time,
+                time_left: 0,
+                duration: 0,
+                individual_id,
+                interaction_strength: strength,
+            };
+
+            let cell = interaction_layer.entry(key).or_insert_with(InteractionCell::default);
+
+            // Check for duplicates
+            if !cell.entities.iter().any(|e| ((e.individual_id == individual_id) || (e.group_id == group_id)) && e.time == time) {
+                cell.entities.push(entity);
+            }
+        }
+    }
+}
+
 pub fn delete_single_individual_instances(interaction_layer: &mut InteractionLayer) {
     interaction_layer.retain(|_, cell| {
         let mut time_map: HashMap<usize, Vec<&Entity>> = HashMap::new();

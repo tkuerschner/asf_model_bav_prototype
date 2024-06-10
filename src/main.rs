@@ -646,6 +646,8 @@ pub struct GlobalVariables {
     month: u32,
     year: u32,
     n_groups: usize,
+    n_roamers: usize,
+    n_dispersers: usize,
 }
 
 // Define a struct to represent the landscape
@@ -1342,10 +1344,34 @@ pub fn random_known_cell_except_last_three(known_cells: &HashSet<(usize, usize)>
  
 // Update functions
 
-pub fn update_counter(n_groups: &mut usize, groups: &mut Vec<Groups>, disperser_vector: &Vec<DispersingIndividual>) {
-    let nd = disperser_vector.len();
-    let ng: usize = groups.iter().map(|group| group.group_members.len()).sum();
-    *n_groups = nd + ng;
+pub fn update_counter(globals: &mut GlobalVariables , groups: &mut Vec<Groups>, disperser_vector: &Vec<DispersingIndividual>, roamers: &Vec<RoamingIndividual>) {
+
+    //let nd = disperser_vector.len();
+    //let ng: usize = groups.iter().map(|group| group.group_members.len()).//sum();
+    //*n_groups = nd + ng;
+    // count number of groups, dispersers groups, roamers and total individuals
+    //let mut tmp_n_groups = glob;
+    //let mut tmp_n_dispersers = 0;
+    //let mut tmp_n_roamers = 0;
+    //let mut tmp_n_total = 0;
+
+    for group in groups.iter() {
+        globals.n_groups += 1;
+        globals.n_individuals = group.group_members.len();
+    }
+
+    globals.n_dispersers = disperser_vector.len();
+    globals.n_individuals += disperser_vector.len();
+    
+    globals.n_roamers = roamers.len();
+    globals.n_individuals += roamers.len();
+    
+
+    
+    
+    
+   
+
 }
  
 pub fn progress_time(global_variables: &mut GlobalVariables) {
@@ -1478,7 +1504,7 @@ fn main() {
     log::info!("--------------------------->>> Starting simulation at time: {:?}", start_time);
 
     let mut rng = rand::thread_rng();
-    let num_groups = 40; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 30; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
@@ -1535,6 +1561,8 @@ fn main() {
         month: 1, // Initialize with 1
         year: 1,  // Initialize with 1
         n_groups: 0,
+        n_dispersers: 0,
+        n_roamers: 0,
         // Add more variables as needed here
     };
 
@@ -1650,7 +1678,7 @@ fn main() {
         ageing(&mut model.groups, &mut model.global_variables.age_mortality);                                         //   <-----------------temp OFF
 
         //Updating various counters such as number of individuals
-        update_counter(&mut model.global_variables.n_individuals, &mut model.groups, &disperser_vector);
+        update_counter(&mut model.global_variables, &mut model.groups, &disperser_vector, &roamer_vector);
 
         // Update group memory
         //update_group_memory(&mut individuals); // turned off for speed
@@ -1695,6 +1723,9 @@ fn main() {
             month: model.global_variables.month,
             year: model.global_variables.year,
             n_groups: model.global_variables.n_groups,
+            n_dispersers: model.global_variables.n_dispersers,
+            n_roamers: model.global_variables.n_roamers,
+
         });
 
 
