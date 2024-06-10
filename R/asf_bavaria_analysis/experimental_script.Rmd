@@ -38,7 +38,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 140       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 141       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -52,6 +52,8 @@ groups <- read.csv("./output/all_groups.csv", header = T)
 dispersers <- read.csv("./output/all_dispersers.csv", header = T)
 
 roamers <- read.csv("./output/all_roamers.csv", header = T)
+
+iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
 
 
 ```
@@ -1959,5 +1961,21 @@ ggplot(g32, aes(x = iteration, y = n_members, color = as.factor(group_id))) +
 
 
   groups3 <- groups %>% filter(group_id == 32) %>% filter(iteration > 850 & iteration < 1000)
+
+```
+
+
+```{r}
+
+head(iLayer)
+
+il <- iLayer %>%
+group_by(iteration, group_id) %>%
+sample_n(1) %>%
+ungroup() %>%
+group_by(x, y) %>%
+mutate(indiv_here = n())
+
+
 
 ```

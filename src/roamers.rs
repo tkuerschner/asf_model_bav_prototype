@@ -346,16 +346,31 @@ fn get_3_groups_in_range(roamer: &mut RoamingIndividual, groups: &Vec<Groups>)  
     }
     
     roamer.known_groups = target_groups_final;
+
+    if roamer.known_groups.is_empty() {
+        //get all group ids
+       let all_groups = get_all_group_ids(groups);
+       // exclude parental group
+       let known_groups = all_groups.iter()
+           .filter(|&&g| g != roamer.origin_group_id)
+           .cloned()
+           .collect::<Vec<usize>>();
+        roamer.known_groups = known_groups;
+       }
+       
  
 }
 
 
 fn select_target_group(roamer: &mut RoamingIndividual, rng: &mut impl Rng) -> Option<usize> {
+    
+    
     // Select a random group from the known groups
     let target_group = roamer.known_groups.choose(rng);
     //log::info!("Roamer {:?} selected target group: {:?}", roamer.roamer_id, target_group.unwrap());
     roamer.target_group = Some(*target_group.unwrap());
     roamer.target_group
+
 }
 
 fn evaluate_and_set_target_cell(roamer: &mut RoamingIndividual, groups: &Vec<Groups>) {
@@ -388,6 +403,7 @@ fn roaming_check(roamer: &mut RoamingIndividual, groups: &Vec<Groups>, rng: &mut
                 }
                 
             }
+          
             evaluate_and_set_target_cell(roamer, groups);
             roamer.stay_time = 5 + rand::thread_rng().gen_range(0..10);
             roamer.reached_target = false;
@@ -403,6 +419,17 @@ fn reevaluate_known_groups(roamer: &mut RoamingIndividual, groups: &Vec<Groups>)
         }
     }
     roamer.known_groups = known_groups;
+
+    if roamer.known_groups.is_empty() {
+        //get all group ids
+       let all_groups = get_all_group_ids(groups);
+       // exclude parental group
+       let known_groups = all_groups.iter()
+           .filter(|&&g| g != roamer.origin_group_id)
+           .cloned()
+           .collect::<Vec<usize>>();
+        roamer.known_groups = known_groups;
+       }
 }
 
 fn stay_with_target_group(roamer: &mut RoamingIndividual) {

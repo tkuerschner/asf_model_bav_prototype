@@ -310,3 +310,8 @@ pub fn handle_empty_groups(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>) 
     delete_groups_without_members(groups);
     free_cells_of_empty_groups(groups, grid);
 }
+
+//get all group ids
+pub fn get_all_group_ids(groups: &Vec<Groups>) -> Vec<usize> {
+    groups.iter().map(|group| group.group_id).collect()
+}
