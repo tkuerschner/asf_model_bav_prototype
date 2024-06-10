@@ -163,7 +163,7 @@ pub fn initial_roamer_dispersal_target(roamers: &mut Vec<RoamingIndividual>, gri
  }
 //}
 
-pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>, rng: &mut impl Rng) {
+pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>, rng: &mut impl Rng,  i_layer: &mut InteractionLayer, time: usize) {
     
     for roamer in roamers.iter_mut().filter(|roamer| roamer.initial_dispersal == true) {
         let mut ptt = 0;
@@ -174,6 +174,7 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
 
             if move_towards_target {
                 move_towards_target_cell_roamer(roamer, grid);
+                record_movement_in_interaction_layer(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
@@ -189,6 +190,7 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                 }
             } else {
                 move_randomly_roamer(roamer, grid);
+                record_movement_in_interaction_layer(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
@@ -247,13 +249,14 @@ fn move_randomly_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
     }
 }
 
-pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
+pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_layer: &mut InteractionLayer, time: usize) {
   
         while roamer.daily_distance > 0 && roamer.staying_with_target_group == false && roamer.initial_dispersal == false && roamer.reached_target == false{
             let move_towards_target = rand::thread_rng().gen_bool(0.25);
             //log::info!("Roamer {:?} is moving towards target: {:?}", roamer.roamer_id, move_towards_target);
             if move_towards_target {
                 move_towards_target_cell_roamer(roamer, grid);
+                record_movement_in_interaction_layer(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
@@ -267,6 +270,7 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
                 }
             } else {
                 move_randomly_roamer(roamer, grid);
+                record_movement_in_interaction_layer(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
@@ -440,7 +444,7 @@ fn stay_with_target_group(roamer: &mut RoamingIndividual) {
     }
 }
 
-fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>){
+fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_layer: &mut InteractionLayer, time: usize){
     //let target_group: &Groups = groups.iter().find(|g| g.group_id == roamer.target_group.unwrap()).unwrap();
     //let tx = target_group.x;
     //let ty = target_group.y;
@@ -457,6 +461,7 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
 
         if move_towards_target {
             move_towards_target_cell_roamer(roamer, grid);
+            record_movement_in_interaction_layer(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                     // Roamer reached target
@@ -466,6 +471,7 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
             }
         } else {
             move_randomly_roamer(roamer, grid);
+            record_movement_in_interaction_layer(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                     // Roamer reached target
@@ -482,13 +488,13 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
   
 }
 
-pub fn execute_roaming(roamers: &mut Vec<RoamingIndividual>, groups: &Vec<Groups>, grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) {
+pub fn execute_roaming(roamers: &mut Vec<RoamingIndividual>, groups: &Vec<Groups>, grid: &Vec<Vec<Cell>>, rng: &mut impl Rng, i_layer: &mut InteractionLayer, time: usize) {
     for roamer in roamers.iter_mut().filter(|roamer| roamer.initial_dispersal == false) {
         roaming_check(roamer, groups, rng);
         let mut just_moved_with_group = false;
         
         if roamer.staying_with_target_group == true {
-            move_roamer_with_target_group(roamer, grid);
+            move_roamer_with_target_group(roamer, grid, i_layer, time);
             if roamer.stay_time <= 0 {
                 roamer.staying_with_target_group = false;
                 roamer.reached_target = false;
@@ -499,7 +505,7 @@ pub fn execute_roaming(roamers: &mut Vec<RoamingIndividual>, groups: &Vec<Groups
         }
         
         if just_moved_with_group == false {
-            move_roamer(roamer, grid);
+            move_roamer(roamer, grid, i_layer, time);
         }
         
    

@@ -1478,7 +1478,7 @@ fn main() {
     log::info!("--------------------------->>> Starting simulation at time: {:?}", start_time);
 
     let mut rng = rand::thread_rng();
-    let num_groups = 4; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 40; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
@@ -1607,7 +1607,7 @@ fn main() {
         log::info!("Initial roamer target assignment: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         initial_roamer_dispersal_target(&mut model.roamers,  &mut model.grid, &mut rng);
         log::info!("Initial roamer movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        initial_roamer_dispersal_movement(&mut model.roamers, &mut model.grid, &mut model.groups, &mut rng);
+        initial_roamer_dispersal_movement(&mut model.roamers, &mut model.grid, &mut model.groups, &mut rng, &mut model.interaction_layer, iteration);
         // Free territory of groups with no members
         if model.global_variables.day == 1 {
           //  free_group_cells(&mut groups, &mut grid);
@@ -1623,7 +1623,7 @@ fn main() {
         log::info!("Check AP of groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         check_attraction_points_in_territory(&mut model.grid, &mut model.groups, 3, &mut rng);
         log::info!("Roaming movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        execute_roaming(&mut model.roamers, &mut model.groups, &mut model.grid, &mut rng);
+        execute_roaming(&mut model.roamers, &mut model.groups, &mut model.grid, &mut rng, &mut model.interaction_layer, iteration);
         log::info!("Group movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         move_groups(&model.grid, &mut model.groups, &mut rng, &mut model.interaction_layer, iteration);
 
@@ -1656,6 +1656,7 @@ fn main() {
         //update_group_memory(&mut individuals); // turned off for speed
 
         // Update the interaction layer to remove single individual instances
+        log::info!("Deleting single individual instances: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         delete_single_individual_instances(&mut model.interaction_layer);
 
         if iteration == (RUNTIME) {
