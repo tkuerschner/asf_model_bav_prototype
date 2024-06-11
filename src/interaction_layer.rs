@@ -16,12 +16,12 @@ use std::collections::HashMap;
 //5. The number of individuals that have been at a specific x and y coordinate
 //6. The number of groups that have been at a specific x and y coordinate
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct InteractionCell {
     pub entities: Vec<Entity>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Entity {
     pub group_id: usize,
     pub individual_type: String,
@@ -142,6 +142,12 @@ pub fn delete_single_individual_instances(interaction_layer: &mut InteractionLay
         // Retain only those cells where there's at least one time slot with more than one entity
         time_map.values().any(|entities| entities.len() > 1)
     });
+}
+
+
+// function to fully purge the interaction layer
+pub fn purge_interaction_layer(interaction_layer: &mut InteractionLayer) {
+    interaction_layer.clear();
 }
 
 /* 

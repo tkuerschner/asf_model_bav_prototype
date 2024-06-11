@@ -20,7 +20,9 @@ for (pckg in
     "raster",
     "scico",
     "ggnewscale",
-    "gganimate"
+    "gganimate",
+    "mongolite",
+    "jsonlite"
 ))
 {
   if (!require(pckg, character.only = T)) {
@@ -55,6 +57,28 @@ roamers <- read.csv("./output/all_roamers.csv", header = T)
 
 iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
 
+
+```
+```{r data load}
+# Function to read BSON file
+read_bson_file <- function(file_path) {
+  # Open the BSON file
+  bson_data <- readBin(file_path, "raw", file.info(file_path)$size)
+  
+  # Convert BSON to JSON
+  json_data <- bson::bson_to_json(bson_data)
+  
+  # Parse JSON to a data frame or list
+  parsed_data <- fromJSON(json_data)
+  
+  return(parsed_data)
+}
+
+# Usage
+interaction_layer_data <- read_bson_file("./output/all_interaction_layer.bson")
+
+# View the data
+print(interaction_layer_data)
 
 ```
 
@@ -1982,16 +2006,24 @@ head(iLayer)
 #plot a map of xy with the interaction strength
 
 il <- iLayer %>%
-  group_by(iteration) %>%
-  summarise(x = x, y = y, interaction_strength = mean(interaction_strength))
+  #group_by(iteration) %>%
+  group_by(x, y) %>%
+  summarise(x = x, y = y, interaction_strength = sum(interaction_strength))
+
+  #remove duplicates
+
+il <- il[!duplicated(il),]
 
 head(il)
+tail(il)
+length(il$iteration)
+
 
 ggplot()+
 geom_tile(data = g2, aes(x = x, y = y, fill = quality))+
 new_scale_fill()+
 geom_tile(data = il, aes(x = x, y = y, fill = interaction_strength))+
-scale_fill_gradient(low = "white", high = "red", limits = c(0,1))+ 
+scale_fill_gradient(low = "white", high = "red")+ 
 theme_minimal()
 
 

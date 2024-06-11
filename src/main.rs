@@ -1504,7 +1504,7 @@ fn main() {
     log::info!("--------------------------->>> Starting simulation at time: {:?}", start_time);
 
     let mut rng = rand::thread_rng();
-    let num_groups = 30; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 4; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
@@ -1705,6 +1705,8 @@ fn main() {
             // save the interaction layer for the current iteration
             all_interaction_layers.push((iteration, model.interaction_layer.clone()));
 
+            purge_interaction_layer( &mut model.interaction_layer);
+
         // Stop the sim when all individuals are dead
 
         if model.global_variables.n_individuals == 0 {
@@ -1765,7 +1767,9 @@ fn main() {
 
     save_roamers_as_csv("output/all_roamers.csv", &all_roamer_states).expect("Failed to save roamer as CSV");
 
-    save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+    //save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+
+    save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
 
     // variable that is set to the system time when the save is complete
     //let save_time = Local::now();

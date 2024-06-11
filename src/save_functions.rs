@@ -1,6 +1,9 @@
 // Saving Output functions
 
 use crate::*;
+use bson::{to_bson, Bson, doc,Document};
+use std::fs::File;
+use std::io::Write;
 
 
 // Fix me to work with groups
@@ -281,10 +284,36 @@ pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &
 
 
 
+pub fn save_interaction_layer_as_bson(
+    file_path: &str,
+    interaction_layers: &[(usize, InteractionLayer)],
+) -> io::Result<()> {
+    let mut file = File::create(file_path)?;
 
+    // Convert the interaction layers to a serializable format
+    let mut serializable_layers: Vec<Document> = Vec::new();
+    for (iteration, layer) in interaction_layers {
+        let mut layer_doc = Document::new();
+        for (&(x, y, t), cell) in layer {
+            let key = format!("{},{},{}", x, y, t);
+            layer_doc.insert(key, to_bson(cell).unwrap());
+        }
+        let doc = doc! {
+            "iteration": *iteration as i64,
+            "layer": layer_doc
+        };
+        serializable_layers.push(doc);
+    }
 
+    // Serialize the data to BSON
+    let top_level_doc = doc! { "interaction_layers": serializable_layers };
+    let bson_data = to_bson(&top_level_doc)
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
 
+    file.write_all(&bson::to_vec(&bson_data).map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?)?;
 
+    Ok(())
+}
 
 
 //pub fn save_individuals_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)]) -> io::Result<()> {
