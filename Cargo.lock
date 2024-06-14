@@ -50,6 +50,7 @@ dependencies = [
  "chrono",
  "ctrlc",
  "image",
+ "kdtree",
  "lazy_static",
  "log",
  "log4rs",
@@ -57,6 +58,7 @@ dependencies = [
  "rand_distr",
  "serde",
  "serde_json",
+ "sif-kdtree",
  "zip",
 ]
 
@@ -500,6 +502,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "kdtree"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80ee359328fc9087e9e3fc0a4567c4dd27ec69a127d6a70e8d9dd22845b8b1a2"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -904,6 +915,15 @@ dependencies = [
  "ryu",
  "serde",
  "yaml-rust",
+]
+
+[[package]]
+name = "sif-kdtree"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf082ab37b4267e9b373e3c606ba6cd347b5a0ffb6672ae8046e740ccd8a6700"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]

@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 143       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 145       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -680,7 +680,7 @@ animated_plot3 <- grp_path_bp +
 
 # summary(mpz_data)
 # summary(gr2)
-anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_Dispersal_", it, ".gif"), animate(animated_plot3)) # i get an eror here
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_Dispersal_", it, ".gif"), animate(animated_plot3)) #
 
 ```
 

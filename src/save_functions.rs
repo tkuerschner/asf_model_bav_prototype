@@ -247,8 +247,7 @@ pub fn save_roamers_as_csv(filename: &str, roamer_states: &[(usize, Vec<RoamingI
     Ok(())
 
 }
-
-
+/* 
 pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &[(usize, InteractionLayer)]) -> io::Result<()> {
     // Create or open the CSV file
     let mut file = File::create(filename)?;
@@ -281,9 +280,40 @@ pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &
     println!("Interaction layer saved to: {}", filename);
     Ok(())
 }
+*/
 
+pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &[(usize, InteractionLayer)]) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
 
+    // Write the header line
+    writeln!(file, "iteration,x,y,time,individual_id,group_id,individual_type,time_left,duration,interaction_strength")?;
 
+    // Write each entity's data for each iteration
+    for (iteration, interaction_layer) in interaction_layer_states {
+        for entity in interaction_layer.iter_entities() {
+            writeln!(
+                file,
+                "{},{},{},{},{},{},{},{},{},{}",
+                iteration,
+                entity.x,
+                entity.y,
+                entity.time,
+                entity.individual_id,
+                entity.group_id,
+                entity.individual_type,
+                entity.time_left,
+                entity.duration,
+                entity.interaction_strength
+            )?;
+        }
+    }
+
+    println!("Interaction layer saved to: {}", filename);
+    Ok(())
+}
+
+/* 
 pub fn save_interaction_layer_as_bson(
     file_path: &str,
     interaction_layers: &[(usize, InteractionLayer)],
@@ -315,7 +345,7 @@ pub fn save_interaction_layer_as_bson(
     Ok(())
 }
 
-
+*/
 //pub fn save_individuals_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)]) -> io::Result<()> {
 //
 //    // Create or open the CSV file

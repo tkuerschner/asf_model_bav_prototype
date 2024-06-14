@@ -174,7 +174,18 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
 
             if move_towards_target {
                 move_towards_target_cell_roamer(roamer, grid);
-                record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+              //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+              i_layer.add_entity_and_record_movement(
+                roamer.origin_group_id,
+                "roamer",
+                time,
+                0, // Assuming time_left is not used
+                0, // Assuming duration is not used
+                roamer.individual_id,
+                1.0, // Assuming interaction_strength is default
+                roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
+                roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+            );
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
@@ -190,7 +201,18 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                 }
             } else {
                 move_randomly_roamer(roamer, grid);
-                record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+              //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+              i_layer.add_entity_and_record_movement(
+                roamer.origin_group_id,
+                "roamer",
+                time,
+                0, // Assuming time_left is not used
+                0, // Assuming duration is not used
+                roamer.individual_id,
+                1.0, // Assuming interaction_strength is default
+                roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
+                roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+            );
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
@@ -256,7 +278,18 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
             //log::info!("Roamer {:?} is moving towards target: {:?}", roamer.roamer_id, move_towards_target);
             if move_towards_target {
                 move_towards_target_cell_roamer(roamer, grid);
-                record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+               // record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+               i_layer.add_entity_and_record_movement(
+                roamer.origin_group_id,
+                "roamer",
+                time,
+                0, // Assuming time_left is not used
+                0, // Assuming duration is not used
+                roamer.individual_id,
+                1.0, // Assuming interaction_strength is default
+                roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
+                roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+            );
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
@@ -270,7 +303,18 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
                 }
             } else {
                 move_randomly_roamer(roamer, grid);
-                record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+             //   record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+             i_layer.add_entity_and_record_movement(
+                roamer.origin_group_id,
+                "roamer",
+                time,
+                0, // Assuming time_left is not used
+                0, // Assuming duration is not used
+                roamer.individual_id,
+                1.0, // Assuming interaction_strength is default
+                roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
+                roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+            );
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                         // Roamer reached target
@@ -461,7 +505,18 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
 
         if move_towards_target {
             move_towards_target_cell_roamer(roamer, grid);
-            record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+          //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+          i_layer.add_entity_and_record_movement(
+            roamer.origin_group_id,
+            "roamer",
+            time,
+            0, // Assuming time_left is not used
+            0, // Assuming duration is not used
+            roamer.individual_id,
+            1.0, // Assuming interaction_strength is default
+            roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
+            roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+        );
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                     // Roamer reached target
@@ -471,7 +526,18 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
             }
         } else {
             move_randomly_roamer(roamer, grid);
-            record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+          //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+          i_layer.add_entity_and_record_movement(
+            roamer.origin_group_id,
+            "roamer",
+            time,
+            0, // Assuming time_left is not used
+            0, // Assuming duration is not used
+            roamer.individual_id,
+            1.0, // Assuming interaction_strength is default
+            roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
+            roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+        );
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                     // Roamer reached target

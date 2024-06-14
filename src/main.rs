@@ -57,7 +57,12 @@ use roamers::*;
 
 mod interaction_layer;
 use interaction_layer::*;
-type InteractionLayer = HashMap<(usize, usize, usize), InteractionCell>;
+
+mod utility;
+use utility::*;
+//type InteractionLayer = HashMap<(usize, usize, usize), InteractionCell>;
+
+
 
   // Register Ctrl+C handler
 
@@ -71,7 +76,7 @@ pub struct Model {
     pub roamers: Vec<RoamingIndividual>,
     pub dispersers: Vec<DispersingFemaleGroup>,
     //pub interaction_layer: Vec<Vec<InteractionCell>>,
-    pub interaction_layer: HashMap<(usize, usize, usize), InteractionCell>
+    pub interaction_layer: InteractionLayer,
 }
 
 #[derive(Debug, Clone)]
@@ -839,7 +844,18 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
             if rng.gen_range(0..100) < 25 { // <-----------------------------------------------DEBUG FIX ME percentage
                 //move_to_random_adjacent_cells(grid.len(), individual, rng);
                 move_to_random_adjacent_cells_2(grid, group, rng);
-                record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                i_layer.add_entity_and_record_movement(
+                    group.group_id, 
+                    "group", 
+                    time, 
+                    0, 
+                    0, 
+                    group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                    1.0, 
+                    group.x as f64, 
+                    group.y as f64
+                );
                 group.daily_movement_distance -= 1;
             } else {
                 // Move towards the cell with the highest quality
@@ -870,7 +886,18 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
 
                   //move_one_step_towards_target_cell(group);
                   move_one_step_towards_target_cell_with_random(group,rng,grid);
-                  record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                  //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                  i_layer.add_entity_and_record_movement(
+                    group.group_id, 
+                    "group", 
+                    time, 
+                    0, 
+                    0, 
+                    group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                    1.0, 
+                    group.x as f64, 
+                    group.y as f64
+                );
 
                     group.daily_movement_distance -= 1;
 
@@ -923,14 +950,36 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                     && ((group.y as isize) - (group.target_cell.unwrap().1 as isize)).abs() <= 3
                     {
                         move_towards_highest_quality(grid, group, rng);
-                        record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                        //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                        i_layer.add_entity_and_record_movement(
+                            group.group_id, 
+                            "group", 
+                            time, 
+                            0, 
+                            0, 
+                            group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                            1.0, 
+                            group.x as f64, 
+                            group.y as f64
+                        );
                         group.daily_movement_distance -= 1;
                     }else {
                         
                        // correlated_random_walk_towards_target(grid, group, rng);
                         //move_one_step_towards_target_cell(group);
                         move_one_step_towards_target_cell_with_random(group,rng,grid);
-                        record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                        //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                        i_layer.add_entity_and_record_movement(
+                            group.group_id, 
+                            "group", 
+                            time, 
+                            0, 
+                            0, 
+                            group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                            1.0, 
+                            group.x as f64, 
+                            group.y as f64
+                        );
                         group.daily_movement_distance -= 1;
                     }
                     
@@ -1504,7 +1553,7 @@ fn main() {
     log::info!("--------------------------->>> Starting simulation at time: {:?}", start_time);
 
     let mut rng = rand::thread_rng();
-    let num_groups = 4; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
@@ -1566,9 +1615,12 @@ fn main() {
         // Add more variables as needed here
     };
 
-    let interaction_layer_tmp = create_interaction_layer();
-
+    //let interaction_layer_tmp = create_interaction_layer();
+    //let interaction_layer_tmp = 0;
     
+     // Create an instance of InteractionLayer
+     let interaction_layer_tmp = InteractionLayer::new();
+
      // create the model
      let mut model = Model {
         grid: grid,
@@ -1643,7 +1695,7 @@ fn main() {
         }
 
        
-
+        check_empty_disperser_group(dispersing_groups_vector);
 
         // Simulate movement of individuals
         log::info!("AP dynamic: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
@@ -1685,7 +1737,7 @@ fn main() {
 
         // Update the interaction layer to remove single individual instances
         log::info!("Deleting single individual instances: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        delete_single_individual_instances(&mut model.interaction_layer);
+       // delete_single_individual_instances(&mut model.interaction_layer);
 
         if iteration == (RUNTIME) {
             // Save the grid state for the current (last) iteration
@@ -1705,7 +1757,7 @@ fn main() {
             // save the interaction layer for the current iteration
             all_interaction_layers.push((iteration, model.interaction_layer.clone()));
 
-            purge_interaction_layer( &mut model.interaction_layer);
+           // purge_interaction_layer( &mut model.interaction_layer);
 
         // Stop the sim when all individuals are dead
 
@@ -1742,6 +1794,8 @@ fn main() {
         // Progress time 
         
         progress_time(&mut model.global_variables);
+
+        model.interaction_layer.clear_interaction_layer(); // clear the interaction layer for the next iteration
  
 
     }
@@ -1767,9 +1821,9 @@ fn main() {
 
     save_roamers_as_csv("output/all_roamers.csv", &all_roamer_states).expect("Failed to save roamer as CSV");
 
-    //save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+    save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
 
-    save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
+   // save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
 
     // variable that is set to the system time when the save is complete
     //let save_time = Local::now();

@@ -1,6 +1,6 @@
 use crate::*;
 use std::collections::HashMap;
-type InteractionLayer = HashMap<(usize, usize, usize), InteractionCell>;
+//type InteractionLayer = HashMap<(usize, usize, usize), InteractionCell>;
 
 //struct for dispersal with all fields of the group_member struct and new fields x and y coordinates
 
@@ -221,7 +221,19 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
 
                 if move_towards_target {
                     move_towards_target_cell_group(disperser_group, grid);
-                    record_movement_in_interaction_layer(i_layer, disperser_group.disp_grp_x, disperser_group.disp_grp_y, time, disperser_group.dispersing_individuals[0].origin_group_id,  "disperser", disperser_group.dispersing_individuals[0].disperser_id);
+                    //record_movement_in_interaction_layer(i_layer, disperser_group.disp_grp_x, disperser_group.disp_grp_y, time, disperser_group.dispersing_individuals.last().unwrap().origin_group_id,  "disperser", disperser_group.dispersing_individuals.last().unwrap().disperser_id);
+                    i_layer.add_entity_and_record_movement(
+                        disperser_group.dispersing_individuals.last().unwrap().origin_group_id,
+                        "disperser",
+                        time,
+                        0, // Assuming time_left is not used
+                        0, // Assuming duration is not used
+                        disperser_group.dispersing_individuals.last().unwrap().disperser_id,
+                        1.0, // Assuming interaction_strength is default
+                        disperser_group.disp_grp_x as f64, // Convert coordinates to f64 if necessary
+                        disperser_group.disp_grp_y as f64  // Convert coordinates to f64 if necessary
+                    );
+
                     if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
                         reached_target = true;
                        // println!("disperser reached target tw");
@@ -229,7 +241,19 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
                     }
                 } else {
                     move_randomly_group(disperser_group, grid);
-                    record_movement_in_interaction_layer(i_layer, disperser_group.disp_grp_x, disperser_group.disp_grp_y, time, disperser_group.dispersing_individuals[0].origin_group_id,  "disperser", disperser_group.dispersing_individuals[0].disperser_id);
+
+                    //record_movement_in_interaction_layer(i_layer, disperser_group.disp_grp_x, disperser_group.disp_grp_y, time, disperser_group.dispersing_individuals.last().unwrap().origin_group_id,  "disperser", disperser_group.dispersing_individuals.last().unwrap().disperser_id);
+                    i_layer.add_entity_and_record_movement(
+                        disperser_group.dispersing_individuals.last().unwrap().origin_group_id,
+                        "disperser",
+                        time,
+                        0, // Assuming time_left is not used
+                        0, // Assuming duration is not used
+                        disperser_group.dispersing_individuals.last().unwrap().disperser_id,
+                        1.0, // Assuming interaction_strength is default
+                        disperser_group.disp_grp_x as f64, // Convert coordinates to f64 if necessary
+                        disperser_group.disp_grp_y as f64  // Convert coordinates to f64 if necessary
+                    );
                     if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
                         reached_target = true;
                        // println!("disperser reached target rw");
