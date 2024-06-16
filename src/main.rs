@@ -958,6 +958,7 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                             0, 
                             0, 
                             group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                            
                             1.0, 
                             group.x as f64, 
                             group.y as f64
@@ -1680,6 +1681,7 @@ fn main() {
             roamer_assignemnt(&mut model.roamers,&mut model.groups);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
+       check_empty_disperser_group(dispersing_groups_vector);
             log::info!("Moving dispersers: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             move_female_disperser_group(&mut model.dispersers, &mut model.grid, &mut model.groups, &mut rng, model.global_variables.month, &mut model.interaction_layer, iteration);
 
@@ -1695,7 +1697,7 @@ fn main() {
         }
 
        
-        check_empty_disperser_group(dispersing_groups_vector);
+        delete_groups_without_members(&mut model.groups);
 
         // Simulate movement of individuals
         log::info!("AP dynamic: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
@@ -1705,6 +1707,7 @@ fn main() {
         log::info!("Roaming movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         execute_roaming(&mut model.roamers, &mut model.groups, &mut model.grid, &mut rng, &mut model.interaction_layer, iteration);
         log::info!("Group movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        delete_groups_without_members(&mut model.groups);
         move_groups(&model.grid, &mut model.groups, &mut rng, &mut model.interaction_layer, iteration);
 
         //check dispersers if their target cell == none
