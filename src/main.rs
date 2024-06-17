@@ -1,6 +1,7 @@
 use rand::{rngs, Rng};
 use rand::seq::SliceRandom;
 use rand_distr::num_traits::int;
+use core::time;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result, Read,};
@@ -15,6 +16,7 @@ use chrono::Local;
 use zip::{ZipWriter, write::FileOptions, CompressionMethod};
 use std::thread;
 use std::time::Duration;
+use std::collections::HashMap;
 
 
 //use lazy_static::lazy_static;
@@ -56,6 +58,12 @@ use roamers::*;
 mod interaction_layer;
 use interaction_layer::*;
 
+mod utility;
+use utility::*;
+//type InteractionLayer = HashMap<(usize, usize, usize), InteractionCell>;
+
+
+
   // Register Ctrl+C handler
 
 
@@ -67,7 +75,8 @@ pub struct Model {
     pub global_variables: GlobalVariables,
     pub roamers: Vec<RoamingIndividual>,
     pub dispersers: Vec<DispersingFemaleGroup>,
-    pub interaction_layer: Vec<Vec<InteractionCell>>,
+    //pub interaction_layer: Vec<Vec<InteractionCell>>,
+    pub interaction_layer: InteractionLayer,
 }
 
 #[derive(Debug, Clone)]
@@ -642,6 +651,8 @@ pub struct GlobalVariables {
     month: u32,
     year: u32,
     n_groups: usize,
+    n_roamers: usize,
+    n_dispersers: usize,
 }
 
 // Define a struct to represent the landscape
@@ -732,7 +743,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 5; 
+const RUNTIME: usize = 365 * 2; 
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -805,7 +816,7 @@ pub fn move_to_closest_adjacent_cell_to_target(grid: &Vec<Vec<Cell>>, group: &mu
     }
 }
 
-pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R) {
+pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R, mut i_layer: &mut InteractionLayer, time: usize) {
     for group in group.iter_mut() {
 
         //println!("Movement called"); //<------ DEBUG print
@@ -833,6 +844,18 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
             if rng.gen_range(0..100) < 25 { // <-----------------------------------------------DEBUG FIX ME percentage
                 //move_to_random_adjacent_cells(grid.len(), individual, rng);
                 move_to_random_adjacent_cells_2(grid, group, rng);
+                //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                i_layer.add_entity_and_record_movement(
+                    group.group_id, 
+                    "group", 
+                    time, 
+                    0, 
+                    0, 
+                    group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                    1.0, 
+                    group.x as f64, 
+                    group.y as f64
+                );
                 group.daily_movement_distance -= 1;
             } else {
                 // Move towards the cell with the highest quality
@@ -863,6 +886,18 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
 
                   //move_one_step_towards_target_cell(group);
                   move_one_step_towards_target_cell_with_random(group,rng,grid);
+                  //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                  i_layer.add_entity_and_record_movement(
+                    group.group_id, 
+                    "group", 
+                    time, 
+                    0, 
+                    0, 
+                    group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                    1.0, 
+                    group.x as f64, 
+                    group.y as f64
+                );
 
                     group.daily_movement_distance -= 1;
 
@@ -915,12 +950,37 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                     && ((group.y as isize) - (group.target_cell.unwrap().1 as isize)).abs() <= 3
                     {
                         move_towards_highest_quality(grid, group, rng);
+                        //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                        i_layer.add_entity_and_record_movement(
+                            group.group_id, 
+                            "group", 
+                            time, 
+                            0, 
+                            0, 
+                            group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                            
+                            1.0, 
+                            group.x as f64, 
+                            group.y as f64
+                        );
                         group.daily_movement_distance -= 1;
                     }else {
                         
                        // correlated_random_walk_towards_target(grid, group, rng);
                         //move_one_step_towards_target_cell(group);
                         move_one_step_towards_target_cell_with_random(group,rng,grid);
+                        //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+                        i_layer.add_entity_and_record_movement(
+                            group.group_id, 
+                            "group", 
+                            time, 
+                            0, 
+                            0, 
+                            group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                            1.0, 
+                            group.x as f64, 
+                            group.y as f64
+                        );
                         group.daily_movement_distance -= 1;
                     }
                     
@@ -1334,10 +1394,34 @@ pub fn random_known_cell_except_last_three(known_cells: &HashSet<(usize, usize)>
  
 // Update functions
 
-pub fn update_counter(n_groups: &mut usize, groups: &mut Vec<Groups>, disperser_vector: &Vec<DispersingIndividual>) {
-    let nd = disperser_vector.len();
-    let ng: usize = groups.iter().map(|group| group.group_members.len()).sum();
-    *n_groups = nd + ng;
+pub fn update_counter(globals: &mut GlobalVariables , groups: &mut Vec<Groups>, disperser_vector: &Vec<DispersingIndividual>, roamers: &Vec<RoamingIndividual>) {
+
+    //let nd = disperser_vector.len();
+    //let ng: usize = groups.iter().map(|group| group.group_members.len()).//sum();
+    //*n_groups = nd + ng;
+    // count number of groups, dispersers groups, roamers and total individuals
+    //let mut tmp_n_groups = glob;
+    //let mut tmp_n_dispersers = 0;
+    //let mut tmp_n_roamers = 0;
+    //let mut tmp_n_total = 0;
+
+    for group in groups.iter() {
+        globals.n_groups += 1;
+        globals.n_individuals = group.group_members.len();
+    }
+
+    globals.n_dispersers = disperser_vector.len();
+    globals.n_individuals += disperser_vector.len();
+    
+    globals.n_roamers = roamers.len();
+    globals.n_individuals += roamers.len();
+    
+
+    
+    
+    
+   
+
 }
  
 pub fn progress_time(global_variables: &mut GlobalVariables) {
@@ -1470,7 +1554,7 @@ fn main() {
     log::info!("--------------------------->>> Starting simulation at time: {:?}", start_time);
 
     let mut rng = rand::thread_rng();
-    let num_groups = 30; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
    //let file_path = "input/landscape/test.asc";
@@ -1514,6 +1598,10 @@ fn main() {
     // Vector to store global variables for all iterations
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
 
+    // Vector to store interaction layer for all iterations
+    
+    let mut all_interaction_layers: Vec<(usize, InteractionLayer)> = Vec::new();
+
        let global_variables = GlobalVariables {
         age_mortality: 0,
         random_mortality: 0,
@@ -1523,12 +1611,17 @@ fn main() {
         month: 1, // Initialize with 1
         year: 1,  // Initialize with 1
         n_groups: 0,
+        n_dispersers: 0,
+        n_roamers: 0,
         // Add more variables as needed here
     };
 
-    let interaction_layer_tmp = create_interaction_layer(&grid);
-
+    //let interaction_layer_tmp = create_interaction_layer();
+    //let interaction_layer_tmp = 0;
     
+     // Create an instance of InteractionLayer
+     let interaction_layer_tmp = InteractionLayer::new();
+
      // create the model
      let mut model = Model {
         grid: grid,
@@ -1588,14 +1681,15 @@ fn main() {
             roamer_assignemnt(&mut model.roamers,&mut model.groups);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
+       check_empty_disperser_group(dispersing_groups_vector);
             log::info!("Moving dispersers: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-            move_female_disperser_group(&mut model.dispersers, &mut model.grid, &mut model.groups, &mut rng, model.global_variables.month);
+            move_female_disperser_group(&mut model.dispersers, &mut model.grid, &mut model.groups, &mut rng, model.global_variables.month, &mut model.interaction_layer, iteration);
 
         }
         log::info!("Initial roamer target assignment: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         initial_roamer_dispersal_target(&mut model.roamers,  &mut model.grid, &mut rng);
         log::info!("Initial roamer movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        initial_roamer_dispersal_movement(&mut model.roamers, &mut model.grid, &mut model.groups, &mut rng);
+        initial_roamer_dispersal_movement(&mut model.roamers, &mut model.grid, &mut model.groups, &mut rng, &mut model.interaction_layer, iteration);
         // Free territory of groups with no members
         if model.global_variables.day == 1 {
           //  free_group_cells(&mut groups, &mut grid);
@@ -1603,7 +1697,7 @@ fn main() {
         }
 
        
-
+        delete_groups_without_members(&mut model.groups);
 
         // Simulate movement of individuals
         log::info!("AP dynamic: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
@@ -1611,9 +1705,10 @@ fn main() {
         log::info!("Check AP of groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         check_attraction_points_in_territory(&mut model.grid, &mut model.groups, 3, &mut rng);
         log::info!("Roaming movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        execute_roaming(&mut model.roamers, &mut model.groups, &mut model.grid, &mut rng);
+        execute_roaming(&mut model.roamers, &mut model.groups, &mut model.grid, &mut rng, &mut model.interaction_layer, iteration);
         log::info!("Group movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        move_groups(&model.grid, &mut model.groups, &mut rng);
+        delete_groups_without_members(&mut model.groups);
+        move_groups(&model.grid, &mut model.groups, &mut rng, &mut model.interaction_layer, iteration);
 
         //check dispersers if their target cell == none
 
@@ -1638,10 +1733,14 @@ fn main() {
         ageing(&mut model.groups, &mut model.global_variables.age_mortality);                                         //   <-----------------temp OFF
 
         //Updating various counters such as number of individuals
-        update_counter(&mut model.global_variables.n_individuals, &mut model.groups, &disperser_vector);
+        update_counter(&mut model.global_variables, &mut model.groups, &disperser_vector, &roamer_vector);
 
         // Update group memory
         //update_group_memory(&mut individuals); // turned off for speed
+
+        // Update the interaction layer to remove single individual instances
+        log::info!("Deleting single individual instances: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+       // delete_single_individual_instances(&mut model.interaction_layer);
 
         if iteration == (RUNTIME) {
             // Save the grid state for the current (last) iteration
@@ -1657,6 +1756,11 @@ fn main() {
 
             // Save the roamer state for the current iteration
             all_roamer_states.push((iteration, model.roamers.clone()));
+
+            // save the interaction layer for the current iteration
+            all_interaction_layers.push((iteration, model.interaction_layer.clone()));
+
+           // purge_interaction_layer( &mut model.interaction_layer);
 
         // Stop the sim when all individuals are dead
 
@@ -1676,6 +1780,9 @@ fn main() {
             month: model.global_variables.month,
             year: model.global_variables.year,
             n_groups: model.global_variables.n_groups,
+            n_dispersers: model.global_variables.n_dispersers,
+            n_roamers: model.global_variables.n_roamers,
+
         });
 
 
@@ -1690,6 +1797,8 @@ fn main() {
         // Progress time 
         
         progress_time(&mut model.global_variables);
+
+        model.interaction_layer.clear_interaction_layer(); // clear the interaction layer for the next iteration
  
 
     }
@@ -1713,8 +1822,11 @@ fn main() {
 
     save_disperser_group_as_csv("output/all_dispersers.csv", &all_disperser_states).expect("Failed to save disperser as CSV");
 
-    
     save_roamers_as_csv("output/all_roamers.csv", &all_roamer_states).expect("Failed to save roamer as CSV");
+
+    save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+
+   // save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
 
     // variable that is set to the system time when the save is complete
     //let save_time = Local::now();

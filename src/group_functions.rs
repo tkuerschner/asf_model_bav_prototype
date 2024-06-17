@@ -240,10 +240,22 @@ pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Ce
     
 }
 
-// function to check if a group has no members
-pub fn group_has_no_members(group: &Groups) -> bool {
-    group.group_members.is_empty()
+// function to check if a group has no members 
+pub fn group_has_no_members(group: &Groups) -> bool { // TESTER FUNCTION to be removed for the one below
+    if group.group_members.is_empty() {
+        println!("Group {} has no members", group.group_id);
+        return true;
+    
+    } else {
+        return false;
+    }
+
 }
+//pub fn group_has_no_members(group: &Groups) -> bool { 
+//    group.group_members.is_empty()
+//}
+
+
 // take the groupid of the groups that have no members, find all cells taken by that group and free them
 pub fn free_group_cells(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>) {
     let group_ids: Vec<usize> = groups.iter().filter(|group| group_has_no_members(group)).map(|group| group.group_id).collect();
@@ -309,4 +321,9 @@ pub fn free_cells_of_empty_groups(groups: &Vec<Groups>, grid: &mut Vec<Vec<Cell>
 pub fn handle_empty_groups(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>) {
     delete_groups_without_members(groups);
     free_cells_of_empty_groups(groups, grid);
+}
+
+//get all group ids
+pub fn get_all_group_ids(groups: &Vec<Groups>) -> Vec<usize> {
+    groups.iter().map(|group| group.group_id).collect()
 }

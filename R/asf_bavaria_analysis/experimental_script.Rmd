@@ -20,7 +20,9 @@ for (pckg in
     "raster",
     "scico",
     "ggnewscale",
-    "gganimate"
+    "gganimate",
+    "mongolite",
+    "jsonlite"
 ))
 {
   if (!require(pckg, character.only = T)) {
@@ -38,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 140       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 146       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -53,6 +55,30 @@ dispersers <- read.csv("./output/all_dispersers.csv", header = T)
 
 roamers <- read.csv("./output/all_roamers.csv", header = T)
 
+iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
+
+
+```
+```{r data load}
+# Function to read BSON file
+read_bson_file <- function(file_path) {
+  # Open the BSON file
+  bson_data <- readBin(file_path, "raw", file.info(file_path)$size)
+  
+  # Convert BSON to JSON
+  json_data <- bson::bson_to_json(bson_data)
+  
+  # Parse JSON to a data frame or list
+  parsed_data <- fromJSON(json_data)
+  
+  return(parsed_data)
+}
+
+# Usage
+interaction_layer_data <- read_bson_file("./output/all_interaction_layer.bson")
+
+# View the data
+print(interaction_layer_data)
 
 ```
 
@@ -327,8 +353,11 @@ anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, "_spa
 head(globals)
 
 globals %>%
-  ggplot(aes(iteration, n_individuals)) +
-  geom_line() +
+  ggplot() +
+  geom_line(aes(iteration, n_individuals)) +
+  geom_line(aes(iteration, n_groups), color= "blue") +
+  geom_line(aes(iteration, n_roamers), color= "red") +
+  geom_line(aes(iteration, n_dispersers), color= "green") +
   labs(title = "Population size over time", x = "Day", y = "Population size") +
   theme_minimal()
 
@@ -651,7 +680,7 @@ animated_plot3 <- grp_path_bp +
 
 # summary(mpz_data)
 # summary(gr2)
-anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_Dispersal_", it, ".gif"), animate(animated_plot3)) # i get an eror here
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_Dispersal_", it, ".gif"), animate(animated_plot3)) #
 
 ```
 
@@ -1959,5 +1988,43 @@ ggplot(g32, aes(x = iteration, y = n_members, color = as.factor(group_id))) +
 
 
   groups3 <- groups %>% filter(group_id == 32) %>% filter(iteration > 850 & iteration < 1000)
+
+```
+
+
+```{r}
+
+head(iLayer)
+
+#il <- iLayer %>%
+#group_by(iteration, group_id) %>%
+#sample_n(1) %>%
+#ungroup() %>%
+#group_by(x, y) %>%
+#mutate(indiv_here = n())
+
+#plot a map of xy with the interaction strength
+
+il <- iLayer %>%
+  #group_by(iteration) %>%
+  group_by(x, y) %>%
+  summarise(x = x, y = y, interaction_strength = sum(interaction_strength))
+
+  #remove duplicates
+
+il <- il[!duplicated(il),]
+
+head(il)
+tail(il)
+length(il$iteration)
+
+
+ggplot()+
+geom_tile(data = g2, aes(x = x, y = y, fill = quality))+
+new_scale_fill()+
+geom_tile(data = il, aes(x = x, y = y, fill = interaction_strength))+
+scale_fill_gradient(low = "white", high = "red")+ 
+theme_minimal()
+
 
 ```
