@@ -81,18 +81,18 @@ impl InteractionLayer {
         self.record_movement_in_interaction_layer(entity);
     }
 
-    pub fn calculate_interactions(&self, query_x: f64, query_y: f64) {
-        let query_point = [query_x, query_y];
-        let nearest_neighbors = self.kd_tree.nearest(&query_point, 10, &squared_euclidean).unwrap();
-
-        // Process results (entities closest to query_point)
-        for neighbor in nearest_neighbors {
-            let entity_id = neighbor.1;
-            let entity = &self.entities[*entity_id];
-            println!("Entity ID: {}, Coordinates: ({}, {})", entity.individual_id, entity.x, entity.y);
-        }
-    }
-
+   // pub fn calculate_interactions(&self, query_x: f64, query_y: f64) {
+   //     let query_point = [query_x, query_y];
+   //     let nearest_neighbors = self.kd_tree.nearest(&query_point, 10, &squared_euclidean).unwrap();
+//
+   //     // Process results (entities closest to query_point)
+   //     for neighbor in nearest_neighbors {
+   //         let entity_id = neighbor.1;
+   //         let entity = &self.entities[*entity_id];
+   //       //  println!("Entity ID: {}, Coordinates: ({}, {})", entity.individual_id, entity.x, entity.y);
+   //     }
+   // }
+//
     pub fn clear_interaction_layer(&mut self) {
         self.entities.clear();
         self.kd_tree = KdTree::new(2); // Reinitialize the KD-tree

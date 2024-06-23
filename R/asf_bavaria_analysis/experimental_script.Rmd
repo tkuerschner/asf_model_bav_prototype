@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 146       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 145       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -57,28 +57,6 @@ roamers <- read.csv("./output/all_roamers.csv", header = T)
 
 iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
 
-
-```
-```{r data load}
-# Function to read BSON file
-read_bson_file <- function(file_path) {
-  # Open the BSON file
-  bson_data <- readBin(file_path, "raw", file.info(file_path)$size)
-  
-  # Convert BSON to JSON
-  json_data <- bson::bson_to_json(bson_data)
-  
-  # Parse JSON to a data frame or list
-  parsed_data <- fromJSON(json_data)
-  
-  return(parsed_data)
-}
-
-# Usage
-interaction_layer_data <- read_bson_file("./output/all_interaction_layer.bson")
-
-# View the data
-print(interaction_layer_data)
 
 ```
 
@@ -2026,5 +2004,43 @@ geom_tile(data = il, aes(x = x, y = y, fill = interaction_strength))+
 scale_fill_gradient(low = "white", high = "red")+ 
 theme_minimal()
 
+
+```
+
+```{r}
+
+g1 <- groups %>%
+  filter(group_id == 26) %>% 
+  group_by(iteration, age_class) %>% 
+  summarise(n = n())
+
+ggplot()+
+geom_line(data = g1, aes(x = iteration, y = n, color =  age_class))
+
+
+
+
+
+tail(g1)
+
+
+```
+
+
+```{r}
+
+#sum of all group indvidiuals per iteration seperate for age_calss
+
+g2 <- groups %>%
+  group_by(iteration, age_class) %>%
+  summarise(n = n())
+
+
+#plot the data
+
+ggplot() +
+  geom_line(data = g2, aes(x = iteration, y = n, color = age_class)) +
+  labs(title = "Number of group members per iteration", x = "Iteration", y = "Number of group members") +
+  theme_minimal()
 
 ```

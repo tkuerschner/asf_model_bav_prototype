@@ -202,6 +202,21 @@ pub fn roamer_mortality(surv_prob: &SurvivalProbability, roaming_individuals: &m
 
 pub fn execute_mortality(surv_prob: &SurvivalProbability, groups: &mut Vec<Groups>, dispersing_groups: &mut Vec<DispersingFemaleGroup>, roaming_individuals: &mut Vec<RoamingIndividual>, random_mortality: &mut u32, overcap_mortality: &mut u32){
     combined_mortality(surv_prob, groups, overcap_mortality, random_mortality);
+    piglet_specific_mortality(groups);
     disperser_mortality(surv_prob, dispersing_groups, random_mortality);
     roamer_mortality(surv_prob, roaming_individuals, random_mortality);
+}
+
+pub fn piglet_specific_mortality(groups: &mut Vec<Groups> ) {
+
+for  group in groups {
+
+    // if there is no adult left in the group, teh piglets will die
+    if group.group_members.iter().all(|member| member.age_class != AgeClass::Adult) {
+        group.group_members.retain(|member| member.age_class != AgeClass::Piglet);
+    }
+}
+
+
+
 }

@@ -65,9 +65,11 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
         //if members_to_disperse_indices.len() > 0 {
            // println!("Number of dispersers: {}", members_to_disperse_indices.len());
        // }
-
+        if group.group_members.len() > group.max_size {
         // Iterate over indices in reverse order to remove elements safely
         for &index in members_to_disperse_indices.iter().rev() {
+            //check against group size
+            if group.group_members.len() > group.max_size {
             // Remove the member from the group and collect it as a dispersing individual
             let member = group.group_members.remove(index);
             let dispersing_individual = DispersingIndividual {
@@ -89,7 +91,10 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
             // Add the dispersing individual to the dispersing_by_group map
             let dispersing_group = dispersing_by_group.entry(group.group_id as u64).or_insert_with(Vec::new);
             dispersing_group.push(dispersing_individual.clone());
+            }
+
         }
+     }
     }
 
     // Iterate over dispersing_by_group to create DispersingFemaleGroup instances as needed
@@ -215,6 +220,8 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
         for (index, disperser_group) in dispersing_groups.iter_mut().enumerate() {
             let mut reached_target = false;
 
+            if !disperser_group.dispersing_individuals.is_empty() {
+
             while disperser_group.daily_distance > 0 && !reached_target {
                 // Randomly decide whether to move towards the target or move randomly
                 let move_towards_target = rand::thread_rng().gen_bool(0.25);
@@ -278,7 +285,10 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
             }
 
             if reached_target {
+                //println!("disperser reached target");
                 handle_reached_target(disperser_group, grid, groups, rng, &mut groups_to_remove, index, month );
+            }
+
             }
         }
       //println!("Groups to remove: {:?}", groups_to_remove);
@@ -417,3 +427,17 @@ pub fn redraw_dispersal_target(dispersing_group: &mut DispersingFemaleGroup, gri
     }
 }
 
+//check for empty dispersal groups and remove them
+
+pub fn check_and_remove_empty_dispersal_groups(dispersing_groups: &mut Vec<DispersingFemaleGroup>) {
+    let mut indices_to_remove = Vec::new();
+    for (index, dispersing_group) in dispersing_groups.iter().enumerate() {
+        if dispersing_group.dispersing_individuals.is_empty() {
+            indices_to_remove.push(index);
+        }
+    }
+
+    for &index in indices_to_remove.iter().rev() {
+        dispersing_groups.remove(index);
+    }
+}

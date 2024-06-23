@@ -743,7 +743,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 2; 
+const RUNTIME: usize = 365 * 4; 
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -1405,17 +1405,28 @@ pub fn update_counter(globals: &mut GlobalVariables , groups: &mut Vec<Groups>, 
     //let mut tmp_n_roamers = 0;
     //let mut tmp_n_total = 0;
 
-    for group in groups.iter() {
-        globals.n_groups += 1;
-        globals.n_individuals = group.group_members.len();
-    }
+    //for group in groups.iter() {
+    //    globals.n_groups += 1;
+    //    globals.n_individuals = group.group_members.len();
+    //}
+//
+    //globals.n_dispersers = disperser_vector.len();
+    //globals.n_individuals += disperser_vector.len();
+    //
+    //globals.n_roamers = roamers.len();
+    //globals.n_individuals += roamers.len();
+    
+    // count all individuals, roamers, diserpersing individuals and group members
+    globals.n_individuals = groups.iter().map(|group| group.group_members.len()).sum::<usize>() + disperser_vector.len() + roamers.len();
 
-    globals.n_dispersers = disperser_vector.len();
-    globals.n_individuals += disperser_vector.len();
-    
+    // count all roamers
     globals.n_roamers = roamers.len();
-    globals.n_individuals += roamers.len();
-    
+
+    // count all dispersing individuals
+    globals.n_dispersers = disperser_vector.len();
+
+    // count all groups
+    globals.n_groups = groups.len();
 
     
     
@@ -1649,6 +1660,7 @@ fn main() {
 
         
         check_for_empty_groups(&mut model.groups);
+        check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
         log::info!("Checking for empty groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         free_cells_of_empty_groups(&model.groups, &mut model.grid);
         log::info!("Freeing cells of empty groups and deleting group: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
@@ -1683,6 +1695,7 @@ fn main() {
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
        check_empty_disperser_group(dispersing_groups_vector);
             log::info!("Moving dispersers: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+            check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
             move_female_disperser_group(&mut model.dispersers, &mut model.grid, &mut model.groups, &mut rng, model.global_variables.month, &mut model.interaction_layer, iteration);
 
         }
@@ -1824,7 +1837,7 @@ fn main() {
 
     save_roamers_as_csv("output/all_roamers.csv", &all_roamer_states).expect("Failed to save roamer as CSV");
 
-    save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+    //save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
 
    // save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
 
