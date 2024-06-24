@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 145       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 146       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -55,7 +55,7 @@ dispersers <- read.csv("./output/all_dispersers.csv", header = T)
 
 roamers <- read.csv("./output/all_roamers.csv", header = T)
 
-iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
+#iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
 
 
 ```
@@ -2035,12 +2035,90 @@ g2 <- groups %>%
   group_by(iteration, age_class) %>%
   summarise(n = n())
 
+  #add all dispersers to the data
 
-#plot the data
+g3 <- dispersers %>%
+  group_by(iteration, age_class) %>%
+  summarise(n = n())
 
-ggplot() +
-  geom_line(data = g2, aes(x = iteration, y = n, color = age_class)) +
-  labs(title = "Number of group members per iteration", x = "Iteration", y = "Number of group members") +
-  theme_minimal()
+  #add all roamer to the data
+
+g4 <- roamers %>%
+  group_by(iteration, age_class) %>%
+  summarise(n = n())
+
+  ggplot()+
+  geom_line(data = g2, aes(x = iteration, y = n, color =  age_class))#+
+  #geom_line(data = g3, aes(x = iteration, y = n, color =  age_class))#+
+  #geom_line(data = g4, aes(x = iteration, y = n, color =  age_class))
+
+
+  head(g2)
+  head(g3)
+  head(g4)
+
+  tail(g2)
+  tail(g3)
+  tail(g4)
+  # merge them all together
+
+g5 <- merge(g2, g3, by = c("iteration", "age_class"), all = TRUE)
+
+#change NA to 0 in n.y
+
+g5$n.y[is.na(g5$n.y)] <- 0
+
+tail(g5)
+
+
+g6 <- g5 %>%
+  mutate(n = (n.x + n.y))
+
+g6 <- g6 %>%
+  dplyr::select(iteration, age_class, n)
+
+  tail(g6)
+
+g7 <- merge(g6, g4, by = c("iteration", "age_class"), all = TRUE)
+
+tail(g7)
+
+g7$n.y[is.na(g7$n.y)] <- 0
+
+g8 <- g7 %>%
+  mutate(n = (n.x + n.y))
+
+g8 <- g8 %>%
+  dplyr::select(iteration, age_class, n)
+
+tail(g8)
+
+ppl1<- ggplot() +
+  geom_line(data = g8, aes(x = iteration / 336, y = n, color = age_class)) +
+  labs(title = "Number of group members per year", x = "Year", y = "Number of group members")# +
+  #scale_x_continuous(limits = c(0, 100)) +
+  #scale_color_manual(values = c("#CD5555", "black", "#1874CD"))+
+  #theme_bw()+
+  #theme(
+  #  axis.text.y = element_text(size =  34),
+  #  axis.text.x = element_text(size =  30), #angle = 90, vjust = 0.5, hjust=1),
+  #  axis.title = element_text(size =   38),
+  #  legend.text = element_text(size =  36),
+  #  legend.title = element_text(size = 38),
+  #  strip.text.x = element_text(size = 38),
+  #  strip.text.y = element_text(size = 38),
+  #  plot.title = element_text(size = 38)
+  #)
+
+
+    ggsave(
+    paste0("./R/asf_bavaria_analysis/visuals/population2",".png"),
+    plot = ppl1,
+    dpi = 300,
+    limitsize = TRUE,
+    width = 30,
+    height = 20
+  )
+
 
 ```

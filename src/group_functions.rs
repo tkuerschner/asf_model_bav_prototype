@@ -243,7 +243,7 @@ pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Ce
 // function to check if a group has no members 
 pub fn group_has_no_members(group: &Groups) -> bool { // TESTER FUNCTION to be removed for the one below
     if group.group_members.is_empty() {
-        println!("Group {} has no members", group.group_id);
+        //println!("Group {} has no members", group.group_id);
         return true;
     
     } else {

@@ -35,7 +35,7 @@ use save_functions::*;
 
 // Some individual related functions
 mod ageing;
-use ageing::ageing;
+use ageing::{ageing};
 
 mod reproduction;
 use reproduction::*;
@@ -743,7 +743,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 4; 
+const RUNTIME: usize = 365 *50; 
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -1743,7 +1743,8 @@ fn main() {
 
         //age individuals by one day
         log::info!("Ageing triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        ageing(&mut model.groups, &mut model.global_variables.age_mortality);                                         //   <-----------------temp OFF
+        ageing(&mut model);                                         //   <-----------------temp OFF
+        
 
         //Updating various counters such as number of individuals
         update_counter(&mut model.global_variables, &mut model.groups, &disperser_vector, &roamer_vector);
