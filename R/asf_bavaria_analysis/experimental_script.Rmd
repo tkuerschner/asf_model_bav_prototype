@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 146       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 147       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -1846,7 +1846,7 @@ gr2 <- gr1 %>% dplyr::select(group_id, iteration,x,y,sex,age_class)
 
 #save as csv
 
-write.csv(gr2, file = "./R/asf_bavaria_analysis/group1.csv")
+write.csv(gr2, file = "./R/asf_bavaria_analysis/group1a.csv")
 
 
 
@@ -1860,13 +1860,13 @@ gr2 <- gr1 %>% dplyr::select(group_id, iteration,x,y,sex,age_class)
 
 #save as csv
 
-write.csv(gr2, file = "./R/asf_bavaria_analysis/group23.csv")
+write.csv(gr2, file = "./R/asf_bavaria_analysis/group23a.csv")
 
 
 
 
 gr1 <- groups %>%
-  filter(group_id == 51) %>%
+  filter(group_id == 35) %>%
   group_by(iteration) %>%
   sample_n(1)
 
@@ -1875,7 +1875,7 @@ gr2 <- gr1 %>% dplyr::select(group_id, iteration,x,y,sex,age_class)
 
 #save as csv
 
-write.csv(gr2, file = "./R/asf_bavaria_analysis/group51.csv")
+write.csv(gr2, file = "./R/asf_bavaria_analysis/group35a.csv")
 
 
  ```
@@ -2095,24 +2095,24 @@ tail(g8)
 
 ppl1<- ggplot() +
   geom_line(data = g8, aes(x = iteration / 336, y = n, color = age_class)) +
-  labs(title = "Number of group members per year", x = "Year", y = "Number of group members")# +
-  #scale_x_continuous(limits = c(0, 100)) +
-  #scale_color_manual(values = c("#CD5555", "black", "#1874CD"))+
-  #theme_bw()+
-  #theme(
-  #  axis.text.y = element_text(size =  34),
-  #  axis.text.x = element_text(size =  30), #angle = 90, vjust = 0.5, hjust=1),
-  #  axis.title = element_text(size =   38),
-  #  legend.text = element_text(size =  36),
-  #  legend.title = element_text(size = 38),
-  #  strip.text.x = element_text(size = 38),
-  #  strip.text.y = element_text(size = 38),
-  #  plot.title = element_text(size = 38)
-  #)
+  labs(title = "Number of group members per year", x = "Year", y = "Number of group members") +
+  scale_x_continuous(limits = c(0, 10)) +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD"))+
+  theme_bw()+
+  theme(
+    axis.text.y = element_text(size =  34),
+    axis.text.x = element_text(size =  30), #angle = 90, vjust = 0.5, hjust=1),
+    axis.title = element_text(size =   38),
+    legend.text = element_text(size =  36),
+    legend.title = element_text(size = 38),
+    strip.text.x = element_text(size = 38),
+    strip.text.y = element_text(size = 38),
+    plot.title = element_text(size = 38)
+  )
 
 
     ggsave(
-    paste0("./R/asf_bavaria_analysis/visuals/population2",".png"),
+    paste0("./R/asf_bavaria_analysis/visuals/population3",".png"),
     plot = ppl1,
     dpi = 300,
     limitsize = TRUE,
@@ -2121,4 +2121,92 @@ ppl1<- ggplot() +
   )
 
 
+  # add all the individuals together, ignore age calss and add a tag fro groupmemeber, disperser and roamer
+
+g9 <- g2 %>%  group_by(iteration) %>% summarise(n = sum(n))
+
+g9$group <- "group_member"
+
+g10 <- g3 %>%  group_by(iteration) %>% summarise(n = sum(n))
+
+g10$group <- "disperser"
+
+g11 <- g4 %>%  group_by(iteration) %>% summarise(n = sum(n))
+
+g11$group <- "roamer"
+
+
+head(g9)
+head(g10)
+head(g11)
+
+# rbind g10 into g9
+
+g9 <- rbind(g9, g10)
+
+#rbind g11 into g9
+
+g9 <- rbind(g9, g11)
+
+
+ggplot() +
+  geom_line(data = g9, aes(x = iteration, y = n, color = group)) +
+  labs(title = "Number of individuals per iteration", x = "Iteration", y = "Number of individuals") +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+
+
+# get all adult female group members
+
+g12 <- groups %>%
+  group_by(iteration, age_class, sex) %>%
+  summarise(n = n()) %>%
+  filter(age_class  == "Adult")
+
+
+
+g13 <- roamers %>%
+  group_by(iteration, age_class, sex) %>%
+  summarise(n = n()) %>% 
+  filter(age_class  == "Adult")
+
+  g13$type <- "roamer"
+
+  g12$type <- "group_member"
+
+  head(g13)
+  
+
+ g14 <- rbind(g12, g13)
+
+  apop<- ggplot() +
+    geom_line(data = g14, aes(x = iteration / 336, y = n, color = type))+
+      labs(title = "Number of adults per year", x = "Year", y = "Number of adults") +
+    scale_x_continuous(limits = c(0, 10)) +
+    scale_color_manual(values = c("#CD5555", "#1874CD"))+
+    theme_bw()+
+    theme(
+    axis.text.y = element_text(size =  34),
+    axis.text.x = element_text(size =  30), #angle = 90, vjust = 0.5, hjust=1),
+    axis.title = element_text(size =   38),
+    legend.text = element_text(size =  36),
+    legend.title = element_text(size = 38),
+    strip.text.x = element_text(size = 38),
+    strip.text.y = element_text(size = 38),
+    plot.title = element_text(size = 38)
+  )
+
+
+   ggsave(
+    paste0("./R/asf_bavaria_analysis/visuals/adults3",".png"),
+    plot = apop,
+    dpi = 300,
+    limitsize = TRUE,
+    width = 30,
+    height = 20
+  )
+
 ```
+
+

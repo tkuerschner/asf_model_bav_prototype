@@ -795,8 +795,10 @@ pub fn make_core_cell_an_ap(grid: &mut Vec<Vec<Cell>>, cx: usize, cy: usize) {
 
 pub fn dynamic_ap(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng, globals: &mut GlobalVariables) {
     
-    if globals.year > 2 && ((globals.day == 1 && globals.month == 7) || (globals.day == 1 && globals.month == 10)){
+    //if globals.year > 2 && ((globals.day == 1 && globals.month == 7) || (globals.day == 1 && globals.month == 10)){
+    if globals.year > 2 && ((globals.day == 1 ) || (globals.day == 10 ) || (globals.day == 19 )){ // FIX ME: changed to 3 times a month
        // println!("Dynamic AP placement");
+       //log::info!("Dynamic AP placement");
         for group in groups.iter_mut() {
         
             if globals.year > 2 && globals.month == 7 && globals.day == 1 {
