@@ -12,3 +12,17 @@ pub fn check_empty_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
     }
    
 }
+
+
+pub fn good_year_check(model: &mut Model, rng: &mut impl Rng ){
+
+    if model.global_variables.good_year == false {
+        let random_number = rng.gen_range(0..100);
+        if random_number <= GODD_YEAR_CHANCE {
+            model.global_variables.good_year = true;
+        }
+    } else {
+        model.global_variables.good_year = false;
+    }
+
+}

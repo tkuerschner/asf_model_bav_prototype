@@ -131,11 +131,11 @@ pub fn save_global_variables_as_csv(filename: &str, global_variables: &[GlobalVa
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,day,month,year,n_individuals,age_mortality,random_mortality,overcap_mortality,n_groups,n_roamers,n_dispersers")?;
+    writeln!(file, "iteration,day,month,year,n_individuals,age_mortality,random_mortality,overcap_mortality,n_groups,n_roamers,n_dispersers,good_year")?;
 
     // Write each iteration's global variables
     for (iteration, globals) in global_variables.iter().enumerate() {
-        writeln!(file, "{},{},{},{},{},{},{},{},{},{},{}", 
+        writeln!(file, "{},{},{},{},{},{},{},{},{},{},{},{}", 
         iteration, 
         globals.day, 
         globals.month, 
@@ -147,6 +147,7 @@ pub fn save_global_variables_as_csv(filename: &str, global_variables: &[GlobalVa
         globals.n_groups,
         globals.n_roamers,
         globals.n_dispersers,
+        globals.good_year,
     
     )?;
     }

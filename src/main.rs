@@ -653,6 +653,7 @@ pub struct GlobalVariables {
     n_groups: usize,
     n_roamers: usize,
     n_dispersers: usize,
+    good_year: bool,
 }
 
 // Define a struct to represent the landscape
@@ -751,6 +752,7 @@ const PIGLET_SURVIVAL_DAY: f64 = 0.9438;
 const MIN_STAY_TIME: usize = 1;
 const MAX_STAY_TIME: usize = 14;
 const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
+const GODD_YEAR_CHANCE: usize = 15; // 15% chance of a good year
 
 
 
@@ -1624,6 +1626,7 @@ fn main() {
         n_groups: 0,
         n_dispersers: 0,
         n_roamers: 0,
+        good_year: false,
         // Add more variables as needed here
     };
 
@@ -1658,7 +1661,8 @@ fn main() {
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
 
-        
+        good_year_check(&mut model, &mut rng); // check if it is a good year
+
         check_for_empty_groups(&mut model.groups);
         check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
         log::info!("Checking for empty groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
@@ -1730,7 +1734,7 @@ fn main() {
             //debug print REMOVE ME
             //print!("reproduction is triggered");
             log::info!("Reproduction triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-          reproduction(model.global_variables.month, &mut model.groups, iteration);  // Adjust num_new_individuals               //   <-----------------temp OFF
+          reproduction(model.global_variables.month, &mut model.groups, iteration, model.global_variables.good_year);  // Adjust num_new_individuals               //   <-----------------temp OFF
         }
 
         if model.global_variables.day == 15 {
@@ -1796,6 +1800,7 @@ fn main() {
             n_groups: model.global_variables.n_groups,
             n_dispersers: model.global_variables.n_dispersers,
             n_roamers: model.global_variables.n_roamers,
+            good_year: model.global_variables.good_year,
 
         });
 

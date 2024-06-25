@@ -3,7 +3,7 @@
 use crate::*;
 
 
-pub fn reproduction(month: u32, groups: &mut Vec<Groups>, current_tick: usize) {
+pub fn reproduction(month: u32, groups: &mut Vec<Groups>, current_tick: usize, year_modifier: bool) {
     let reproduction_probability = match month {
         1 => 0.06,
         2 => 0.16,
@@ -16,6 +16,12 @@ pub fn reproduction(month: u32, groups: &mut Vec<Groups>, current_tick: usize) {
         9 => 1.00,
         _ => 0.0,
     };
+
+    let mut range_max = 5;
+
+    if year_modifier {
+        range_max = 10;
+    }
 
     for group in groups.iter_mut() {
         // Collect indices of members to be reproduced
@@ -52,7 +58,7 @@ pub fn reproduction(month: u32, groups: &mut Vec<Groups>, current_tick: usize) {
 
         // Add new members
         for index in eligible_members_indices {
-            let num_new_members = rand::thread_rng().gen_range(1..5);
+            let num_new_members = rand::thread_rng().gen_range(1..range_max);
 
             for _ in 0..num_new_members {
                 let new_sex = if rand::thread_rng().gen_bool(0.5) {
