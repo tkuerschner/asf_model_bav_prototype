@@ -18,12 +18,30 @@ pub fn reproduction(month: u32, groups: &mut Vec<Groups>, current_tick: usize, y
     };
 
     let mut range_max = 5;
+    let mut range_min = 1;
 
     if year_modifier {
         range_max = 10;
+        range_min = 5;
     }
 
     for group in groups.iter_mut() {
+
+        // Calculate the difference of current group size with the max group size
+
+        let group_size = group.group_members.len() as i32;
+        let max_group_size = group.max_size as i32;
+        let group_size_difference: i32 = max_group_size - group_size;
+
+        // increase the min and max range variables based on the group size difference, e.g. if the difference is 10% or less dont change the value but for every 10% difference increase the range by 1 and half that for the min range
+
+        if group_size_difference > 0 {
+            let range_increase = (group_size_difference as f64 / max_group_size as f64) * 10.0;
+            range_max += range_increase as i32;
+            range_min += (range_increase / 2.0) as i32;
+        }
+
+
         // Collect indices of members to be reproduced
         let members_to_reproduce_indices: Vec<usize> = group
             .group_members
@@ -58,7 +76,7 @@ pub fn reproduction(month: u32, groups: &mut Vec<Groups>, current_tick: usize, y
 
         // Add new members
         for index in eligible_members_indices {
-            let num_new_members = rand::thread_rng().gen_range(1..range_max);
+            let num_new_members = rand::thread_rng().gen_range(range_min..range_max);
 
             for _ in 0..num_new_members {
                 let new_sex = if rand::thread_rng().gen_bool(0.5) {

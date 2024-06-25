@@ -1661,7 +1661,10 @@ fn main() {
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
 
-        good_year_check(&mut model, &mut rng); // check if it is a good year
+        if model.global_variables.day == 1 && model.global_variables.month == 1 {
+            good_year_check(&mut model, &mut rng); // check if it is a good year
+        }
+        
 
         check_for_empty_groups(&mut model.groups);
         check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
