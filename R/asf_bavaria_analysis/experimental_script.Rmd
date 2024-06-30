@@ -2029,6 +2029,25 @@ tail(g1)
 
 ```{r}
 
+#plot good years over time
+
+gl1 <- globals %>% mutate(good_year = ifelse(good_year == "true", 1, 0))
+
+ggplot()+
+geom_line(data=gl1, aes(x = iteration, y = good_year))+
+labs(title = "Good years over time", x = "Iteration", y = "Good year")+
+theme_minimal()
+
+#extract the iterations with good years from the globals
+
+good_years <- globals %>% filter(good_year == "true") %>% dplyr::select(iteration)
+
+# select only one entry per year 
+
+good_years <- good_years %>% filter(iteration %% 336 == 0)
+
+
+
 #sum of all group indvidiuals per iteration seperate for age_calss
 
 g2 <- groups %>%
@@ -2093,17 +2112,20 @@ g8 <- g8 %>%
 
 tail(g8)
 
-ppl1<- ggplot() +
+#g8 <- g8 %>% filter(iteration > 5000 & iteration < 8000)
+
+ppl1 <- ggplot() +
   geom_line(data = g8, aes(x = iteration / 336, y = n, color = age_class)) +
+  geom_vline(data = good_years, aes(xintercept = iteration / 336), color = "red", linetype = "dashed") +
   labs(title = "Number of group members per year", x = "Year", y = "Number of group members") +
-  scale_x_continuous(limits = c(0, 10)) +
-  scale_color_manual(values = c("#CD5555", "black", "#1874CD"))+
-  theme_bw()+
+  scale_x_continuous(limits = c(0, 30)) +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_bw() +
   theme(
-    axis.text.y = element_text(size =  34),
-    axis.text.x = element_text(size =  30), #angle = 90, vjust = 0.5, hjust=1),
-    axis.title = element_text(size =   38),
-    legend.text = element_text(size =  36),
+    axis.text.y = element_text(size = 34),
+    axis.text.x = element_text(size = 30),
+    axis.title = element_text(size = 38),
+    legend.text = element_text(size = 36),
     legend.title = element_text(size = 38),
     strip.text.x = element_text(size = 38),
     strip.text.y = element_text(size = 38),
@@ -2112,7 +2134,7 @@ ppl1<- ggplot() +
 
 
     ggsave(
-    paste0("./R/asf_bavaria_analysis/visuals/population3",".png"),
+    paste0("./R/asf_bavaria_analysis/visuals/population15",".png"),
     plot = ppl1,
     dpi = 300,
     limitsize = TRUE,
@@ -2180,10 +2202,12 @@ g13 <- roamers %>%
 
  g14 <- rbind(g12, g13)
 
+ #g14 <- g14 %>% filter(iteration > 5000 & iteration < 8000)
+
   apop<- ggplot() +
     geom_line(data = g14, aes(x = iteration / 336, y = n, color = type))+
       labs(title = "Number of adults per year", x = "Year", y = "Number of adults") +
-    scale_x_continuous(limits = c(0, 10)) +
+    scale_x_continuous(limits = c(0, 30)) +
     scale_color_manual(values = c("#CD5555", "#1874CD"))+
     theme_bw()+
     theme(
@@ -2199,7 +2223,7 @@ g13 <- roamers %>%
 
 
    ggsave(
-    paste0("./R/asf_bavaria_analysis/visuals/adults3",".png"),
+    paste0("./R/asf_bavaria_analysis/visuals/adults15",".png"),
     plot = apop,
     dpi = 300,
     limitsize = TRUE,
@@ -2209,4 +2233,30 @@ g13 <- roamers %>%
 
 ```
 
+```{r}
 
+gx1 <- groups %>%
+  filter(sex == "female", iteration > 1000) 
+
+head(gx1)
+tail(gx1)
+
+gx12 <- gx1 %>% filter(age_class == "Adult") 
+
+tail(gx12)
+
+unique(gx1$individual_id)
+
+#filter gx1 for an individual that has at some point ageclaa piglet and adult
+
+
+
+gx2 <- gx1 %>%
+  filter(individual_id == 32613) 
+
+ggplot()+
+geom_line(data = gx2, aes(x = iteration, y = age_class))
+
+
+
+```

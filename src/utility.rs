@@ -26,3 +26,25 @@ pub fn good_year_check(model: &mut Model, rng: &mut impl Rng ){
     }
 
 }
+
+// function to remove half of all group member and half of all roamers
+
+pub fn remove_half_of_all_groups(model: &mut Model) {
+  
+    //set the age of half of all group members and roamers to MAX_AGE + 5
+    for group in model.groups.iter_mut() {
+        let half_group_size = group.group_members.len() / 2;
+        for i in 0..half_group_size {
+            group.group_members[i].age = MAX_AGE + 5;
+        }
+    }
+
+    let half_roamers_size = model.roamers.len() / 2;
+    for i in 0..half_roamers_size {
+        model.roamers[i].age = MAX_AGE + 5;
+    }
+
+    
+
+
+}

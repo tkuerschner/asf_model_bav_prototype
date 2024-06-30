@@ -744,7 +744,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 10; 
+const RUNTIME: usize = 365 * 30; 
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -1663,6 +1663,7 @@ fn main() {
 
         if model.global_variables.day == 1 && model.global_variables.month == 1 {
             good_year_check(&mut model, &mut rng); // check if it is a good year
+            roamer_density_dependent_removal(&mut model); //roamers leave the area i.e. are removed when there are more males then females
         }
         
 
@@ -1762,6 +1763,10 @@ fn main() {
         // Update the interaction layer to remove single individual instances
         log::info!("Deleting single individual instances: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
        // delete_single_individual_instances(&mut model.interaction_layer);
+
+       if iteration == (6000) {  // DEBUG TESTER REMOVE ME
+        remove_half_of_all_groups(&mut model);
+       }
 
         if iteration == (RUNTIME) {
             // Save the grid state for the current (last) iteration
