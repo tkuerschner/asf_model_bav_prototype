@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 147       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 148       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -1606,7 +1606,7 @@ result <- inner_join(grid, gr3, by = c("x" = "corex", "y" = "corey"))
 ```{r roamer}
 
 r1 <- roamers %>%
-  filter(roamer_id == 4) %>%
+  filter(roamer_id == 5) %>%
   group_by(iteration) 
 
 r2 <- r1 %>%
@@ -1686,17 +1686,17 @@ r_path_bp <- ggplot() +
   )
 
 
-r1$known_groups
-r1$origin_group_id
-r1$initial_dispersal
-r1$target_group_id
-r1$staying_with_target_group
-r1$target_group
-r1$roamer_x
-r1$roamer_y
-r1$individual_id
-r1$reached_target
-r1$target_cell
+#r1$known_groups
+#r1$origin_group_id
+#r1$initial_dispersal
+#r1$target_group_id
+#r1$staying_with_target_group
+#r1$target_group
+#r1$roamer_x
+#r1$roamer_y
+#r1$individual_id
+#r1$reached_target
+#r1$target_cell
 
 
 
@@ -1829,6 +1829,104 @@ r_path_bp <- ggplot() +
   
 
   }
+
+  ```
+
+  ```{r animate specific roamers}
+  #subset roamers for raomer 54 AND 69
+
+rcp1 <- roamers %>% filter(roamer_id == 54 | roamer_id == 69) %>% 
+  group_by(roamer_id, iteration)
+
+#animate that path of both roamers
+
+
+gr1 <- rcp1 %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)
+
+
+
+gr2 <- gr1 %>%
+  ungroup() %>%
+  dplyr::select(iteration, roamer_x, roamer_y, tx, ty, roamer_id)
+
+buffer_size <- 20
+
+mpz_data <- g2 %>%
+  filter(
+    x >= min(gr2$roamer_x) - buffer_size &
+      x <= max(gr2$roamer_x) + buffer_size &
+      y >= min(gr2$roamer_y) - buffer_size &
+      y <= max(gr2$roamer_y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
+
+ap_data <- g3 %>%
+ filter(
+   x >= min(gr2$roamer_x) - buffer_size &
+     x <= max(gr2$roamer_x) + buffer_size &
+     y >= min(gr2$roamer_y) - buffer_size &
+     y <= max(gr2$roamer_y) + buffer_size
+ ) %>%
+  dplyr::select(x, y,iteration)
+
+terr_data <- g4 %>%
+  filter(
+    x >= min(gr2$roamer_x) - buffer_size &
+      x <= max(gr2$roamer_x) + buffer_size &
+      y >= min(gr2$roamer_y) - buffer_size &
+      y <= max(gr2$roamer_y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality,iteration, territory_of_group)
+
+  #gr2 <- gr2 %>% filter(group_id == 1)
+ #head(mpz_data)
+ #head(ap_data)
+ #head(terr_data)
+
+gr2$group <- 1
+
+rm_path_bp <- ggplot() +
+  geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data, aes(x = x, y = y, fill = quality), alpha = .5) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  #guides(fill = "none") +
+  geom_path(data = gr2, aes(x = roamer_x, y = roamer_y, group = as.factor(roamer_id),  color = as.factor(roamer_id)), linewidth = 1, ,linetype = "solid") +
+  geom_point(data = gr2, aes(roamer_x, roamer_y, group = seq_along(iteration), color = as.factor(roamer_id)), size = 2) +
+  scale_color_viridis_d() +
+  #geom_point(data = gr2, aes(tx, ty, group = as.factor(roamer_id), fill = as.factor(roamer_id), colour = as.factor(roamer_id)), size = 2, shape = 8) +
+  new_scale_fill() +
+ geom_point(data = ap_data, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  #labs(title = "Day: {frame_along}", color = "Movement") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20),
+    legend.position = "none"
+  )
+
+
+ #ggsave("example_movement5.png", grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
+animated_plot <- rm_path_bp +
+  # transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
+  transition_reveal(iteration) +
+  labs(fill = "specific roamer movement", title = "Day: {frame_along}") +
+  #transition_time(iteration) +
+  enter_fade() +
+  exit_fade()
+
+# summary(mpz_data)
+# summary(gr2)
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_roamer_2", it, ".gif"), animate(animated_plot)) 
+
 
   ```
 
