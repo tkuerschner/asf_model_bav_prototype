@@ -41,6 +41,7 @@ impl Entity {
 pub struct InteractionLayer {
     entities: Vec<Entity>,
     kd_tree: KdTree<f64, usize, [f64; 2]>, // Specify all three generic parameters
+    pub id_to_index: HashMap<usize, usize>,
 }
 
 impl InteractionLayer {
@@ -48,18 +49,22 @@ impl InteractionLayer {
         InteractionLayer {
             entities: Vec::new(),
             kd_tree: KdTree::new(2), // 2-dimensional space
+            id_to_index: HashMap::new(),
         }
     }
 
-    pub fn record_movement_in_interaction_layer(
-        &mut self,
-        entity: Entity,
-    ) {
-        // Add the entity to the list (optional, for reference)
+    pub fn record_movement_in_interaction_layer(&mut self, entity: Entity) {
+        let entity_id = entity.individual_id;
+        let index = self.entities.len();
+        
+        // Add the entity to the list
         self.entities.push(entity.clone());
 
         // Add or update entity in kd-tree
-        self.kd_tree.add(entity.as_point(), entity.individual_id).unwrap();
+        self.kd_tree.add(entity.as_point(), entity_id).unwrap();
+        
+        // Update the id to index mapping
+        self.id_to_index.insert(entity_id, index);
     }
 
     pub fn add_entity_and_record_movement(
@@ -74,8 +79,18 @@ impl InteractionLayer {
         x: f64,
         y: f64,
     ) {
-        // Create new entity
-        let entity = Entity::new(group_id, individual_type, time, time_left, duration, individual_id, interaction_strength, x, y);
+             // Create new entity
+             let entity = Entity::new(
+                group_id,
+                individual_type,
+                time,
+                time_left,
+                duration,
+                individual_id,
+                interaction_strength,
+                x,
+                y,
+            );
 
         // Record movement in interaction layer
         self.record_movement_in_interaction_layer(entity);
@@ -96,6 +111,7 @@ impl InteractionLayer {
     pub fn clear_interaction_layer(&mut self) {
         self.entities.clear();
         self.kd_tree = KdTree::new(2); // Reinitialize the KD-tree
+        self.id_to_index.clear(); // Clear the id to index mapping
     }
 
    // Method to iterate over entities in the KD-tree
@@ -104,18 +120,26 @@ impl InteractionLayer {
 }
 
     /// Query entities within radius `radius` from point `(query_x, query_y)`
-    pub fn query_other_entities_in_radius(&self, query_x: f64, query_y: f64, radius: f64, entity_id_to_exclude: usize) -> Vec<(usize, f64)> {
+    pub fn query_other_entities_in_radius(
+        &self,
+        query_x: f64,
+        query_y: f64,
+        radius: f64,
+        entity_id_to_exclude: usize,
+    ) -> Vec<(usize, f64)> {
         let query_point = [query_x, query_y];
         let mut results = Vec::new();
 
         // Iterate over all entities and filter those within radius, excluding self
         for (_, entity_id) in self.kd_tree.iter_nearest(&query_point, &squared_euclidean).unwrap() {
-            let entity = &self.entities[*entity_id];
-            let distance_squared = squared_euclidean(&entity.as_point(), &query_point);
-            let distance = distance_squared.sqrt();
-            
-            if distance <= radius && entity.individual_id != entity_id_to_exclude {
-                results.push((*entity_id, distance));
+            if let Some(&entity_index) = self.id_to_index.get(entity_id) {
+                let entity = &self.entities[entity_index];
+                let distance_squared = squared_euclidean(&entity.as_point(), &query_point);
+                let distance = distance_squared.sqrt();
+
+                if distance <= radius && entity.individual_id != entity_id_to_exclude {
+                    results.push((entity.individual_id, distance));
+                }
             }
         }
 
@@ -147,12 +171,15 @@ impl InteractionLayer {
 
         // Rebuild kd-tree with remaining entities
         self.kd_tree = KdTree::new(2); // Reinitialize the KD-tree
+        self.id_to_index.clear(); // Clear the id to index mapping
 
-        for entity in &self.entities {
+        for (index, entity) in self.entities.iter().enumerate() {
             self.kd_tree.add(entity.as_point(), entity.individual_id).unwrap();
+            self.id_to_index.insert(entity.individual_id, index);
         }
     }
 }
+
 
 
 
@@ -166,6 +193,7 @@ impl Clone for InteractionLayer {
         InteractionLayer {
             entities: self.entities.clone(),
             kd_tree: new_kd_tree,
+            id_to_index: self.id_to_index.clone(),
         }
     }
 }
@@ -189,6 +217,65 @@ pub fn calculate_interactions(interaction_layer: &InteractionLayer, query_x: f64
         println!("Entity ID: {}, Coordinates: ({}, {})", entity.individual_id, entity.x, entity.y);
     }
 }
+
+// function to find out if any other male roamer is withing a radius of 10 cells
+
+//pub fn any_other_roamer_close(interaction_layer: &InteractionLayer, query_x: f64, query_y: //f64, individual_id: usize) -> bool {
+//
+//    let query_point = [query_x, query_y];
+//    let nearest_neighbors = interaction_layer.kd_tree.nearest(&//query_point, 10, &squared_euclidean).unwrap();
+//
+//    // Process results (entities closest to query_point)
+//    for neighbor in nearest_neighbors {
+//        let entity_id = neighbor.1;
+//        //println!("entity_id: {}, entities.len(): {}", entity_id, interaction_layer.//entities.len());
+//
+
+//
+//        let entity = &interaction_layer.entities[*entity_id];
+//        if entity.individual_type == "roamer" && entity.individual_id != individual_id {
+//            return true;
+//        }
+//    }
+//
+//    false
+//
+//}
+
+pub fn any_other_roamer_close(interaction_layer: &InteractionLayer, query_x: f64, query_y: f64, exclude_id: usize) -> bool {
+    let query_point = [query_x, query_y];
+    let nearest_neighbors = interaction_layer.kd_tree.nearest(&query_point, 10, &squared_euclidean).unwrap();
+
+    // Process results (entities closest to query_point)
+    for neighbor in nearest_neighbors {
+        let entity_id = *neighbor.1;
+
+        // Bounds check
+        if let Some(&entity_idx) = interaction_layer.id_to_index.get(&entity_id) {
+            let entity = &interaction_layer.entities[entity_idx];
+
+            // Debug information
+            // println!("entity_id: {}, entities.len(): {}", entity_id, interaction_layer.entities.len());
+
+            if entity.individual_id != exclude_id && entity.individual_type == "roamer" {
+                return true;
+            }
+        } else {
+            eprintln!("Index out of bounds: entity_id: {}, entities.len(): {}", entity_id, interaction_layer.entities.len());
+        }
+    }
+
+    false
+}
+
+
+
+
+
+
+
+
+
 
 
 /*

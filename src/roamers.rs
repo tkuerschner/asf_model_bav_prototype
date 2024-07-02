@@ -173,7 +173,7 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
             //log::info!("Dispersing roamer {:?} is moving towards target: {:?}", roamer.roamer_id, move_towards_target);
 
             if move_towards_target {
-                move_towards_target_cell_roamer(roamer, grid);
+                move_towards_target_cell_roamer(roamer, grid, i_layer);
               //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
               i_layer.add_entity_and_record_movement(
                 roamer.origin_group_id,
@@ -239,22 +239,132 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
     }
 }
 
-fn move_towards_target_cell_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
+//fn move_towards_target_cell_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, //i_layer: &mut InteractionLayer) {
+//    if let Some((target_x, target_y)) = roamer.target_cell {
+//        let dx = (target_x as isize - roamer.roamer_x as isize).signum();
+//        let dy = (target_y as isize - roamer.roamer_y as isize).signum();
+//        let new_x = (roamer.roamer_x as isize + dx) as usize;
+//        let new_y = (roamer.roamer_y as isize + dy) as usize;
+//
+//        if any_other_roamer_close(i_layer, new_x as f64, //new_y as f64, roamer.individual_id){
+//
+//            // find a neighboring cell with any other roamer false
+//            let mut new_x = roamer.roamer_x;
+//            let mut new_y = roamer.roamer_y;
+//
+//            let mut found = false;
+//
+//            for i in -1..=1 {
+//                for j in -1..=1 {
+//                    let x = (roamer.roamer_x as isize + i) as usize;
+//                    let y = (roamer.roamer_y as isize + j) as usize;
+//                    if x < grid.len() && y < grid[0].len() && !any_other_roamer_close//(i_layer, x as f64, y as f64, //roamer.individual_id) {
+//                        new_x = x;
+//                        new_y = y;
+//                        found = true;
+//                        roamer.roamer_x = new_x;
+//                        roamer.roamer_y = new_y;
+//                       
+//                        break;
+//                    }
+//                }
+//            }
+//
+//
+//            if found == false { 
+//                // random neighboring cell
+//                let dx = rand::thread_rng().gen_range(-1..=1);
+//                let dy = rand::thread_rng().gen_range(-1..=1);
+//
+//                let new_x = (roamer.roamer_x as isize + dx) as usize;
+//                let new_y = (roamer.roamer_y as isize + dy) as usize;
+//
+//                // Update roamer's position if within grid boundaries
+//                if new_x < grid.len() && new_y < grid[0].len()
+//                //&& is_valid_cell(grid, new_x, new_y)
+//                {
+//                    roamer.roamer_x = new_x;
+//                    roamer.roamer_y = new_y;
+//                    roamer.daily_distance -= 1;
+//                }
+//            } 
+//
+//        } else {
+//        // Update roamer's position if within grid boundaries
+//        if new_x < grid.len() && new_y < grid[0].len() 
+//        //&& is_valid_cell(grid, new_x, new_y) 
+//        {
+//            roamer.roamer_x = new_x;
+//            roamer.roamer_y = new_y;
+//            roamer.daily_distance -= 1;
+//        }
+//     }
+//    }
+//}
+
+fn move_towards_target_cell_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_layer: &mut InteractionLayer) {
     if let Some((target_x, target_y)) = roamer.target_cell {
         let dx = (target_x as isize - roamer.roamer_x as isize).signum();
         let dy = (target_y as isize - roamer.roamer_y as isize).signum();
         let new_x = (roamer.roamer_x as isize + dx) as usize;
         let new_y = (roamer.roamer_y as isize + dy) as usize;
-        // Update roamer's position if within grid boundaries
-        if new_x < grid.len() && new_y < grid[0].len() 
-        //&& is_valid_cell(grid, new_x, new_y) 
-        {
-            roamer.roamer_x = new_x;
-            roamer.roamer_y = new_y;
-            roamer.daily_distance -= 1;
+
+        if any_other_roamer_close(i_layer, new_x as f64, new_y as f64, roamer.individual_id) {
+            let mut new_x = roamer.roamer_x;
+            let mut new_y = roamer.roamer_y;
+            let mut found = false;
+
+            for i in -1..=1 {
+                for j in -1..=1 {
+                    let x = (roamer.roamer_x as isize + i) as usize;
+                    let y = (roamer.roamer_y as isize + j) as usize;
+                    if x < grid.len() && y < grid[0].len() && !any_other_roamer_close(i_layer, x as f64, y as f64, roamer.individual_id) {
+                        new_x = x;
+                        new_y = y;
+                        found = true;
+                        break;
+                    }
+                }
+                if found {
+                    roamer.roamer_x = new_x;
+                    roamer.roamer_y = new_y;
+                    if roamer.daily_distance > 0 {
+                        roamer.daily_distance -= 1;
+                    }
+                    break;
+                }
+            }
+
+            if !found {
+                let dx = rand::thread_rng().gen_range(-1..=1);
+                let dy = rand::thread_rng().gen_range(-1..=1);
+                let new_x = (roamer.roamer_x as isize + dx) as usize;
+                let new_y = (roamer.roamer_y as isize + dy) as usize;
+
+                if new_x < grid.len() && new_y < grid[0].len() {
+                    roamer.roamer_x = new_x;
+                    roamer.roamer_y = new_y;
+                    
+                    // Ensure daily_distance does not underflow
+                    if roamer.daily_distance > 0 {
+                        roamer.daily_distance -= 1;
+                    }
+                }
+            }
+        } else {
+            if new_x < grid.len() && new_y < grid[0].len() {
+                roamer.roamer_x = new_x;
+                roamer.roamer_y = new_y;
+                
+                // Ensure daily_distance does not underflow
+                if roamer.daily_distance > 0 {
+                    roamer.daily_distance -= 1;
+                }
+            }
         }
     }
 }
+
 
 fn move_randomly_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
     let dx = rand::thread_rng().gen_range(-1..=1);
@@ -272,68 +382,42 @@ fn move_randomly_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
 }
 
 pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_layer: &mut InteractionLayer, time: usize) {
-  
-        while roamer.daily_distance > 0 && roamer.staying_with_target_group == false && roamer.initial_dispersal == false && roamer.reached_target == false{
-            let move_towards_target = rand::thread_rng().gen_bool(0.25);
-            //log::info!("Roamer {:?} is moving towards target: {:?}", roamer.roamer_id, move_towards_target);
-            if move_towards_target {
-                move_towards_target_cell_roamer(roamer, grid);
-               // record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
-               i_layer.add_entity_and_record_movement(
-                roamer.origin_group_id,
-                "roamer",
-                time,
-                0, // Assuming time_left is not used
-                0, // Assuming duration is not used
-                roamer.individual_id,
-                1.0, // Assuming interaction_strength is default
-                roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
-                roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
-            );
-                if let Some((target_x, target_y)) = roamer.target_cell {
-                    if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
-                        // Roamer reached target
-                        //log::info!("Roamer {:?} reached target", roamer.roamer_id);
-                        roamer.reached_target = true;
-                       // log::info!("Roamer {:?} target reached? {:?} ",roamer.roamer_id, roamer.reached_target);
-                        roamer.staying_with_target_group = true;
-                        roamer.daily_distance = 0;
-                        break;
-                    }
-                }
-            } else {
-                move_randomly_roamer(roamer, grid);
-             //   record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
-             i_layer.add_entity_and_record_movement(
-                roamer.origin_group_id,
-                "roamer",
-                time,
-                0, // Assuming time_left is not used
-                0, // Assuming duration is not used
-                roamer.individual_id,
-                1.0, // Assuming interaction_strength is default
-                roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
-                roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
-            );
-                if let Some((target_x, target_y)) = roamer.target_cell {
-                    if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
-                        // Roamer reached target
-                        //log::info!("Roamer {:?} reached target", roamer.roamer_id);
-                        roamer.reached_target = true;
-                        roamer.staying_with_target_group = true;
-                        roamer.daily_distance = 0;
-                        break;
-                    }
-                }
+    while roamer.daily_distance > 0 && !roamer.staying_with_target_group && !roamer.initial_dispersal && !roamer.reached_target {
+        let move_towards_target = rand::thread_rng().gen_bool(0.25);
+        
+        if move_towards_target {
+            move_towards_target_cell_roamer(roamer, grid, i_layer);
+        } else {
+            move_randomly_roamer(roamer, grid);
+        }
 
+        i_layer.add_entity_and_record_movement(
+            roamer.origin_group_id,
+            "roamer",
+            time,
+            0, // Assuming time_left is not used
+            0, // Assuming duration is not used
+            roamer.individual_id,
+            1.0, // Assuming interaction_strength is default
+            roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
+            roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+        );
+
+        if let Some((target_x, target_y)) = roamer.target_cell {
+            if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
+                roamer.reached_target = true;
+                roamer.staying_with_target_group = true;
+                roamer.daily_distance = 0;
+                break;
             }
         }
-        //log::info!("Roamer {:?} finished moving for today", roamer.roamer_id);
-        if roamer.reached_target == false {
+    }
+
+    if !roamer.reached_target {
         roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
-        }
-    
+    }
 }
+
 
 fn set_list_of_target_groups(roamer: &mut RoamingIndividual, groups: &Vec<Groups>) {
  // take the 5 closet groups to the current x/y and write their group_id into known_groups
@@ -504,7 +588,7 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
         let move_towards_target = rand::thread_rng().gen_bool(0.25);
 
         if move_towards_target {
-            move_towards_target_cell_roamer(roamer, grid);
+            move_towards_target_cell_roamer(roamer, grid, i_layer);
           //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
           i_layer.add_entity_and_record_movement(
             roamer.origin_group_id,
