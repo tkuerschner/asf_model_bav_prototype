@@ -44,6 +44,21 @@ pub struct DispersingFemaleGroup {
     pub marked_for_removal: bool,
 }
 
+impl DispersingFemaleGroup {
+ 
+    pub fn infected_member_present(&self)->bool{
+        let mut infected = false;
+        for member in &self.dispersing_individuals {
+            if member.health_status == HealthStatus::Infected {
+                infected = true;
+                break;
+            }
+        }
+        infected
+    }
+
+}
+
 pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &mut Vec<DispersingIndividual>, dispersing_groups: &mut Vec<DispersingFemaleGroup>) {
     let mut remaining_individuals = Vec::new(); // Store individuals that couldn't be dispersed
 
@@ -238,7 +253,8 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
                         disperser_group.dispersing_individuals.last().unwrap().disperser_id,
                         1.0, // Assuming interaction_strength is default
                         disperser_group.disp_grp_x as f64, // Convert coordinates to f64 if necessary
-                        disperser_group.disp_grp_y as f64  // Convert coordinates to f64 if necessary
+                        disperser_group.disp_grp_y as f64,  // Convert coordinates to f64 if necessary
+                        disperser_group.infected_member_present(),
                     );
 
                     if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
@@ -259,7 +275,8 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
                         disperser_group.dispersing_individuals.last().unwrap().disperser_id,
                         1.0, // Assuming interaction_strength is default
                         disperser_group.disp_grp_x as f64, // Convert coordinates to f64 if necessary
-                        disperser_group.disp_grp_y as f64  // Convert coordinates to f64 if necessary
+                        disperser_group.disp_grp_y as f64,  // Convert coordinates to f64 if necessary
+                        disperser_group.infected_member_present(),
                     );
                     if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
                         reached_target = true;

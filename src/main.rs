@@ -60,6 +60,9 @@ use interaction_layer::*;
 
 mod utility;
 use utility::*;
+
+mod pathogen;
+use pathogen::*;
 //type InteractionLayer = HashMap<(usize, usize, usize), InteractionCell>;
 
 
@@ -481,8 +484,24 @@ impl Groups {
     }
 }
 
-}
+//function to return true if a specific group members health status is infected
+//pub fn is_infected(group: &Groups, member_id: usize) -> bool {
+//    let member = group.group_members.iter().find(|&member| member.individual_id == member_id).//unwrap();
+//    member.health_status == HealthStatus::Infected
+//
+//}
 
+    pub fn infected_member_present(&self)->bool{
+        let mut infected = false;
+        for member in &self.group_members {
+            if member.health_status == HealthStatus::Infected {
+                infected = true;
+                break;
+            }
+        }
+        infected
+    }
+}
 
 
 // Define a enum to represent the movement mode 
@@ -856,7 +875,10 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                     group.group_members.last().unwrap().individual_id, // id of the first individual in the group
                     1.0, 
                     group.x as f64, 
-                    group.y as f64
+                    group.y as f64,
+                    group.infected_member_present(),
+
+
                 );
                 group.daily_movement_distance -= 1;
             } else {
@@ -898,7 +920,8 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                     group.group_members.last().unwrap().individual_id, // id of the first individual in the group
                     1.0, 
                     group.x as f64, 
-                    group.y as f64
+                    group.y as f64,
+                    group.infected_member_present(),
                 );
 
                     group.daily_movement_distance -= 1;
@@ -963,7 +986,8 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                             
                             1.0, 
                             group.x as f64, 
-                            group.y as f64
+                            group.y as f64,
+                            group.infected_member_present(),
                         );
                         group.daily_movement_distance -= 1;
                     }else {
@@ -981,7 +1005,8 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                             group.group_members.last().unwrap().individual_id, // id of the first individual in the group
                             1.0, 
                             group.x as f64, 
-                            group.y as f64
+                            group.y as f64,
+                            group.infected_member_present(),
                         );
                         group.daily_movement_distance -= 1;
                     }

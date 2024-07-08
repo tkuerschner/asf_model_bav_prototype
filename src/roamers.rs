@@ -36,6 +36,15 @@ pub struct RoamingIndividual {
     pub staying_with_target_group: bool,
 }
 
+impl RoamingIndividual {
+
+    pub fn roamer_is_infected(&self) -> bool {
+        self.health_status == HealthStatus::Infected
+    }
+
+
+}
+
 // Function to assign dispersers to groups
 pub fn roamer_assignemnt(roamers: &mut Vec<RoamingIndividual>, groups: &mut Vec<Groups>) {
     
@@ -184,7 +193,8 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                 roamer.individual_id,
                 1.0, // Assuming interaction_strength is default
                 roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
-                roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+                roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
+                roamer.roamer_is_infected(),
             );
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
@@ -211,7 +221,8 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                 roamer.individual_id,
                 1.0, // Assuming interaction_strength is default
                 roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
-                roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+                roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
+                roamer.roamer_is_infected(),
             );
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
@@ -400,7 +411,8 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
             roamer.individual_id,
             1.0, // Assuming interaction_strength is default
             roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
-            roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+            roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
+            roamer.roamer_is_infected(),
         );
 
         if let Some((target_x, target_y)) = roamer.target_cell {
@@ -599,7 +611,8 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
             roamer.individual_id,
             1.0, // Assuming interaction_strength is default
             roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
-            roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+            roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
+            roamer.roamer_is_infected(),
         );
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
@@ -620,7 +633,8 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
             roamer.individual_id,
             1.0, // Assuming interaction_strength is default
             roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
-            roamer.roamer_y as f64  // Convert coordinates to f64 if necessary
+            roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
+            roamer.roamer_is_infected(),
         );
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
