@@ -43,8 +43,10 @@ pub fn remove_half_of_all_groups(model: &mut Model) {
     for i in 0..half_roamers_size {
         model.roamers[i].age = MAX_AGE + 5;
     }
+}
 
-    
-
-
+pub fn reset_group_coordinates_to_core_cell(group: &mut Groups) -> (usize, usize) {
+    group.x = group.core_cell.unwrap().0;
+    group.y = group.core_cell.unwrap().1;
+    (group.x, group.y)
 }
