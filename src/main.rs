@@ -810,24 +810,6 @@ pub fn find_closest_adjacent_cell_to_target(group: &Groups) -> Option<(usize, us
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 pub fn random_cell(grid_size: usize, rng: &mut impl Rng) -> (usize, usize) {
     let x = rng.gen_range(0..grid_size);
     let y = rng.gen_range(0..grid_size);
