@@ -50,3 +50,12 @@ pub fn reset_group_coordinates_to_core_cell(group: &mut Groups) -> (usize, usize
     group.y = group.core_cell.unwrap().1;
     (group.x, group.y)
 }
+
+ // This function should return global variable current_time
+pub fn current_time(model: &mut Model) -> usize {
+
+    model.global_variables.current_time
+
+}
+ 
+
