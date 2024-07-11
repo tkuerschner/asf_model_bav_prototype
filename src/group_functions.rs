@@ -327,3 +327,15 @@ pub fn handle_empty_groups(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>) 
 pub fn get_all_group_ids(groups: &Vec<Groups>) -> Vec<usize> {
     groups.iter().map(|group| group.group_id).collect()
 }
+
+
+
+   // function called from the persepective of a groupmember that retruns the groupmembers group position using the group id
+
+pub fn get_group_position(model: &Model, my_group: usize) -> (usize, usize) {
+
+    let group = model.groups.iter().find(|group| group.group_id == my_group).unwrap();
+    (group.x, group.y)
+    
+}
+
