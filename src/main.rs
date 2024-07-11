@@ -66,6 +66,9 @@ use pathogen::*;
 
 mod movement;
 use movement::*;
+
+mod carcass;
+use carcass::*;
 //type InteractionLayer = HashMap<(usize, usize, usize), InteractionCell>;
 
 
@@ -83,6 +86,7 @@ pub struct Model {
     pub dispersers: Vec<DispersingFemaleGroup>,
     //pub interaction_layer: Vec<Vec<InteractionCell>>,
     pub interaction_layer: InteractionLayer,
+    pub carcasses: Vec<Carcass>,
 }
 
 #[derive(Debug, Clone)]
@@ -593,7 +597,7 @@ impl fmt::Display for Sex {
 }
 
 // Define a enum to represent an individual's age class
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum AgeClass {
     Piglet,
     Yearling,
@@ -657,6 +661,7 @@ pub struct GlobalVariables {
     n_roamers: usize,
     n_dispersers: usize,
     good_year: bool,
+    current_time: usize,
 }
 
 // Define a struct to represent the landscape
@@ -1058,6 +1063,9 @@ fn main() {
     //create vector for roaming individuals using the struct in roamers.rs
     let roamer_vector: &mut Vec<RoamingIndividual> = &mut Vec::new();
 
+    //create a vector for the carcasses
+    let carcass_vector: &mut Vec<Carcass> = &mut Vec::new();
+
     
    // place_new_attraction_points(&mut grid, &mut groups, 5);
 
@@ -1092,6 +1100,7 @@ fn main() {
         n_dispersers: 0,
         n_roamers: 0,
         good_year: false,
+        current_time: 0,
         // Add more variables as needed here
     };
 
@@ -1109,6 +1118,7 @@ fn main() {
         roamers: roamer_vector.clone(),
         global_variables: global_variables,
         interaction_layer: interaction_layer_tmp,
+        carcasses: carcass_vector.clone(),
     };
     
 
@@ -1274,6 +1284,7 @@ fn main() {
             n_dispersers: model.global_variables.n_dispersers,
             n_roamers: model.global_variables.n_roamers,
             good_year: model.global_variables.good_year,
+            current_time: iteration,
 
         });
 

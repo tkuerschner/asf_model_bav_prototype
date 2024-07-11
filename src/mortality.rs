@@ -241,3 +241,4 @@ pub fn roamer_density_dependent_removal(model: &mut Model) {
 
  
 }
+
