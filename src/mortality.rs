@@ -1,6 +1,252 @@
 use crate::*;
 
 
+//pub fn combined_mortality(surv_prob: &SurvivalProbability, model: &mut Model){
+//    for group in model.groups.iter_mut() {
+//        let current_group_size = group.group_members.len();
+//        let max_group_size = group.max_size;
+//        let diff = current_group_size as i32 - max_group_size as i32;
+//        let surv_prob_adult;
+//        let surv_prob_piglet;
+//        let mut overcap_check = false;
+//        let dead_group_members: Vec<GroupMember> = Vec::new();
+//
+//        if diff > 0 { // if the group size is greater than the max group size
+//            let decrease = diff as f64 * 0.001; // decrease the survival probability by 0.1% for each individual over the max group size
+//            surv_prob_adult =   surv_prob.adult - (surv_prob.adult * decrease); 
+//            surv_prob_piglet =  surv_prob.piglet - (surv_prob.piglet * decrease);
+//            overcap_check = true;
+//            
+//        } else { // if the group size is less than the max group size
+//            surv_prob_adult = surv_prob.adult;
+//            surv_prob_piglet = surv_prob.piglet;
+//        }
+//
+//        let retained_group_members: Vec<GroupMember> = group.group_members
+//        .drain(..)
+//        .filter(|member| {
+//            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
+//            let rounded_number = (random_number * 1e4).round() / 1e4;
+//
+//            if member.age_class != AgeClass::Piglet {
+//                if rounded_number < surv_prob_adult {
+//                    true
+//                } else {
+//                    if overcap_check {
+//                        model.global_variables.overcapacity_mortality += 1;
+//                    } else {
+//                        model.global_variables.random_mortality += 1;
+//                    }   
+//                    false
+//                }
+//            } else {
+//                if rounded_number < surv_prob_piglet {
+//                    true
+//                } else {
+//                    if overcap_check {
+//                        model.global_variables.overcapacity_mortality += 1;
+//                    } else {
+//                        model.global_variables.random_mortality += 1;
+//                    }
+//                    false
+//                }
+//            }
+//        })
+//        .collect();
+//    group.group_members.extend_from_slice(&retained_group_members);
+//    }
+//}
+
+pub fn combined_mortality(surv_prob: &SurvivalProbability, model: &mut Model) {
+    let mut dead_group_members = Vec::new();
+
+    for group in model.groups.iter_mut() {
+        let current_group_size = group.group_members.len();
+        let max_group_size = group.max_size;
+        let diff = current_group_size as i32 - max_group_size as i32;
+        let mut surv_prob_adult = surv_prob.adult;
+        let mut surv_prob_piglet = surv_prob.piglet;
+        let mut overcap_check = false;
+
+        if diff > 0 {
+            let decrease = diff as f64 * 0.001;
+            surv_prob_adult -= surv_prob_adult * decrease;
+            surv_prob_piglet -= surv_prob_piglet * decrease;
+            overcap_check = true;
+        }
+
+        group.group_members.retain(|member| {
+            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
+            let rounded_number = (random_number * 1e4).round() / 1e4;
+
+            let survives = if member.age_class != AgeClass::Piglet {
+                rounded_number < surv_prob_adult
+            } else {
+                rounded_number < surv_prob_piglet
+            };
+
+            if survives {
+                true
+            } else {
+                if overcap_check {
+                    model.global_variables.overcapacity_mortality += 1;
+                } else {
+                    model.global_variables.random_mortality += 1;
+                }
+                dead_group_members.push(member.clone()); // Clone the member
+                false
+            }
+        });
+    }
+
+    // Create carcasses for all dead group members outside the loop
+    for member in dead_group_members {
+        create_carcass(member, model);
+    }
+}
+
+
+pub fn disperser_mortality(
+    surv_prob: &SurvivalProbability,
+    model: &mut Model
+) {
+    let mut dead_dispersing_individuals = Vec::new();
+
+    for d_group in model.dispersers.iter_mut() {
+        let retained_d_group_members: Vec<DispersingIndividual> = d_group.dispersing_individuals
+            .drain(..)
+            .filter(|member| {
+                let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
+                let rounded_number = (random_number * 1e4).round() / 1e4;
+
+                let survives = if member.age_class != AgeClass::Piglet {
+                    rounded_number < surv_prob.adult
+                } else {
+                    rounded_number < surv_prob.piglet
+                };
+
+                if survives {
+                    true
+                } else {
+                    model.global_variables.random_mortality += 1;
+                    dead_dispersing_individuals.push(member.clone()); // Clone the member
+                    false
+                }
+            })
+            .collect();
+
+        d_group.dispersing_individuals.extend_from_slice(&retained_d_group_members);
+    }
+
+    // Create carcasses for all dead dispersing individuals outside the loop
+    for member in dead_dispersing_individuals {
+        create_carcass(member, model);
+    }
+}
+
+
+
+pub fn roamer_mortality(surv_prob: &SurvivalProbability, model: &mut Model) {
+    let mut dead_roamers = Vec::new();
+
+    model.roamers.retain(|member| {
+        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
+        let rounded_number = (random_number * 1e4).round() / 1e4;
+
+        let survives = if member.age_class != AgeClass::Piglet {
+            rounded_number < surv_prob.adult
+        } else {
+            rounded_number < surv_prob.piglet
+        };
+
+        if survives {
+            true
+        } else {
+            model.global_variables.random_mortality += 1;
+            dead_roamers.push(member.clone());
+            false
+        }
+    });
+
+    for member in dead_roamers {
+        create_carcass(member, model);
+    }
+}
+
+pub fn execute_mortality(model: &mut Model, surv_prob: &SurvivalProbability){
+
+
+    combined_mortality(surv_prob, model);
+    piglet_specific_mortality(&mut model.groups);
+    disperser_mortality(surv_prob, model);
+    roamer_mortality(surv_prob, model);
+}
+
+pub fn piglet_specific_mortality(groups: &mut Vec<Groups> ) {
+
+for  group in groups {
+
+    // if there is no adult left in the group, teh piglets will die
+    if group.group_members.iter().all(|member| member.age_class != AgeClass::Adult) {
+        group.group_members.retain(|member| member.age_class != AgeClass::Piglet);
+    }
+}
+
+
+
+}
+
+pub fn roamer_density_dependent_removal(model: &mut Model) {
+    
+    let n_adult_female = model.groups.iter().map(|group| group.group_members.iter().filter(|member| member.age_class == AgeClass::Adult && member.sex == Sex::Female).count()).sum::<usize>();
+
+    let n_roaming_individuals = model.roamers.len();
+
+    // as long as there are more roamers then adult females, remove random roamer
+
+    if n_roaming_individuals > n_adult_female {
+        let n_to_remove = n_roaming_individuals - n_adult_female;
+
+        for _ in 0..n_to_remove {
+            let index = rand::thread_rng().gen_range(0..model.roamers.len());
+            model.roamers.remove(index);
+        }
+
+    }
+
+ 
+}
+
+//pub fn roamer_mortality(surv_prob: &SurvivalProbability, model: &mut Model){
+// 
+//    let retained_roamers: Vec<RoamingIndividual> = model.roamers
+//    .drain(..)
+//    .filter(|member| {
+//        let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
+//        let rounded_number = (random_number * 1e4).round() / 1e4;
+//
+//        if member.age_class != AgeClass::Piglet {
+//        if rounded_number < surv_prob.adult {
+//            true
+//        } else {
+//            model.global_variables.random_mortality += 1;
+//            create_carcass(*member, model); 
+//            false
+//        }
+//        } else {
+//        if rounded_number < surv_prob.piglet {
+//            true
+//        } else {
+//            model.global_variables.random_mortality += 1;
+//            create_carcass(*member, model); 
+//            false
+//        }
+//        }
+//    })
+//    .collect();
+//    model.roamers.extend_from_slice(&retained_roamers);
+//}
+
 
 //pub fn mortality(surv_prob: &SurvivalProbability, groups: &mut Vec<Groups>, random_mortality: &mut u32){
 //
@@ -84,161 +330,31 @@ use crate::*;
 //    }
 //}
 
-
-pub fn combined_mortality(surv_prob: &SurvivalProbability,groups: &mut Vec<Groups>, overcap_mortality: &mut u32,  random_mortality: &mut u32){
-    for group in groups.iter_mut() {
-        let current_group_size = group.group_members.len();
-        let max_group_size = group.max_size;
-        let diff = current_group_size as i32 - max_group_size as i32;
-        let surv_prob_adult;
-        let surv_prob_piglet;
-        let mut overcap_check = false;
-        
-
-        if diff > 0 { // if the group size is greater than the max group size
-            let decrease = diff as f64 * 0.001; // decrease the survival probability by 0.1% for each individual over the max group size
-            surv_prob_adult =   surv_prob.adult - (surv_prob.adult * decrease); 
-            surv_prob_piglet =  surv_prob.piglet - (surv_prob.piglet * decrease);
-            overcap_check = true;
-            
-        } else { // if the group size is less than the max group size
-            surv_prob_adult = surv_prob.adult;
-            surv_prob_piglet = surv_prob.piglet;
-        }
-
-        let retained_group_members: Vec<GroupMember> = group.group_members
-        .drain(..)
-        .filter(|member| {
-            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
-            let rounded_number = (random_number * 1e4).round() / 1e4;
-
-            if member.age_class != AgeClass::Piglet {
-                if rounded_number < surv_prob_adult {
-                    true
-                } else {
-                    if overcap_check {
-                        *overcap_mortality += 1;
-                    } else {
-                        *random_mortality += 1;
-                    }   
-                    false
-                }
-            } else {
-                if rounded_number < surv_prob_piglet {
-                    true
-                } else {
-                    if overcap_check {
-                        *overcap_mortality += 1;
-                    } else {
-                        *random_mortality += 1;
-                    }
-                    false
-                }
-            }
-        })
-        .collect();
-    group.group_members.extend_from_slice(&retained_group_members);
-    }
-}
-
-pub fn disperser_mortality(surv_prob: &SurvivalProbability, dispersing_groups: &mut Vec<DispersingFemaleGroup>, random_mortality: &mut u32){
-    for d_group in dispersing_groups.iter_mut() {
-        let retained_d_group_members: Vec<DispersingIndividual> = d_group.dispersing_individuals
-        .drain(..)
-        .filter(|member| {
-            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
-            let rounded_number = (random_number * 1e4).round() / 1e4;
-
-            if member.age_class != AgeClass::Piglet {
-                if rounded_number < surv_prob.adult {
-                    true
-                } else {
-                    *random_mortality += 1;
-                    false
-                }
-            } else {
-                if rounded_number < surv_prob.piglet {
-                    true
-                } else {
-                    *random_mortality += 1;
-                    false
-                }
-            }
-        })
-        .collect();
-    d_group.dispersing_individuals.extend_from_slice(&retained_d_group_members);
-    }
-}
-
-pub fn roamer_mortality(surv_prob: &SurvivalProbability, roaming_individuals: &mut Vec<RoamingIndividual>, random_mortality: &mut u32){
- 
-        let retained_r_group_members: Vec<RoamingIndividual> = roaming_individuals
-        .drain(..)
-        .filter(|member| {
-            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
-            let rounded_number = (random_number * 1e4).round() / 1e4;
-
-            if member.age_class != AgeClass::Piglet {
-                if rounded_number < surv_prob.adult {
-                    true
-                } else {
-                    *random_mortality += 1;
-                    false
-                }
-            } else {
-                if rounded_number < surv_prob.piglet {
-                    true
-                } else {
-                    *random_mortality += 1;
-                    false
-                }
-            }
-        })
-        .collect();
-    roaming_individuals.extend_from_slice(&retained_r_group_members);
-    
-    
-}
-
-pub fn execute_mortality(surv_prob: &SurvivalProbability, groups: &mut Vec<Groups>, dispersing_groups: &mut Vec<DispersingFemaleGroup>, roaming_individuals: &mut Vec<RoamingIndividual>, random_mortality: &mut u32, overcap_mortality: &mut u32){
-    combined_mortality(surv_prob, groups, overcap_mortality, random_mortality);
-    piglet_specific_mortality(groups);
-    disperser_mortality(surv_prob, dispersing_groups, random_mortality);
-    roamer_mortality(surv_prob, roaming_individuals, random_mortality);
-}
-
-pub fn piglet_specific_mortality(groups: &mut Vec<Groups> ) {
-
-for  group in groups {
-
-    // if there is no adult left in the group, teh piglets will die
-    if group.group_members.iter().all(|member| member.age_class != AgeClass::Adult) {
-        group.group_members.retain(|member| member.age_class != AgeClass::Piglet);
-    }
-}
-
-
-
-}
-
-pub fn roamer_density_dependent_removal(model: &mut Model) {
-    
-    let n_adult_female = model.groups.iter().map(|group| group.group_members.iter().filter(|member| member.age_class == AgeClass::Adult && member.sex == Sex::Female).count()).sum::<usize>();
-
-    let n_roaming_individuals = model.roamers.len();
-
-    // as long as there are more roamers then adult females, remove random roamer
-
-    if n_roaming_individuals > n_adult_female {
-        let n_to_remove = n_roaming_individuals - n_adult_female;
-
-        for _ in 0..n_to_remove {
-            let index = rand::thread_rng().gen_range(0..model.roamers.len());
-            model.roamers.remove(index);
-        }
-
-    }
-
- 
-}
-
+//pub fn disperser_mortality(surv_prob: &SurvivalProbability, dispersing_groups: &mut Vec<DispersingFemaleGroup>, //random_mortality: &mut u32){
+//    for d_group in dispersing_groups.iter_mut() {
+//        let retained_d_group_members: Vec<DispersingIndividual> = d_group.dispersing_individuals
+//        .drain(..)
+//        .filter(|member| {
+//            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
+//            let rounded_number = (random_number * 1e4).round() / 1e4;
+//
+//            if member.age_class != AgeClass::Piglet {
+//                if rounded_number < surv_prob.adult {
+//                    true
+//                } else {
+//                    *random_mortality += 1;
+//                    false
+//                }
+//            } else {
+//                if rounded_number < surv_prob.piglet {
+//                    true
+//                } else {
+//                    *random_mortality += 1;
+//                    false
+//                }
+//            }
+//        })
+//        .collect();
+//    d_group.dispersing_individuals.extend_from_slice(&retained_d_group_members);
+//    }
+//}
