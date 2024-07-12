@@ -2362,7 +2362,7 @@ geom_line(data = gx2, aes(x = iteration, y = age_class))
 ```
 
 
-```{r}
+```{r carcass map and carcasses over time}
 
 #plot carcss map
 
@@ -2408,5 +2408,35 @@ carcass_data <- carcasses %>%
 
 
 
+
+```
+
+```{r animate carcasses over time}
+#animate carcasses over time
+
+carcass_data <- carcasses %>%
+  group_by(carcass_x, carcass_y, iteration) %>%
+  summarise(n_carcasses = n())
+
+  animated_plot_carcass <- ggplot() +
+  geom_tile(data = g2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = carcass_data, aes(x = carcass_x, y = carcass_y, fill = n_carcasses)) +
+  scale_fill_gradient(low = "white", high = "red") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+  animated_plot_carcass <- animated_plot_carcass + transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
+  labs(title = "Day: {frame_along}")
+
+  anim_save("./R/asf_bavaria_analysis/visuals/carcass_animation.gif", animate(animated_plot_carcass))
 
 ```
