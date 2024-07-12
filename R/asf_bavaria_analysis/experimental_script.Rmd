@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 148       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 149       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -56,6 +56,8 @@ dispersers <- read.csv("./output/all_dispersers.csv", header = T)
 roamers <- read.csv("./output/all_roamers.csv", header = T)
 
 #iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
+
+carcasses <- read.csv("./output/all_carcasses.csv", header = T)
 
 
 ```
@@ -2354,6 +2356,56 @@ gx2 <- gx1 %>%
 
 ggplot()+
 geom_line(data = gx2, aes(x = iteration, y = age_class))
+
+
+
+```
+
+
+```{r}
+
+#plot carcss map
+
+tob <- max(carcasses$iteration)
+
+
+carcass_data <- carcasses %>%
+  group_by(carcass_x, carcass_y) %>%
+  filter(iteration == tob) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_tile(data = g2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = carcass_data, aes(x = carcass_x, y = carcass_y, fill = n)) +
+  scale_fill_gradient(low = "white", high = "red") +
+  theme_minimal()+
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+
+  #carcasses over time
+
+  car1 <- carcasses %>%
+  group_by(iteration) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_line(data = car1, aes(x = iteration, y = n)) +
+  labs(title = "Number of carcasses over time", x = "Iteration", y = "Number of carcasses") +
+  theme_minimal()
+  
+
+
+
+
 
 
 
