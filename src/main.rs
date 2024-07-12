@@ -1085,9 +1085,12 @@ fn main() {
     let mut all_global_variables: Vec<GlobalVariables> = Vec::new();
 
     // Vector to store interaction layer for all iterations
-    
     let mut all_interaction_layers: Vec<(usize, InteractionLayer)> = Vec::new();
 
+    // Vector to store carcass states for all iterations
+    let mut all_carcass_states: Vec<(usize, Vec<Carcass>)> = Vec::new();
+
+    
        let global_variables = GlobalVariables {
         age_mortality: 0,
         random_mortality: 0,
@@ -1221,7 +1224,7 @@ fn main() {
          //mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
          log::info!("Mortality triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
            // combined_mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality);
-            execute_mortality(&survival_prob, &mut model.groups, &mut model.dispersers, &mut model.roamers, &mut model.global_variables.random_mortality, &mut model.global_variables.overcapacity_mortality)
+            execute_mortality(&mut model, &survival_prob)
         }
 
         //age individuals by one day
@@ -1260,6 +1263,9 @@ fn main() {
 
             // save the interaction layer for the current iteration
             all_interaction_layers.push((iteration, model.interaction_layer.clone()));
+
+            // Save the carcass state for the current iteration
+            all_carcass_states.push((iteration, model.carcasses.clone()));
 
            // purge_interaction_layer( &mut model.interaction_layer);
 
@@ -1327,7 +1333,9 @@ fn main() {
 
     save_roamers_as_csv("output/all_roamers.csv", &all_roamer_states).expect("Failed to save roamer as CSV");
 
-    save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+    //save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+
+    save_carcasses_as_csv("output/all_carcasses.csv", &all_carcass_states).expect("Failed to save carcasses as CSV");
 
    // save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
 
