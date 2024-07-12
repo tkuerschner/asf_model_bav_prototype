@@ -1,3 +1,5 @@
+use std::default;
+
 use crate::*;
 
 // Static counter for carcass_id
@@ -63,6 +65,28 @@ impl CarcassSource for GroupMember {
         self.health_status == HealthStatus::Infected
     }
 }
+
+impl CarcassSource for DispersingIndividual {
+    fn individual_id(&self) -> usize {
+        self.individual_id
+    }
+
+    fn age_class(&self) -> AgeClass {
+        self.age_class
+    }
+
+    fn position(&self, _model: &Model) -> (usize, usize) {
+        (self.disp_indiv_x, self.disp_indiv_y)
+    }
+
+    fn creation_time(&self, model: &Model) -> usize {
+        model.global_variables.current_time
+    }
+
+    fn is_infected(&self) -> bool {
+        self.health_status == HealthStatus::Infected
+    }
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct Carcass {
     pub carcass_id: u32,
@@ -77,10 +101,10 @@ pub struct Carcass {
 
 pub fn create_carcass<T: CarcassSource>(
     source: T,
-    lifetime: u32,
-    model: &Model,
-    carcass_vector: &mut Vec<Carcass>,
+    model: &mut Model,
+    
 ) {
+    let default_lifetime = 10;
     let carcass_id = generate_carcass_id() as u32;
     let (x, y) = source.position(model);
     let carcass = Carcass {
@@ -89,10 +113,10 @@ pub fn create_carcass<T: CarcassSource>(
         carcass_y: y,
         creation_time: source.creation_time(model),
         is_infected: source.is_infected(),
-        lifetime,
+        lifetime: default_lifetime,
         age_class: source.age_class(),
     };
-    carcass_vector.push(carcass);
+    model.carcasses.push(carcass);
 }
 
 //implementation : create_carcass(roaming_individual, 10, &model);
