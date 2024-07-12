@@ -17,9 +17,8 @@ pub fn generate_disperser_id() -> usize {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DispersingIndividual {
-    //pub ageclass: AgeClass,
-    pub x: usize,
-    pub y: usize,
+    pub disp_indiv_x: usize,
+    pub disp_indiv_y: usize,
     pub individual_id: usize,
     pub age: u32,
     pub age_class: AgeClass,
@@ -88,8 +87,8 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
             // Remove the member from the group and collect it as a dispersing individual
             let member = group.group_members.remove(index);
             let dispersing_individual = DispersingIndividual {
-                x: group.x,
-                y: group.y,
+                disp_indiv_x: group.x,
+                disp_indiv_y: group.y,
                 individual_id: member.individual_id,
                 age: member.age,
                 age_class: member.age_class.clone(),
@@ -121,8 +120,8 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
                 disp_grp_id: generate_disperser_id(),
                 target_cell: None,
                 daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
-                disp_grp_x: dispersing_individuals[0].x, // Use x of the first individual
-                disp_grp_y: dispersing_individuals[0].y, // Use y of the first individual
+                disp_grp_x: dispersing_individuals[0].disp_indiv_x, // Use x of the first individual
+                disp_grp_y: dispersing_individuals[0].disp_indiv_y, // Use y of the first individual
                 marked_for_removal: false,
             };
             dispersing_groups.push(dispersing_group);
