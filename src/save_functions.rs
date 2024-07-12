@@ -314,6 +314,37 @@ pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &
     Ok(())
 }
 
+
+pub fn save_carcasses_as_csv(filename: &str, carcass_states: &[(usize, Vec<Carcass>)]) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
+
+    // Write the header line
+    writeln!(file, "iteration,carcass_id,carcass_x,carcass_y,creation_time,is_infected,lifetime,age_class")?;
+
+    // Write each carcass's data for each iteration
+    for (iteration, carcasses) in carcass_states {
+        for carcass in carcasses {
+            writeln!(
+                file,
+                "{},{},{},{},{},{},{},{}",
+                iteration,
+                carcass.carcass_id,
+                carcass.carcass_x,
+                carcass.carcass_y,
+                carcass.creation_time,
+                carcass.is_infected,
+                carcass.lifetime,
+                carcass.age_class
+            )?;
+        }
+    }
+
+    println!("Carcasses saved to: {}", filename);
+    Ok(())
+}
+
+
 /* 
 pub fn save_interaction_layer_as_bson(
     file_path: &str,
