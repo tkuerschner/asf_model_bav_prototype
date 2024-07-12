@@ -104,7 +104,14 @@ pub fn create_carcass<T: CarcassSource>(
     model: &mut Model,
     
 ) {
-    let default_lifetime = 10;
+
+    let lifetime_adjusted: u32;
+    if source.age_class() == AgeClass::Piglet {
+         lifetime_adjusted = 75;
+    } else {
+         lifetime_adjusted = 150; //FIX ME get the correct values
+    }
+
     let carcass_id = generate_carcass_id() as u32;
     let (x, y) = source.position(model);
     let carcass = Carcass {
@@ -113,12 +120,28 @@ pub fn create_carcass<T: CarcassSource>(
         carcass_y: y,
         creation_time: source.creation_time(model),
         is_infected: source.is_infected(),
-        lifetime: default_lifetime,
+        lifetime: lifetime_adjusted,
         age_class: source.age_class(),
     };
     model.carcasses.push(carcass);
 }
 
-//implementation : create_carcass(roaming_individual, 10, &model);
+
+pub fn remove_carcass(model: &mut Model) {
+    model.carcasses.retain(|c| c.lifetime > 0);
+}
+
+pub fn update_carcass_lifetime(model: &mut Model) {
+    for carcass in model.carcasses.iter_mut() {
+        carcass.lifetime -= 1;
+    }
+}
+
+pub fn handle_carcasses (model: &mut Model) {
+ 
+ update_carcass_lifetime(model);
+ remove_carcass(model);
+}
+
 
 
