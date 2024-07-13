@@ -1245,9 +1245,9 @@ fn main() {
         log::info!("Deleting single individual instances: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
        // delete_single_individual_instances(&mut model.interaction_layer);
 
-       if iteration == (6000) {  // DEBUG TESTER REMOVE ME
-        remove_half_of_all_groups(&mut model);
-       }
+      // if iteration == (6000) {  // DEBUG TESTER REMOVE ME
+      //  remove_half_of_all_groups(&mut model);
+      // }
 
         if iteration == (RUNTIME) {
             // Save the grid state for the current (last) iteration
