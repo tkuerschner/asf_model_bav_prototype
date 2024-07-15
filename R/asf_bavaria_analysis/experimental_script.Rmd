@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 151       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 152       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -59,7 +59,7 @@ roamers <- read.csv("./output/all_roamers.csv", header = T)
 
 carcasses <- read.csv("./output/all_carcasses.csv", header = T)
 
-
+high_seats <- read.csv("./output/all_high_seats.csv", header = T)
 ```
 
 ```{r data prep}
@@ -2511,5 +2511,32 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/cmap/carcass_map_",i,".png"), pl
 
 }
 
+
+```
+
+
+```{r}
+
+#plot a map of the high seats
+
+hs_data <- high_seats %>%
+  group_by(x_hs, y_hs) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_tile(data = g2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = hs_data, aes(x = x_hs, y = y_hs, fill = n)) +
+  scale_fill_gradient(low = "white", high = "red") +
+  theme_minimal()+
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
 
 ```

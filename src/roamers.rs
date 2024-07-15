@@ -420,19 +420,19 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
 
         ///EXPERIMENTAL
 
-        let nearby_high_seats = i_layer.query_high_seats_in_radius(roamer.roamer_x as f64, roamer.roamer_y as f64, 3.0);
+       //let nearby_high_seats = i_layer.query_high_seats_in_radius(roamer.roamer_x as f64, roamer.roamer_y as f64, 3.0);
 
-        if !nearby_high_seats.is_empty() {
-           //println!(
-           //    "Roamer ID: {} is near the following high seats:",
-           //    roamer.individual_id
-           //);
-            for (hs_id, distance) in nearby_high_seats {
-               // println!("  High Seat ID: {}, Distance: {}", hs_id, distance);
-            }
-        } else {
-           // println!("Roamer ID: {} is not near any high seats.", roamer.individual_id);
-        }
+      // if !nearby_high_seats.is_empty() {
+      //    //println!(
+      //    //    "Roamer ID: {} is near the following high seats:",
+      //    //    roamer.individual_id
+      //    //);
+      //     for (hs_id, distance) in nearby_high_seats {
+      //        // println!("  High Seat ID: {}, Distance: {}", hs_id, distance);
+      //     }
+      // } else {
+      //    // println!("Roamer ID: {} is not near any high seats.", roamer.individual_id);
+      // }
 
      ///EXPERIMENTAL END
 

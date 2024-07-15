@@ -341,7 +341,7 @@ fn handle_reached_target(
         let (target_x, target_y) = disperser_group.target_cell.unwrap();
         add_new_group_at_location(groups, grid, target_x, target_y);
         let new_group_id = groups.last().unwrap().group_id;
-        log::info!("New group will be added, new group id: {}", new_group_id);
+        //log::info!("New group will be added, new group id: {}", new_group_id);
         make_core_cell_an_ap(grid, groups.last().unwrap().core_cell.unwrap().0, groups.last().unwrap().core_cell.unwrap().1);
         
         if month > 6 && month < 10 {
@@ -376,7 +376,7 @@ fn handle_reached_target(
                 break;
                 }
             }
-            log::info!("Individual {} moved to group {}", disperser.individual_id, new_group_id);
+           // log::info!("Individual {} moved to group {}", disperser.individual_id, new_group_id);
         }
         
         //groups_to_remove.push(index);
