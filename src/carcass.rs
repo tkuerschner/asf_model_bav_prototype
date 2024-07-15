@@ -126,7 +126,7 @@ pub fn create_carcass<T: CarcassSource>(
     model.carcasses.push(carcass);
 }
 
-pub fn remove_carcass(model: &mut Model) {
+pub fn remove_decayed_carcasses(model: &mut Model) {
     model.carcasses.retain(|c| c.lifetime > 0);
 }
 
@@ -136,8 +136,19 @@ pub fn update_carcass_lifetime(model: &mut Model) {
     }
 }
 
+//function to remove carcasses that are not in a valid cell 
+pub fn remove_invalid_carcasses(model: &mut Model) {
+    model.carcasses.retain(|c| is_valid_cell(&model.grid, c.carcass_x, c.carcass_y ));
+}
+
+pub fn remove_carcasses(model: &mut Model) {
+    remove_decayed_carcasses(model);
+    remove_invalid_carcasses(model);
+}
+
 pub fn handle_carcasses (model: &mut Model) {
  
- update_carcass_lifetime(model);
- remove_carcass(model);
-}
+    update_carcass_lifetime(model);
+    remove_carcass(model);
+    
+   }

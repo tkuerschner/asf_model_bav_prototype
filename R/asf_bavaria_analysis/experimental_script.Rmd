@@ -2403,7 +2403,27 @@ carcass_data <- carcasses %>%
   theme_minimal()
   
 
+# add the carcasses over time together and create a heatmap of carcasses
 
+carcass_data2 <- carcasses %>%
+  group_by(carcass_x, carcass_y, iteration) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_tile(data = g2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = carcass_data2, aes(x = carcass_x, y = carcass_y, fill = n)) +
+  scale_fill_gradient(low = "white", high = "red") +
+  theme_minimal()+
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
 
 
 
