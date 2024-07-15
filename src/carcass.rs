@@ -13,7 +13,7 @@ pub fn generate_carcass_id() -> usize {
     }
 }
 
-// Define the trait that will be implemented by RoamingIndividual and GroupMember TODO add implementation for disperser
+// Define the trait that will be implemented by RoamingIndividual GroupMember and dispersingIndividual
 pub trait CarcassSource {
     fn individual_id(&self) -> usize;
     fn age_class(&self) -> AgeClass;
@@ -87,6 +87,7 @@ impl CarcassSource for DispersingIndividual {
         self.health_status == HealthStatus::Infected
     }
 }
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Carcass {
     pub carcass_id: u32,
@@ -97,7 +98,6 @@ pub struct Carcass {
     pub lifetime: u32,
     pub age_class: AgeClass,
 }
-
 
 pub fn create_carcass<T: CarcassSource>(
     source: T,
@@ -126,7 +126,6 @@ pub fn create_carcass<T: CarcassSource>(
     model.carcasses.push(carcass);
 }
 
-
 pub fn remove_carcass(model: &mut Model) {
     model.carcasses.retain(|c| c.lifetime > 0);
 }
@@ -142,6 +141,3 @@ pub fn handle_carcasses (model: &mut Model) {
  update_carcass_lifetime(model);
  remove_carcass(model);
 }
-
-
-
