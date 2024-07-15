@@ -762,7 +762,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 20; 
+const RUNTIME: usize = 365 * 2; 
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -952,6 +952,7 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
     //let SurvivalProbability {adult = ADULT_SURVIVAL, piglet = PIGLET_SURVIVAL}
     //let mut survival_prob: Vec<SurvivalProbability> = Vec::new();
    
+   
 
     //extract cell info
     let cell_info_list = extract_cell_info(&grid);
@@ -1065,7 +1066,11 @@ fn main() {
     log::info!("Removing attraction points with quality 0");
     remove_ap_on_cells_with_quality_0(&mut grid);
     
-    
+        // place high seats
+
+   
+
+
     //create vector for dispersing individuals using the struct in dispersal.rs
     let disperser_vector: &mut Vec<DispersingIndividual> = &mut Vec::new();
     let dispersing_groups_vector: &mut Vec<DispersingFemaleGroup> = &mut Vec::new();
@@ -1140,6 +1145,8 @@ fn main() {
         high_seats: high_seat_vector.clone(),
     };
     
+    //place high seats
+    place_high_seats(&mut model);
 
     // Allocate survival probabilities
     let survival_prob = SurvivalProbability {

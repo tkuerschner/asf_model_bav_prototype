@@ -141,14 +141,15 @@ pub fn remove_invalid_carcasses(model: &mut Model) {
     model.carcasses.retain(|c| is_valid_cell(&model.grid, c.carcass_x, c.carcass_y ));
 }
 
+pub fn handle_carcasses (model: &mut Model) {
+ 
+    update_carcass_lifetime(model);
+    remove_carcasses(model);
+    
+   }
+
 pub fn remove_carcasses(model: &mut Model) {
     remove_decayed_carcasses(model);
     remove_invalid_carcasses(model);
 }
 
-pub fn handle_carcasses (model: &mut Model) {
- 
-    update_carcass_lifetime(model);
-    remove_carcass(model);
-    
-   }

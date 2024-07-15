@@ -415,6 +415,30 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
             roamer.roamer_is_infected(),
         );
 
+
+
+
+        ///EXPERIMENTAL
+
+        let nearby_high_seats = i_layer.query_high_seats_in_radius(roamer.roamer_x as f64, roamer.roamer_y as f64, 3.0);
+
+        if !nearby_high_seats.is_empty() {
+           //println!(
+           //    "Roamer ID: {} is near the following high seats:",
+           //    roamer.individual_id
+           //);
+            for (hs_id, distance) in nearby_high_seats {
+               // println!("  High Seat ID: {}, Distance: {}", hs_id, distance);
+            }
+        } else {
+           // println!("Roamer ID: {} is not near any high seats.", roamer.individual_id);
+        }
+
+     ///EXPERIMENTAL END
+
+
+
+
         if let Some((target_x, target_y)) = roamer.target_cell {
             if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                 roamer.reached_target = true;
