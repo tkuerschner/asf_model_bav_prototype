@@ -69,6 +69,9 @@ use movement::*;
 
 mod carcass;
 use carcass::*;
+
+mod hunting;
+use hunting::*;
 //type InteractionLayer = HashMap<(usize, usize, usize), InteractionCell>;
 
 
@@ -87,6 +90,7 @@ pub struct Model {
     //pub interaction_layer: Vec<Vec<InteractionCell>>,
     pub interaction_layer: InteractionLayer,
     pub carcasses: Vec<Carcass>,
+    pub high_seats: Vec<HighSeat>,
 }
 
 #[derive(Debug, Clone)]
@@ -621,7 +625,7 @@ pub struct SurvivalProbability{
     piglet: f64,
 }
 
-// Define a struct to represent a grid cell
+// Define a struct to represent a grid cellFinteraction
 #[derive(Debug, Clone, PartialEq)]
 pub struct Cell {
     quality: f64,
@@ -629,6 +633,12 @@ pub struct Cell {
     x_grid: usize,
     y_grid: usize,
     territory: AreaSeparation
+}
+
+impl Cell {
+    pub fn is_valid(&self) -> bool {
+        self.quality > 0.0
+    }
 }
 
 // Define a struct to represent the area separation
@@ -677,7 +687,7 @@ pub struct LandscapeMetadata {
 }
 
 // Define a struct to represent the output
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 struct Output {
     iteration: usize,
     id: usize,
@@ -695,7 +705,7 @@ struct Output {
 }
 
 // Define a struct to represent the input
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 struct Input {
 max_age: u32,
 presence_time_limit: usize,
@@ -1066,6 +1076,8 @@ fn main() {
     //create a vector for the carcasses
     let carcass_vector: &mut Vec<Carcass> = &mut Vec::new();
 
+    //high seat vector
+    let high_seat_vector: &mut Vec<HighSeat> = &mut Vec::new();
     
    // place_new_attraction_points(&mut grid, &mut groups, 5);
 
@@ -1089,6 +1101,9 @@ fn main() {
 
     // Vector to store carcass states for all iterations
     let mut all_carcass_states: Vec<(usize, Vec<Carcass>)> = Vec::new();
+
+    // Vector to store high seat states for all iterations
+    let mut all_high_seat_states: Vec<(usize, Vec<HighSeat>)> = Vec::new();
 
     
        let global_variables = GlobalVariables {
@@ -1122,6 +1137,7 @@ fn main() {
         global_variables: global_variables,
         interaction_layer: interaction_layer_tmp,
         carcasses: carcass_vector.clone(),
+        high_seats: high_seat_vector.clone(),
     };
     
 
@@ -1270,6 +1286,9 @@ fn main() {
             // Save the carcass state for the current iteration
             all_carcass_states.push((iteration, model.carcasses.clone()));
 
+            // Save the high seat state for the current iteration
+            all_high_seat_states.push((iteration, model.high_seats.clone()));
+
            // purge_interaction_layer( &mut model.interaction_layer);
 
         // Stop the sim when all individuals are dead
@@ -1339,6 +1358,8 @@ fn main() {
     //save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
 
     save_carcasses_as_csv("output/all_carcasses.csv", &all_carcass_states).expect("Failed to save carcasses as CSV");
+
+    save_high_seats_as_csv("output/all_high_seats.csv", &all_high_seat_states).expect("Failed to save high seats as CSV");
 
    // save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
 

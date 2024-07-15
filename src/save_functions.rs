@@ -344,6 +344,38 @@ pub fn save_carcasses_as_csv(filename: &str, carcass_states: &[(usize, Vec<Carca
     Ok(())
 }
 
+//save highseats as csv
+
+pub fn save_high_seats_as_csv(filename: &str, high_seat_states: &[(usize, Vec<HighSeat>)]) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
+
+    // Write the header line
+    writeln!(file, "iteration,hs_id,x_hs,y_hs,is_occupied,range")?;
+
+    // Write each high seat's data for each iteration
+    for (iteration, high_seats) in high_seat_states {
+        for high_seat in high_seats {
+            writeln!(
+                file,
+                "{},{},{},{},{},{}",
+                iteration,
+                high_seat.hs_id,
+                high_seat.x_hs,
+                high_seat.y_hs,
+                high_seat.is_occupied,
+                high_seat.range
+            )?;
+        }
+    }
+
+    println!("High seats saved to: {}", filename);
+    Ok(())
+}
+
+
+
+
 
 /* 
 pub fn save_interaction_layer_as_bson(
