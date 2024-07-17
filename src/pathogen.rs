@@ -1,12 +1,12 @@
 use crate::*;
 
-pub fn within_group_pathogen_infection(model: &mut Model, rng: &mut impl Rng){
+//pub fn within_group_pathogen_infection(model: &mut Model, rng: &mut impl Rng){
+//
+//
+//}
 
 
-}
-
-
-pub fn infected_in_group(model: &mut Model, rng: &mut impl Rng, group_nr: usize) -> bool {
+pub fn infected_in_group(model: &mut Model, _rng: &mut impl Rng, group_nr: usize) -> bool {
     let mut infected = false;
     // look into group with group_nr == group_id
     let group = model.groups.iter_mut().find(|group| group.group_id == group_nr).unwrap();

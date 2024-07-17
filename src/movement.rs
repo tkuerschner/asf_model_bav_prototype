@@ -19,7 +19,7 @@ impl fmt::Display for MovementMode {
     }
 }
 
-pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R, mut i_layer: &mut InteractionLayer, time: usize) {
+pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R, i_layer: &mut InteractionLayer, time: usize) {
     for group in group.iter_mut() {
 
         //println!("Movement called"); //<------ DEBUG print

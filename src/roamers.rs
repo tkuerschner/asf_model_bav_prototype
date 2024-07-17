@@ -418,7 +418,7 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
 
 
 
-        ///EXPERIMENTAL
+        //experimental
 
        //let nearby_high_seats = i_layer.query_high_seats_in_radius(roamer.roamer_x as f64, roamer.roamer_y as f64, 3.0);
 
@@ -434,7 +434,7 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
       //    // println!("Roamer ID: {} is not near any high seats.", roamer.individual_id);
       // }
 
-     ///EXPERIMENTAL END
+     //experimental
 
 
 

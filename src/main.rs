@@ -1,21 +1,21 @@
-use rand::{rngs, Rng};
+use rand::Rng;
 use rand::seq::SliceRandom;
-use rand_distr::num_traits::int;
-use core::time;
+//use rand_distr::num_traits::int;
+//use core::time;
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{self, Write, BufRead, BufReader, Error, ErrorKind, Result, Read,};
-use std::path::Path;
-use std::collections::VecDeque;
+use std::io::{self, BufRead, BufReader, Error, ErrorKind, Result,};
+//use std::path::Path;
+//use std::collections::VecDeque;
 use std::time::Instant;
-use serde::{de, Deserialize, Serialize};
-use chrono::Datelike;
-use chrono::Timelike;
+//use serde::{de, Deserialize, Serialize};
+//use chrono::Datelike;
+//use chrono::Timelike;
 use std::fs;
 use chrono::Local;
-use zip::{ZipWriter, write::FileOptions, CompressionMethod};
-use std::thread;
-use std::time::Duration;
+//use zip::{ZipWriter, write::FileOptions, CompressionMethod};
+//use std::thread;
+//use std::time::Duration;
 use std::collections::HashMap;
 
 
@@ -62,7 +62,7 @@ mod utility;
 use utility::*;
 
 mod pathogen;
-use pathogen::*;
+//use pathogen::*;
 
 mod movement;
 use movement::*;
@@ -137,12 +137,12 @@ impl Groups {
     }
 
     // Method to perform logic on each group member
-    pub fn process_group_members(&self) {
-        for member in &self.group_members {
-            // Perform logic on each group member
-            // Example: println!("{:?}", member);
-        }
-    }
+    //pub fn process_group_members(&self) {
+    //    for member in &self.group_members {
+    //        // Perform logic on each group member
+    //        // Example: println!("{:?}", member);
+    //    }
+    //}
 
     // Method to get the distance to the target cell
     pub fn distance_to_target (&self) -> i32 {

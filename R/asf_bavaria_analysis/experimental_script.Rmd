@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 152       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 153       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -2460,7 +2460,7 @@ g2x <- g2 %>% dplyr::select(x, y, quality)
   animated_plot_carcass <- plot_carcass + 
   transition_reveal(iteration) +
   #transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
-  labs(fill = "Number of carcasses", title = "Day: {frame_along}")+
+  labs(fill = "Number of carcasses", title = "Day: {frame_along}") +
    enter_fade() +
   exit_fade()
 
@@ -2482,7 +2482,7 @@ geom_point(data= c1, aes(x = carcass_x, y = carcass_y, color = (carcass_id)))
 
 
 c2 <- carcasses %>%
-  filter(carcass_id == 407) 
+  filter(carcass_id == 407)
 
 ```
 
