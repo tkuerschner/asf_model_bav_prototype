@@ -19,8 +19,8 @@ impl fmt::Display for MovementMode {
     }
 }
 
-pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: &mut R, i_layer: &mut InteractionLayer, time: usize) {
-    for group in group.iter_mut() {
+pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
+    for group in model.groups.iter_mut() {
 
         //println!("Movement called"); //<------ DEBUG print
 
@@ -32,7 +32,7 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
 
             //check if a target cell is needed and assign a stay time for the ap
             if group.target_cell.is_none() {
-                let territory_ap = get_attraction_points_in_territory(grid, group.group_id);
+                let territory_ap = get_attraction_points_in_territory(&model.grid, group.group_id);
                 let new_target_cell = territory_ap
                     .choose(rng)
                     .cloned()
@@ -46,9 +46,9 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
             // 25% chance to move randomly
             if rng.gen_range(0..100) < 25 { // <-----------------------------------------------DEBUG FIX ME percentage
                 //move_to_random_adjacent_cells(grid.len(), individual, rng);
-                move_to_random_adjacent_cells_2(grid, group, rng);
+                move_to_random_adjacent_cells_2(&model.grid, group, rng);
                 //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
-                i_layer.add_entity_and_record_movement(
+                model.interaction_layer.add_entity_and_record_movement(
                     group.group_id, 
                     "group", 
                     time, 
@@ -62,13 +62,15 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
 
 
                 );
+                
+               if hunting_check(&model.grid, &mut model.high_seats, rng, group.x, group.y) {
+                //println!("Hunting successful");
+               }
+
+
                 group.daily_movement_distance -= 1;
             } else {
-                // Move towards the cell with the highest quality
-               // move_towards_highest_quality(grid, group, rng);
-               //move_within_territory(grid, group, rng);
-
-               // move_to_random_adjacent_cells_2(grid, group, rng);
+              
                 if group.movement == MovementMode::ApTransition {
 
                     if group.x == group.target_cell.unwrap().0 && group.y == group.target_cell.unwrap().1 {
@@ -77,23 +79,9 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                         break; // if target location reached flit to foraging
                     }
                     
-                   // if realign_time > 0 { // every 3rd step we realign to the target
-                   // correlated_random_walk_towards_target(grid, group, rng);
-                   // realign_time -= 1;
-                   // }
-                   // if realign_time == 0 {
-                   //     move_to_closest_adjacent_cell_to_target(grid, group);
-                   //     realign_time = 3;
-                   // }
+                  move_one_step_towards_target_cell_with_random(group, rng, &model.grid);
 
-                  // move_to_closest_adjacent_cell_to_target(grid, group);
-
-                  //move_towards_target_cell(group);
-
-                  //move_one_step_towards_target_cell(group);
-                  move_one_step_towards_target_cell_with_random(group,rng,grid);
-                  //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
-                  i_layer.add_entity_and_record_movement(
+                  model.interaction_layer.add_entity_and_record_movement(
                     group.group_id, 
                     "group", 
                     time, 
@@ -122,14 +110,14 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                         let new_target_cell;
                         if rng.gen_range(1..100) > 100 { // 1% chance to choose a new ap outside the territory // DEBUG TEMPORARILY DEACTIVATED
                            
-                           let outside_ap = get_closest_attraction_points_outside_territory(grid, group);
+                           let outside_ap = get_closest_attraction_points_outside_territory(&model.grid, group);
 
                             new_target_cell = outside_ap
                             .choose(rng)
                             .cloned()
                             .expect("No other attraction points found");
                         } else {
-                        let territory_ap = get_attraction_points_in_territory(grid, group.group_id);
+                        let territory_ap = get_attraction_points_in_territory(&model.grid, group.group_id);
                         let closest_ap = get_closest_attraction_point(group, &territory_ap);
                         let other_aps: Vec<(usize, usize)> = territory_ap
                             .into_iter()
@@ -156,9 +144,8 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                     if ((group.x as isize) - (group.target_cell.unwrap().0 as isize)).abs() <= 3
                     && ((group.y as isize) - (group.target_cell.unwrap().1 as isize)).abs() <= 3
                     {
-                        move_towards_highest_quality(grid, group, rng);
-                        //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
-                        i_layer.add_entity_and_record_movement(
+                        move_towards_highest_quality(&model.grid, group, rng);
+                        model.interaction_layer.add_entity_and_record_movement(
                             group.group_id, 
                             "group", 
                             time, 
@@ -173,12 +160,9 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                         );
                         group.daily_movement_distance -= 1;
                     }else {
-                        
-                       // correlated_random_walk_towards_target(grid, group, rng);
-                        //move_one_step_towards_target_cell(group);
-                        move_one_step_towards_target_cell_with_random(group,rng,grid);
-                        //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
-                        i_layer.add_entity_and_record_movement(
+                        move_one_step_towards_target_cell_with_random(group,rng,&model.grid);
+
+                        model.interaction_layer.add_entity_and_record_movement(
                             group.group_id, 
                             "group", 
                             time, 
@@ -193,20 +177,6 @@ pub fn move_groups<R: Rng>(grid: &Vec<Vec<Cell>>, group: &mut Vec<Groups>, rng: 
                         group.daily_movement_distance -= 1;
                     }
                     
-                    
-                   // println!("Movement left: {}", group.daily_movement_distance); // DEBUG PRINT
-
-                      // Update presence timer
-                    //group.memory.presence_timer += 1;
-                    //
-                    //// Check if presence time limit is reached or 5% chance to move
-                    //if group.memory.presence_timer >= PRESENCE_TIME_LIMIT || rng.gen_range(0..100) < MOVE_CHANCE_PERCENTAGE {
-                    //    // Reset presence timer and force movement to a random cell
-                    //    group.memory.presence_timer = 0;
-                    //    //move_to_random_adjacent_cells(grid.len(), group, rng);
-                    //
-                    //    group.movement = MovementMode::ApTransition;
-                    //}
                 }
             }
         }
