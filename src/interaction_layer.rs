@@ -44,9 +44,7 @@ pub struct InteractionLayer {
     entities: Vec<Entity>,
     kd_tree: KdTree<f64, usize, [f64; 2]>, // Specify all three generic parameters
     pub id_to_index: HashMap<usize, usize>,
-    pub high_seats: Vec<HighSeat>,
-    hs_kd_tree: KdTree<f64, usize, [f64; 2]>, // Separate KD-tree for high seats
-    pub hs_id_to_index: HashMap<usize, usize>, // Mapping for high seats
+
 
 }
 
@@ -54,11 +52,8 @@ impl InteractionLayer {
     pub fn new() -> Self {
         InteractionLayer {
             entities: Vec::new(),
-            high_seats: Vec::new(),
             kd_tree: KdTree::new(2),
-            hs_kd_tree: KdTree::new(2),
             id_to_index: HashMap::new(),
-            hs_id_to_index: HashMap::new(),
             
         }
     }
@@ -190,71 +185,7 @@ impl InteractionLayer {
             self.id_to_index.insert(entity.individual_id, index);
         }
     }
-
-    pub fn add_high_seat(&mut self, high_seat: HighSeat) {
-        let hs_id = high_seat.hs_id;
-        let index = self.high_seats.len();
-        
-        // Add the high seat to the list
-        self.high_seats.push(high_seat.clone());
-
-        // Add high seat to kd-tree
-        self.hs_kd_tree.add(high_seat.as_point(), hs_id).unwrap();
-        
-        // Update the id to index mapping
-        self.hs_id_to_index.insert(hs_id, index);
-    }
-
-    pub fn query_high_seats_in_radius(
-        &self,
-        query_x: f64,
-        query_y: f64,
-        radius: f64,
-    ) -> Vec<(usize, f64)> {
-        let query_point = [query_x, query_y];
-        let mut results = Vec::new();
-
-        // Iterate over all high seats and filter those within radius
-        for (_, hs_id) in self.hs_kd_tree.iter_nearest(&query_point, &squared_euclidean).unwrap() {
-            if let Some(&hs_index) = self.hs_id_to_index.get(hs_id) {
-                let high_seat = &self.high_seats[hs_index];
-                let distance_squared = squared_euclidean(&high_seat.as_point(), &query_point);
-                let distance = distance_squared.sqrt();
-
-                if distance <= radius {
-                    results.push((high_seat.hs_id, distance));
-                }
-            }
-        }
-
-        results
-    }
-    pub fn iter_high_seats<'a>(&'a self) -> impl Iterator<Item = &'a HighSeat> {
-        (0..self.high_seats.len()).map(move |hs_idx| &self.high_seats[hs_idx])
-    }
-
-    pub fn check_individuals_near_high_seats(&self, range: f64) {
-        for entity in &self.entities {
-            let nearby_high_seats = self.query_high_seats_in_radius(entity.x, entity.y, range);
-
-            if !nearby_high_seats.is_empty() {
-                println!(
-                    "Entity ID: {} is near the following high seats:",
-                    entity.individual_id
-                );
-                for (hs_id, distance) in nearby_high_seats {
-                    println!("  High Seat ID: {}, Distance: {}", hs_id, distance);
-                }
-            } else {
-                println!("Entity ID: {} is not near any high seats.", entity.individual_id);
-            }
-        }
-    }
-
 }
-
-
-
 
 
 impl Clone for InteractionLayer {
@@ -264,18 +195,10 @@ impl Clone for InteractionLayer {
             new_kd_tree.add(entity.as_point(), entity.individual_id).unwrap();
         }
 
-        let mut new_hs_kd_tree = KdTree::new(2);
-        for high_seat in &self.high_seats {
-            new_hs_kd_tree.add(high_seat.as_point(), high_seat.hs_id).unwrap();
-        }
-
         InteractionLayer {
             entities: self.entities.clone(),
             kd_tree: new_kd_tree,
-            high_seats: self.high_seats.clone(),
-            hs_kd_tree: new_hs_kd_tree,
             id_to_index: self.id_to_index.clone(),
-            hs_id_to_index: self.hs_id_to_index.clone(),
         }
     }
 }
