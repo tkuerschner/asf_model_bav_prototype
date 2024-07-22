@@ -9,13 +9,16 @@ pub fn generate_high_seat_id() -> usize {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct HighSeat {
     pub x_hs: usize,
     pub y_hs: usize,
     pub hs_id: usize,
     pub is_occupied: bool,
     pub range: usize, // range of the high seat - mean 150m
+    pub success_rate: f64, // success rate of the high seat
+    pub num_hunted: usize, // number of individuals hunted
+    pub successful_hunt: bool,
 }
 
 impl HighSeat {
@@ -26,6 +29,9 @@ impl HighSeat {
             hs_id,
             is_occupied,
             range,
+            success_rate: 0.25,
+            num_hunted: 0,
+            successful_hunt: false,
         }
     }
 
@@ -49,30 +55,153 @@ impl HighSeat {
 }
 
 
+pub fn handle_high_seats_initial(model: &mut Model, rng: &mut impl Rng, initial_high_seats_occupancy: f64) {
+
+    place_high_seats(model);
+    occupy_high_seats(model, rng, initial_high_seats_occupancy);
+    create_hunting_zone(model);
+
+}
 
 
 //1 hs per 10 ha / 10 ha is 100000 m^2 cell size is 50mx50m i.e. 2500 m^2 so 40 cells per 10 ha so 1 hs per 40 cells
 
+//pub fn place_high_seats(model: &mut Model) {
+//    let mut hs_counter = 0;
+//    for i in 0..model.grid.len() {
+//        for j in 0..model.grid[i].len() {
+//            if model.grid[i][j].is_valid() {
+//                if hs_counter % 40 == 0 {
+//                    let hs = HighSeat::new(
+//                        i , 
+//                        j , 
+//                        generate_high_seat_id(), 
+//                        false, 
+//                        3,
+//                    );
+//                    model.high_seats.push(hs.clone());
+//                }
+//                hs_counter += 1;
+//            }
+//        }
+//    }
+//}
+
 pub fn place_high_seats(model: &mut Model) {
+    
+//1 hs per 10 ha / 10 ha is 100000 m^2 cell size is 50mx50m i.e. 2500 m^2 so 40 cells per 10 ha so 1 hs per 40 cells
+    let cells_per_hs = 240;//TEST go back to 40
     let mut hs_counter = 0;
-    for i in 0..model.grid.len() {
-        for j in 0..model.grid[i].len() {
+
+    let mut i = 0;
+    while i < model.grid.len() {
+        let mut j = 0;
+        while j < model.grid[i].len() {
             if model.grid[i][j].is_valid() {
-                if hs_counter % 40 == 0 {
+                if hs_counter == 0 {
+                    // Place a high seat at this grid position
                     let hs = HighSeat::new(
-                        i , 
-                        j , 
-                        generate_high_seat_id(), 
-                        false, 
-                        150
+                        i,
+                        j,
+                        generate_high_seat_id(),
+                        false,
+                        3,
                     );
                     model.high_seats.push(hs.clone());
-                    model.interaction_layer.add_high_seat(hs);
+
+                    // Skip the next `cells_per_hs` cells to ensure spacing
+                    hs_counter = cells_per_hs;
+                } else {
+                    hs_counter -= 1;
                 }
-                hs_counter += 1;
+            }
+            j += 1; // Increment `j` to move to the next cell in the row
+        }
+        i += 1; // Increment `i` to move to the next row in the grid
+    }
+}
+
+
+
+
+
+pub fn create_hunting_zone(model: &mut Model) {
+    for hs in &model.high_seats {
+        if hs.is_occupied {
+        let x = hs.x_hs;
+        let y = hs.y_hs;
+        let range = hs.range;
+        for i in 0..model.grid.len() {
+            for j in 0..model.grid[i].len() {
+                if (i as i32 - x as i32).abs() + (j as i32 - y as i32).abs() <= range as i32 {
+                    model.grid[i][j].set_hunting_zone();
+                    model.grid[i][j].associated_high_seat = Some(hs.hs_id);
+                    }
+                }
             }
         }
     }
 }
 
+
+pub fn hunting_check(grid: &Vec<Vec<Cell>>, hs_vec: &mut Vec<HighSeat> , rng: &mut impl Rng, my_x: usize, my_y: usize) -> bool {
+    // check if the grid cell is a hunting zone
+    if grid[my_x][my_y].hunting_zone {
+        // get the high seat id
+        let hs_id = grid[my_x][my_y].associated_high_seat.unwrap();
+        // get the high seat
+        let hs = hs_vec.iter_mut().find(|hs| hs.hs_id == hs_id).unwrap();
+             
+        // check if the hunt is successful
+        let success = rng.gen_bool(hs.success_rate);
+        if success {
+            hs.num_hunted += 1;
+            hs.successful_hunt = true;
+            // leave the high seat after successful hunt
+            leave_high_seats_after_success(hs_id, hs_vec);
+            true
+        } else {
+            false
+        }
+    }
+    else {
+        false
+    }
+}
+
+pub fn occupy_high_seats(model: &mut Model, rng: &mut impl Rng, percentage: f64) {
+   //occupy 10% of high seats
+    let num_occupied = (model.high_seats.len() as f64 * 0.1) as usize;
+    let mut occupied_hs = 0;
+    while occupied_hs < num_occupied {
+        let idx = rng.gen_range(0..model.high_seats.len());
+        if !model.high_seats[idx].is_occupied {
+            model.high_seats[idx].occupy_high_seat();
+            occupied_hs += 1;
+        }
+    }
+}
+
+pub fn leave_all_high_seats(model: &mut Model) {
+    //leave all high seats
+    for hs in &mut model.high_seats {
+        hs.leave_high_seat();
+    }
+}
+
+pub fn leave_high_seats_after_success(hs_id: usize, hs_vec: &mut Vec<HighSeat>) {
+    //leave high seat after hunt
+    for hs in hs_vec {
+        if hs.hs_id == hs_id {
+            hs.leave_high_seat();
+        }
+    }
+}
+
+pub fn shuffle_high_seat_occupancy(model: &mut Model, rng: &mut impl Rng, occupancy_rate: f64) {
+    //leave all high seats
+    leave_all_high_seats(model);
+    //occupy 10% of high seats
+    occupy_high_seats(model, rng, occupancy_rate);
+}
 
