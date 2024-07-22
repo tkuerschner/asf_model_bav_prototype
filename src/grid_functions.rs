@@ -5,6 +5,45 @@ use crate::*;
 //use std::f64::consts::PI;
 //use rand_distr::{Distribution, Normal};
 
+// Define a struct to represent a grid cellFinteraction
+#[derive(Debug, Clone, PartialEq)]
+pub struct Cell {
+    pub quality: f64,
+    pub counter: usize,
+    pub x_grid: usize,
+    pub y_grid: usize,
+    pub territory: AreaSeparation,
+    pub hunting_zone: bool,
+    pub associated_high_seat: Option<usize>,
+}
+
+impl Cell {
+    pub fn is_valid(&self) -> bool {
+        self.quality > 0.0
+    }
+
+    pub fn set_hunting_zone(&mut self) {
+        self.hunting_zone = true;
+    }
+
+}
+
+// Define a struct to represent the area separation
+#[derive(Debug, Clone, PartialEq)]
+pub struct AreaSeparation {
+    pub is_ap: bool,
+    pub is_taken:bool,
+    pub taken_by_group: usize,
+    pub core_cell_of_group: usize,
+}
+
+// Define a struct to represent the cell information
+pub struct CellInfo {
+    pub x_grid_o: usize,
+    pub y_grid_o: usize,
+    pub quality: f64,
+}
+
 
 pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>, LandscapeMetadata)> {
     // Open the file in read-only mode
@@ -49,6 +88,8 @@ pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>
                         taken_by_group:0,
                         core_cell_of_group:0,
                     },
+                    hunting_zone:false,
+                    associated_high_seat: None,
                 })
                 //.filter(|cell| cell.quality > 0.0)
                 .collect();
