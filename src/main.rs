@@ -625,37 +625,7 @@ pub struct SurvivalProbability{
     piglet: f64,
 }
 
-// Define a struct to represent a grid cellFinteraction
-#[derive(Debug, Clone, PartialEq)]
-pub struct Cell {
-    quality: f64,
-    counter: usize,
-    x_grid: usize,
-    y_grid: usize,
-    territory: AreaSeparation
-}
 
-impl Cell {
-    pub fn is_valid(&self) -> bool {
-        self.quality > 0.0
-    }
-}
-
-// Define a struct to represent the area separation
-#[derive(Debug, Clone, PartialEq)]
-pub struct AreaSeparation {
-    is_ap: bool,
-    is_taken:bool,
-    taken_by_group: usize,
-    core_cell_of_group: usize,
-}
-
-// Define a struct to represent the cell information
-pub struct CellInfo {
-    x_grid_o: usize,
-    y_grid_o: usize,
-    quality: f64,
-}
 
 // Define a struct to represent global variables
 #[derive(Debug, Clone)]
@@ -771,6 +741,7 @@ const MIN_STAY_TIME: usize = 1;
 const MAX_STAY_TIME: usize = 14;
 const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
 const GODD_YEAR_CHANCE: usize = 15; // 15% chance of a good year
+const BURN_IN_PERIOD: usize = 0; // 365 * 2; // 2 years burn in period
 
 
 
@@ -1066,7 +1037,7 @@ fn main() {
     log::info!("Removing attraction points with quality 0");
     remove_ap_on_cells_with_quality_0(&mut grid);
     
-        // place high seats
+        
 
    
 
@@ -1146,7 +1117,9 @@ fn main() {
     };
     
     //place high seats
-    place_high_seats(&mut model);
+    log::info!("Placing high seats");
+    handle_high_seats_initial(&mut model, &mut rng, 0.1);
+    log::info!("Placing high seats done");
 
     // Allocate survival probabilities
     let survival_prob = SurvivalProbability {
@@ -1176,11 +1149,23 @@ fn main() {
         delete_groups_without_members(&mut model.groups);
         check_for_empty_groups(&mut model.groups);
 
+        //test outsource into file TODO
+        let hunting_per_month_list = vec![0.3,0.2,0.2,0.1,0.0,0.0,0.0,0.0,0.0,0.1,0.1,0.2];
+        //high seat occupancy
         
-       // if iteration > 25{
-       //     log::info!("Checking for empty groups: year {}, month {}, day {}, iteration {}", global_variables.year, global_variables.month, global_variables.day, iteration);
-       //     handle_empty_groups(&mut groups, &mut grid);
-       // }
+      if iteration > BURN_IN_PERIOD {
+        if model.global_variables.day == 1 {
+            //get the current month
+            let current_month = model.global_variables.month;
+            //use the current month to get the position in the hunting list vector
+            let hunting_per_month = hunting_per_month_list[current_month as usize - 1];
+
+            shuffle_high_seat_occupancy(&mut model, &mut rng, hunting_per_month)
+
+
+        }
+
+      }
 
         //dispersal
         if iteration > 100 {
@@ -1230,7 +1215,7 @@ fn main() {
         execute_roaming(&mut model.roamers, &mut model.groups, &mut model.grid, &mut rng, &mut model.interaction_layer, iteration);
         log::info!("Group movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         delete_groups_without_members(&mut model.groups);
-        move_groups(&model.grid, &mut model.groups, &mut rng, &mut model.interaction_layer, iteration);
+        move_groups(&mut rng,   iteration, &mut model);
 
         //check dispersers if their target cell == none
 
