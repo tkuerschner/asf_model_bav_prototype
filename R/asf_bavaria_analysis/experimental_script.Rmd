@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 153       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 155       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -2523,6 +2523,9 @@ hs_data <- high_seats %>%
   group_by(x_hs, y_hs) %>%
   summarise(n = n())
 
+ghz <- g2 %>% filter(hunting_zone == "true")
+
+
   ggplot() +
   geom_tile(data = g2, aes(x = x, y = y, fill = quality)) +
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
@@ -2530,6 +2533,8 @@ hs_data <- high_seats %>%
   new_scale_fill() +
   geom_tile(data = hs_data, aes(x = x_hs, y = y_hs, fill = n)) +
   scale_fill_gradient(low = "white", high = "red") +
+  new_scale_fill()+
+  geom_tile(data = ghz, aes(x = x, y = y, fill = (hunting_zone))) +
   theme_minimal()+
   theme(
     axis.text = element_blank(),
@@ -2540,3 +2545,4 @@ hs_data <- high_seats %>%
   )
 
 ```
+
