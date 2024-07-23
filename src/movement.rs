@@ -54,7 +54,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     time, 
                     0, 
                     0, 
-                    group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                    group.group_members.first().unwrap().individual_id, // id of the first individual in the group
                     1.0, 
                     group.x as f64, 
                     group.y as f64,
@@ -65,7 +65,22 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                 
                if hunting_check(&model.grid, &mut model.high_seats, rng, group.x, group.y) {
                 //println!("Hunting successful");
+
+                //TODO devise logic to select and remove a single groupmember from the group
+
+               let hunted_id = group.get_id_random_group_member();
+                let hi = group.group_members.iter_mut().find(|individual| individual.individual_id == hunted_id).unwrap();
+
+               model.hunting_statistics.add_hunted_individual(group.x, group.y, hi.sex.clone(), hi.age, hi.age_class, hi.individual_id, Some(group.group_id) , IndividualType::GroupMember, model.global_variables.current_time);
+
+                group.remove_group_member(hunted_id);
+
                }
+
+               //exit this group movement loop if there are no members left in the group
+                if group.group_members.len() == 0 {
+                     break;
+                }
 
 
                 group.daily_movement_distance -= 1;
@@ -87,7 +102,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     time, 
                     0, 
                     0, 
-                    group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                    group.group_members.first().unwrap().individual_id, // id of the first individual in the group
                     1.0, 
                     group.x as f64, 
                     group.y as f64,
@@ -151,7 +166,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                             time, 
                             0, 
                             0, 
-                            group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                            group.group_members.first().unwrap().individual_id, // id of the first individual in the group
                             
                             1.0, 
                             group.x as f64, 
@@ -168,7 +183,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                             time, 
                             0, 
                             0, 
-                            group.group_members.last().unwrap().individual_id, // id of the first individual in the group
+                            group.group_members.first().unwrap().individual_id, // id of the first individual in the group
                             1.0, 
                             group.x as f64, 
                             group.y as f64,
