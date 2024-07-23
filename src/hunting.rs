@@ -1,3 +1,5 @@
+use std::option;
+
 use crate::*;
 
 static mut HIGH_SEAT_COUNTER: usize = 0;
@@ -51,6 +53,62 @@ impl HighSeat {
         [self.x_hs as f64, self.y_hs as f64]
     }
 
+
+}
+#[derive(Debug, Clone)]
+pub struct HuntingStatistics {
+  pub hunted_individuals: Vec<HuntedIndividuals>,
+}
+#[derive(Debug, Clone)]
+pub struct HuntedIndividuals {
+    pub x: usize,
+    pub y: usize,
+    pub sx: Sex,
+    pub age: u32,
+    pub age_class: AgeClass,
+    pub id: usize,
+    pub origin_group: option::Option<usize>,
+    pub type_individual: IndividualType,
+    pub time: usize,
+}
+#[derive(Debug, Clone)]
+pub enum IndividualType {
+    Roamer,
+    GroupMember,
+    Disperser, 
+}
+
+impl fmt::Display for IndividualType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            IndividualType::Roamer => write!(f, "Roamer"),
+            IndividualType::GroupMember => write!(f, "GroupMember"),
+            IndividualType::Disperser => write!(f, "Disperser"),
+        }
+    }
+}
+
+impl HuntingStatistics {
+    pub fn new() -> HuntingStatistics {
+        HuntingStatistics {
+            hunted_individuals: Vec::new(),
+        }
+    }
+
+    pub fn add_hunted_individual(&mut self, x: usize, y: usize, sx: Sex, age: u32, age_class: AgeClass, id: usize, origin_group: option::Option<usize>, type_individual: IndividualType, time: usize) {
+        let hunted_individual = HuntedIndividuals {
+            x,
+            y,
+            sx,
+            age,
+            age_class,
+            id,
+            origin_group,
+            type_individual,
+            time
+        };
+        self.hunted_individuals.push(hunted_individual);
+    }
 
 }
 
