@@ -374,7 +374,35 @@ pub fn save_high_seats_as_csv(filename: &str, high_seat_states: &[(usize, Vec<Hi
 }
 
 
+pub fn save_hunting_statistics_as_csv(filename: &str, hunting_statistics: &[(usize, HuntingStatistics)]) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
 
+    // Write the header line
+    writeln!(file, "x,y,sx,age,age_class,id,origin_group,type_individual,iteration")?;
+
+    // Write each hunted individual's data for each iteration
+    for (iteration, stats) in hunting_statistics {
+        for hunted_individual in &stats.hunted_individuals {
+            writeln!(
+                file,
+                "{},{},{},{},{},{},{},{},{}",
+                hunted_individual.x,
+                hunted_individual.y,
+                hunted_individual.sx,
+                hunted_individual.age,
+                hunted_individual.age_class,
+                hunted_individual.id,
+                hunted_individual.origin_group.unwrap_or(0),
+                hunted_individual.type_individual,
+                iteration
+            )?;
+        }
+    }
+
+    println!("Hunting statistics saved to: {}", filename);
+    Ok(())
+}
 
 
 /* 
