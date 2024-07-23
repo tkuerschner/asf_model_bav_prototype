@@ -91,7 +91,10 @@ pub struct Model {
     pub interaction_layer: InteractionLayer,
     pub carcasses: Vec<Carcass>,
     pub high_seats: Vec<HighSeat>,
+    pub hunting_statistics: HuntingStatistics,
 }
+
+
 
 #[derive(Debug, Clone)]
 pub struct Groups {
@@ -134,6 +137,26 @@ impl Groups {
     // Method to get a reference to a specific group member
     pub fn get_group_member(&self, index: usize) -> Option<&GroupMember> {
         self.group_members.get(index)
+    }
+
+    pub fn remove_random_member(&mut self) {
+        if let Some(index) = self.group_members.choose(&mut rand::thread_rng()).map(|member| self.group_members.iter().position(|m| *m == *member).unwrap()) {
+            self.group_members.remove(index);
+        }
+    }
+
+    pub fn get_id_random_group_member(&self) -> usize {
+        if let Some(member) = self.group_members.choose(&mut rand::thread_rng()) {
+            member.individual_id
+        } else {
+            0
+        }
+    }
+
+    pub fn remove_group_member(&mut self, member_id: usize) {
+        if let Some(index) = self.group_members.iter().position(|member| member.individual_id == member_id) {
+            self.group_members.remove(index);
+        }
     }
 
     // Method to perform logic on each group member
@@ -538,7 +561,7 @@ fn generate_group_id() -> usize {
 }
 
 // Define a struct to represent an individual
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GroupMember {
     individual_id: usize,
     age: u32,
@@ -552,6 +575,7 @@ pub struct GroupMember {
     has_dispersed: bool,
     current_group_id: usize,
 }
+
 
 // Define a struct to represent a groups's memory
 #[derive(Debug, Clone)]
@@ -1081,6 +1105,9 @@ fn main() {
     // Vector to store high seat states for all iterations
     let mut all_high_seat_states: Vec<(usize, Vec<HighSeat>)> = Vec::new();
 
+    // Vector to store hunting statistics for all iterations
+    let mut all_hunting_statistics: Vec<(usize, HuntingStatistics)> = Vec::new();
+
     
        let global_variables = GlobalVariables {
         age_mortality: 0,
@@ -1104,6 +1131,9 @@ fn main() {
      // Create an instance of InteractionLayer
      let interaction_layer_tmp = InteractionLayer::new();
 
+     // Create an instance of Hunting statistics
+    let hunting_statistics = HuntingStatistics::new();
+
      // create the model
      let mut model = Model {
         grid: grid,
@@ -1114,6 +1144,8 @@ fn main() {
         interaction_layer: interaction_layer_tmp,
         carcasses: carcass_vector.clone(),
         high_seats: high_seat_vector.clone(),
+        hunting_statistics: hunting_statistics,
+        
     };
     
     //place high seats
@@ -1281,6 +1313,9 @@ fn main() {
             // Save the high seat state for the current iteration
             all_high_seat_states.push((iteration, model.high_seats.clone()));
 
+            // Save the hunting statistics for the current iteration
+            all_hunting_statistics.push((iteration, model.hunting_statistics.clone()));
+
            // purge_interaction_layer( &mut model.interaction_layer);
 
         // Stop the sim when all individuals are dead
@@ -1353,7 +1388,11 @@ fn main() {
 
     save_high_seats_as_csv("output/all_high_seats.csv", &all_high_seat_states).expect("Failed to save high seats as CSV");
 
+    save_hunting_statistics_as_csv("output/all_hunting_statistics.csv", &all_hunting_statistics).expect("Failed to save hunting statistics as CSV");
+
    // save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
+
+   //
 
     // variable that is set to the system time when the save is complete
     //let save_time = Local::now();

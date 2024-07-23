@@ -60,6 +60,8 @@ roamers <- read.csv("./output/all_roamers.csv", header = T)
 carcasses <- read.csv("./output/all_carcasses.csv", header = T)
 
 high_seats <- read.csv("./output/all_high_seats.csv", header = T)
+
+hunting_stats <- read.csv("./output/all_hunting_statistics.csv", header = T)
 ```
 
 ```{r data prep}
