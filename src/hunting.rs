@@ -202,7 +202,7 @@ pub fn create_hunting_zone(model: &mut Model) {
 }
 
 
-pub fn hunting_check(grid: &Vec<Vec<Cell>>, hs_vec: &mut Vec<HighSeat> , rng: &mut impl Rng, my_x: usize, my_y: usize) -> bool {
+pub fn hunting_check(grid: &mut Vec<Vec<Cell>>, hs_vec: &mut Vec<HighSeat> , rng: &mut impl Rng, my_x: usize, my_y: usize) -> bool {
     // check if the grid cell is a hunting zone
     if grid[my_x][my_y].hunting_zone {
         // get the high seat id
@@ -217,6 +217,7 @@ pub fn hunting_check(grid: &Vec<Vec<Cell>>, hs_vec: &mut Vec<HighSeat> , rng: &m
             hs.successful_hunt = true;
             // leave the high seat after successful hunt
             leave_high_seats_after_success(hs_id, hs_vec);
+            remove_hunting_zone_of_hs(grid, hs_id);
             true
         } else {
             false
@@ -252,14 +253,38 @@ pub fn leave_high_seats_after_success(hs_id: usize, hs_vec: &mut Vec<HighSeat>) 
     for hs in hs_vec {
         if hs.hs_id == hs_id {
             hs.leave_high_seat();
+            
         }
     }
 }
 
+pub fn remove_hunting_zone_of_hs(grid: &mut Vec<Vec<Cell>>, hs_id: usize) {
+    for i in 0..grid.len() {
+        for j in 0..grid[i].len() {
+            if grid[i][j].associated_high_seat == Some(hs_id) {
+                grid[i][j].hunting_zone = false;
+                grid[i][j].associated_high_seat = None;
+            }
+        }
+    }
+}
+
+pub fn remove_all_hunting_zones(grid: &mut Vec<Vec<Cell>>) {
+    for i in 0..grid.len() {
+        for j in 0..grid[i].len() {
+            grid[i][j].hunting_zone = false;
+            grid[i][j].associated_high_seat = None;
+        }
+    }
+}
+
+
 pub fn shuffle_high_seat_occupancy(model: &mut Model, rng: &mut impl Rng, occupancy_rate: f64) {
     //leave all high seats
     leave_all_high_seats(model);
+    remove_all_hunting_zones(&mut model.grid);
     //occupy 10% of high seats
     occupy_high_seats(model, rng, occupancy_rate);
+    create_hunting_zone(model);
 }
 

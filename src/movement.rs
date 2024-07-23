@@ -63,7 +63,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
 
                 );
                 
-               if hunting_check(&model.grid, &mut model.high_seats, rng, group.x, group.y) {
+               if hunting_check(&mut model.grid, &mut model.high_seats, rng, group.x, group.y) {
                 //println!("Hunting successful");
 
                 //TODO devise logic to select and remove a single groupmember from the group

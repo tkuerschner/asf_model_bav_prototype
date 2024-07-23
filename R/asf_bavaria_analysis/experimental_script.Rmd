@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 155       #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 157      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -2545,6 +2545,128 @@ ghz <- g2 %>% filter(hunting_zone == "true")
     panel.grid = element_blank(),
     plot.title = element_text(hjust = 0.5, size = 20)
   )
+
+```
+
+```{r hunting stats}
+
+h1 <- hunting_stats
+
+#plot hunted animals over time colored by agecalss
+
+h2 <- h1 %>%
+  group_by(iteration, age_class) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_line(data = h2, aes(x = iteration, y = n, color = age_class)) +
+  labs(title = "Number of hunted animals over time", x = "Iteration", y = "Number of hunted animals") +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+  #plot hunted animals over time colored by ageclass for each month each month is 28 steps
+
+  h3 <- h1 %>%
+  group_by(iteration, age_class) %>%
+  summarise(n = n())
+
+  h3$month <- (h3$iteration %% 336) / 28
+
+ # plot as bar plot for each month
+
+  ggplot() +
+  geom_bar(data = h3, aes(x = month, y = n, fill = age_class), stat = "identity") +
+  labs(title = "Number of hunted animals per month", x = "Month", y = "Number of hunted animals") +
+  scale_fill_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+  #plot hunted animals over time colored by ageclass for each month each month is 28 steps
+
+  h4 <- h1 %>%
+  group_by(iteration, age_class) %>%
+  summarise(n = n())
+
+  h4$month <- (h4$iteration %% 336) / 28
+
+  # plot as line plot for each month
+
+  ggplot() +
+  geom_line(data = h4, aes(x = month, y = n, color = age_class)) +
+  labs(title = "Number of hunted animals per month", x = "Month", y = "Number of hunted animals") +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+  #plot hunted animals over time colored by ageclass for each month each month is 28 steps and average over the year, each yeat is 12*28 steps
+
+  h5 <- h1 %>%
+  group_by(iteration, age_class) %>%
+  summarise(n = n())
+
+  h5$month <- round(h5$iteration / 28) + 1 
+  # if h5$month > 12 then month = month - 11
+
+  h5$month[h5$month > 12] <- h5$month[h5$month > 12] - 12
+  h5$month[h5$month > 12] <- h5$month[h5$month > 12] - 12
+
+
+
+  h5$year <- round(h5$iteration / 336) + 1
+
+  h6 <- h5 %>%
+  group_by(month, age_class) %>%
+  summarise(n = mean(n))
+
+  # plot as bar plot for each month
+
+  ggplot() +
+  geom_bar(data = h6, aes(x = as.factor(month), y = n, fill = age_class), stat = "identity") +
+  labs(title = "Number of hunted animals per month", x = "Month", y = "Number of hunted animals") +
+  scale_fill_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+
+#group iteration into month 28 iterations per month
+
+h8 <- h1 %>% mutate(month = case_when(iteration %% 28 == 0 ~ iteration / 28, TRUE ~ as.numeric(iteration)))
+
+
+ggplot()+
+geom_bar(data=h1, aes(x= as.factor(iteration), fill = age_class))+
+labs(title = "Number of hunted animals per month", x = "Month", y = "Number of hunted animals")+
+scale_fill_manual(values = c("#CD5555", "black", "#1874CD"))+
+theme_minimal()
+
+
+
+
+
+```
+
+```{r}
+
+#plot hunted individuals as heatmap
+
+
+h2 <- h1 %>%
+  group_by(x,y) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_tile(data = g2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = h2, aes(x = x, y = y, fill = n)) +
+  scale_fill_gradient(low = "white", high = "red") +
+  theme_minimal()+
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
 
 ```
 

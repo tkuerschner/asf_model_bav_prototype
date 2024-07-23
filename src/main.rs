@@ -1192,8 +1192,12 @@ fn main() {
             //use the current month to get the position in the hunting list vector
             let hunting_per_month = hunting_per_month_list[current_month as usize - 1];
 
+            if hunting_per_month > 0.0 {
+                log::info!("Shuffling high seat occupancy: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             shuffle_high_seat_occupancy(&mut model, &mut rng, hunting_per_month)
-
+            } else {
+                leave_all_high_seats(&mut model);
+            }
 
         }
 
