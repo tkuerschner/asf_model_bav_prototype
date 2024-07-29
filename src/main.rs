@@ -1197,6 +1197,7 @@ fn main() {
             shuffle_high_seat_occupancy(&mut model, &mut rng, hunting_per_month)
             } else {
                 leave_all_high_seats(&mut model);
+                remove_all_hunting_zones(&mut model.grid);
             }
 
         }
@@ -1392,7 +1393,7 @@ fn main() {
 
     save_high_seats_as_csv("output/all_high_seats.csv", &all_high_seat_states).expect("Failed to save high seats as CSV");
 
-    save_hunting_statistics_as_csv("output/all_hunting_statistics.csv", &all_hunting_statistics).expect("Failed to save hunting statistics as CSV");
+    save_hunting_statistics_as_csv("output/all_hunting_statistics.csv", &all_hunting_statistics, &all_global_variables).expect("Failed to save hunting statistics as CSV");
 
    // save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
 
