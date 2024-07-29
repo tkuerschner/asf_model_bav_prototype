@@ -1149,10 +1149,7 @@ fn main() {
         
     };
     
-    //place high seats
-    log::info!("Placing high seats");
-    handle_high_seats_initial(&mut model, &mut rng, 0.1);
-    log::info!("Placing high seats done");
+ 
 
     // Allocate survival probabilities
     let survival_prob = SurvivalProbability {
@@ -1187,12 +1184,21 @@ fn main() {
         //high seat occupancy
         
       if iteration > BURN_IN_PERIOD {
-        if model.global_variables.day == 1 {
-            //get the current month
-            let current_month = model.global_variables.month;
-            //use the current month to get the position in the hunting list vector
-            let hunting_per_month = hunting_per_month_list[current_month as usize - 1];
+        //get the current month
+        let current_month = model.global_variables.month;
+        //use the current month to get the position in the hunting list vector
+        let hunting_per_month = hunting_per_month_list[current_month as usize - 1];
 
+        if iteration == 1 {
+
+               //place high seats
+                log::info!("Placing high seats");
+                handle_high_seats_initial(&mut model, &mut rng, hunting_per_month);
+                log::info!("Placing high seats done");
+        }
+
+        if model.global_variables.day == 1 {
+            
             if hunting_per_month > 0.0 {
                 log::info!("Shuffling high seat occupancy: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             shuffle_high_seat_occupancy(&mut model, &mut rng, hunting_per_month)

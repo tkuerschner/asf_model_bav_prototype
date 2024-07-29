@@ -230,7 +230,7 @@ pub fn hunting_check(grid: &mut Vec<Vec<Cell>>, hs_vec: &mut Vec<HighSeat> , rng
 
 pub fn occupy_high_seats(model: &mut Model, rng: &mut impl Rng, percentage: f64) {
    //occupy 10% of high seats
-    let num_occupied = (model.high_seats.len() as f64 * 0.1) as usize;
+    let num_occupied = (model.high_seats.len() as f64 * percentage) as usize;
     let mut occupied_hs = 0;
     while occupied_hs < num_occupied {
         let idx = rng.gen_range(0..model.high_seats.len());
