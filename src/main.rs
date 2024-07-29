@@ -4,7 +4,7 @@ use rand::seq::SliceRandom;
 //use core::time;
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Error, ErrorKind, Result,};
+use std::io::{self, BufRead, BufReader, Error, ErrorKind, Result,Write};
 //use std::path::Path;
 //use std::collections::VecDeque;
 use std::time::Instant;
@@ -17,6 +17,7 @@ use chrono::Local;
 //use std::thread;
 //use std::time::Duration;
 use std::collections::HashMap;
+use std::path::Path;
 
 
 //use lazy_static::lazy_static;
@@ -756,7 +757,7 @@ const PRESENCE_TIME_LIMIT: usize = 5;
 const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 2; 
+const RUNTIME: usize = 3;//365 * 2; 
 const ADULT_SURVIVAL: f64 = 0.65;
 const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -982,7 +983,7 @@ fn main() {
 
     //purge old log file if it exists and was not saved
     let _ = std::fs::remove_file("logs/outputLog.log");
-    
+    let simID = generate_unique_simulation_id();
     // check the logs folder, if there is 10 ore more files in there zip them and move them to the archive folder
    // let log_folder = Path::new("logs");
    // let archive_folder = Path::new("logs/archive");
@@ -1040,7 +1041,7 @@ fn main() {
     //    log::info!("Archived log files");
     //}
 
-    log::info!("--------------------------->>> Starting simulation at time: {:?}", start_time);
+    log::info!("--------------------------->>> Starting simulation {} at time: {:?}", simID, start_time);
 
     let mut rng = rand::thread_rng();
     let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
@@ -1374,31 +1375,55 @@ fn main() {
     println!("Time taken to run simulation: {:?}", time_taken);
     log::info!("Time taken to run simulation: {:?}", time_taken);
 
-    // Save all grid states to a single CSV file
-    save_grid_as_csv("output/all_grid_states.csv", &all_grid_states).expect("Failed to save grid states as CSV");                //   <-----------------temp OFF
+   //let time_rn = Local::now();
+   //let folder_name = format!("output/simulation_{}_{}", simID, time_rn.format("%Y_%m_%d_%H_%M"));
+   //fs::create_dir_all(&folder_name).expect("Failed to create folder");
 
-    // Save all individual states to a single CSV file
-    save_groups_as_csv("output/all_groups.csv", &all_group_states).expect("Failed to save groups as CSV");
+   let time_rn = Local::now();
+   let folder_name = format!("simulation_{}_t_{}", simID, time_rn.format("%Y_%m_%d_%H_%M"));
+   let folder_path = format!("output/{}", folder_name);
+
+   // Create the directory
+   println!("Creating directory: {}", folder_path);
+   match fs::create_dir_all(&folder_path) {
+       Ok(_) => println!("Directory created successfully: {}", folder_path),
+       Err(e) => {
+           println!("Failed to create directory: {}. Error: {:?}", folder_path, e);
+           return;
+       }
+   }
+
+
+    // Ensure directory creation is flushed to stdout
+    std::io::stdout().flush().unwrap();
+
+    // Save all grid states to a single CSV file
+    save_grid_as_csv(format!("output/{}/all_grid_states.csv", folder_name).as_str(), &all_grid_states).expect("Failed to save grid states as CSV");               
+
+   // Save all individual states to a single CSV file
+    save_groups_as_csv(format!("output/{}/all_groups.csv", folder_name).as_str(), &all_group_states).expect("Failed to save groups as CSV");
 
     // Save all global variables to a single CSV file
-    save_global_variables_as_csv("output/all_global_variables.csv", &all_global_variables).expect("Failed to save global variables as CSV");
+    save_global_variables_as_csv(format!("output/{}/all_global_variables.csv", folder_name).as_str(), &all_global_variables).expect("Failed to save global variables as CSV");
 
-    save_disperser_group_as_csv("output/all_dispersers.csv", &all_disperser_states).expect("Failed to save disperser as CSV");
+    save_disperser_group_as_csv(format!("output/{}/all_dispersers.csv", folder_name).as_str(), &all_disperser_states).expect("Failed to save disperser as CSV");
 
-    save_roamers_as_csv("output/all_roamers.csv", &all_roamer_states).expect("Failed to save roamer as CSV");
+    save_roamers_as_csv(format!("output/{}/all_roamers.csv", folder_name).as_str(), &all_roamer_states).expect("Failed to save roamer as CSV");
 
-    //save_interaction_layer_as_csv("output/all_interaction_layer.csv", &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+    //save_interaction_layer_as_csv(format!("output/{}/all_interaction_layer.csv", folder_name).as_str(), &all_interaction_layers).expect("Failed to save interaction layer as CSV");
 
-    save_carcasses_as_csv("output/all_carcasses.csv", &all_carcass_states).expect("Failed to save carcasses as CSV");
+    save_carcasses_as_csv(format!("output/{}/all_carcasses.csv", folder_name).as_str(), &all_carcass_states).expect("Failed to save carcasses as CSV");
 
-    save_high_seats_as_csv("output/all_high_seats.csv", &all_high_seat_states).expect("Failed to save high seats as CSV");
+    save_high_seats_as_csv(format!("output/{}/all_high_seats.csv", folder_name).as_str(), &all_high_seat_states).expect("Failed to save high seats as CSV");
 
-    save_hunting_statistics_as_csv("output/all_hunting_statistics.csv", &all_hunting_statistics, &all_global_variables).expect("Failed to save hunting statistics as CSV");
+    save_hunting_statistics_as_csv(format!("output/{}/all_hunting_statistics.csv", folder_name).as_str(), &all_hunting_statistics, &all_global_variables).expect("Failed to save hunting statistics as CSV");
 
-   // save_interaction_layer_as_bson("output/all_interaction_layer.bson", &all_interaction_layers).expect("Failed to save interaction layer as BSON");
+    //save_interaction_layer_as_bson(format!("output/{}/all_interaction_layer.bson", folder_name).as_str(), &all_interaction_layers).expect("Failed to save interaction layer as BSON");
 
-   //
+    //copy all the files from the specific output folder to the output folder
+    copy_last_sim_to_active(folder_path);
 
+ 
     // variable that is set to the system time when the save is complete
     //let save_time = Local::now();
     let save_time = Instant::now();
@@ -1411,8 +1436,12 @@ fn main() {
     //rename the log file to include date and time to the minute
     let now = Local::now();
     log::info!("--------------------------->>> Simulation complete at time: {:?}", now);
-    let log_file = format!("logs/log_{}.log", now.format("%Y-%m-%d_%H-%M"));
-    fs::rename("logs/outputLog.log", log_file).expect("Failed to rename log file");
+    let log_file = format!("logs/log_{}_{}.log",simID, now.format("%Y_%m_%d_%H_%M"));
+    fs::rename("logs/outputLog.log", log_file.clone()).expect("Failed to rename log file");
+       //copy log file to output folder
+    let log_file_output = format!("output/{}/log_{}.log", folder_name, now.format("%Y_%m_%d_%H_%M"));
+    fs::copy(log_file, log_file_output).expect("Failed to copy log file to output folder");
+
 
 
     // check the logs folder, if there is 10 ore more files in there zip them and move them to the archive folder
@@ -1442,6 +1471,18 @@ fn main() {
     //}
 
 }
+
+fn copy_last_sim_to_active(folder_path: String) {
+    let output_folder = Path::new("output");
+    let output_files = fs::read_dir(folder_path).unwrap();
+    for file in output_files {
+        let file = file.unwrap();
+        let path = file.path();
+        let file_name = path.file_name().unwrap().to_str().unwrap();
+        let output_file = output_folder.join(file_name);
+        fs::copy(path, output_file).expect("Failed to copy file to output folder");
+    }
+    }
 
 
 

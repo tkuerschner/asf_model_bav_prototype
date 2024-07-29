@@ -1,5 +1,5 @@
 use crate::*;
-
+use uuid::Uuid;
 
 //function check if a disperser group has no members
 
@@ -58,4 +58,10 @@ pub fn current_time(model: &mut Model) -> usize {
 
 }
  
+pub fn generate_unique_simulation_id() -> String {
+    // Generate a UUID
+    let uuid = Uuid::new_v4();
+    // Convert UUID to string and remove hyphens
+    uuid.hyphenated().to_string().replace("-", "")
+}
 

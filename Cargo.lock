@@ -53,6 +53,7 @@ dependencies = [
  "log",
  "log4rs",
  "rand",
+ "uuid",
 ]
 
 [[package]]

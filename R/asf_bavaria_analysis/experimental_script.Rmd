@@ -2637,7 +2637,7 @@ scale_fill_manual(values = c("#CD5555", "black", "#1874CD"))+
 theme_minimal()
 
 
-
+h1 <- hunting_stats
 h9 <- h1 %>%
   group_by( age_class, iteration, month, year) %>%
   summarise(n = n()) %>%
