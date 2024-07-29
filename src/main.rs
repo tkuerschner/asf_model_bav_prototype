@@ -1203,6 +1203,7 @@ fn main() {
                 log::info!("Shuffling high seat occupancy: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             shuffle_high_seat_occupancy(&mut model, &mut rng, hunting_per_month)
             } else {
+                log::info!("Removing all high seats and hunting zones: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
                 leave_all_high_seats(&mut model);
                 remove_all_hunting_zones(&mut model.grid);
             }
