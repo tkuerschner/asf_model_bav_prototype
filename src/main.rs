@@ -983,7 +983,7 @@ fn main() {
 
     //purge old log file if it exists and was not saved
     let _ = std::fs::remove_file("logs/outputLog.log");
-    let simID = generate_unique_simulation_id();
+    let sim_id = generate_unique_simulation_id();
     // check the logs folder, if there is 10 ore more files in there zip them and move them to the archive folder
    // let log_folder = Path::new("logs");
    // let archive_folder = Path::new("logs/archive");
@@ -1041,7 +1041,7 @@ fn main() {
     //    log::info!("Archived log files");
     //}
 
-    log::info!("--------------------------->>> Starting simulation {} at time: {:?}", simID, start_time);
+    log::info!("--------------------------->>> Starting simulation {} at time: {:?}", sim_id, start_time);
 
     let mut rng = rand::thread_rng();
     let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
@@ -1225,7 +1225,7 @@ fn main() {
             roamer_assignemnt(&mut model.roamers,&mut model.groups);
         }
        // move_female_disperser(disperser_vector, &mut grid, &mut groups);
-       check_empty_disperser_group(dispersing_groups_vector);
+            check_empty_disperser_group(dispersing_groups_vector);
             log::info!("Moving dispersers: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
             move_female_disperser_group(&mut model.dispersers, &mut model.grid, &mut model.groups, &mut rng, model.global_variables.month, &mut model.interaction_layer, iteration);
@@ -1376,11 +1376,11 @@ fn main() {
     log::info!("Time taken to run simulation: {:?}", time_taken);
 
    //let time_rn = Local::now();
-   //let folder_name = format!("output/simulation_{}_{}", simID, time_rn.format("%Y_%m_%d_%H_%M"));
+   //let folder_name = format!("output/simulation_{}_{}", sim_id, time_rn.format("%Y_%m_%d_%H_%M"));
    //fs::create_dir_all(&folder_name).expect("Failed to create folder");
 
    let time_rn = Local::now();
-   let folder_name = format!("simulation_{}_t_{}", simID, time_rn.format("%Y_%m_%d_%H_%M"));
+   let folder_name = format!("simulation_{}_t_{}", sim_id, time_rn.format("%Y_%m_%d_%H_%M"));
    let folder_path = format!("output/{}", folder_name);
 
    // Create the directory
@@ -1436,7 +1436,7 @@ fn main() {
     //rename the log file to include date and time to the minute
     let now = Local::now();
     log::info!("--------------------------->>> Simulation complete at time: {:?}", now);
-    let log_file = format!("logs/log_{}_{}.log",simID, now.format("%Y_%m_%d_%H_%M"));
+    let log_file = format!("logs/log_{}_{}.log",sim_id, now.format("%Y_%m_%d_%H_%M"));
     fs::rename("logs/outputLog.log", log_file.clone()).expect("Failed to rename log file");
        //copy log file to output folder
     let log_file_output = format!("output/{}/log_{}.log", folder_name, now.format("%Y_%m_%d_%H_%M"));

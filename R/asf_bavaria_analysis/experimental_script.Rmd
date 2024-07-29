@@ -2638,14 +2638,16 @@ theme_minimal()
 
 
 h1 <- hunting_stats
-h9 <- h1 %>%
+#cut the last 5 iterations from the data
+h9 <- h1 %>% filter(iteration < max(h1$iteration) - 5)
+h10 <- h9 %>%
   group_by( age_class, iteration, month, year) %>%
   summarise(n = n()) %>%
   group_by(month, year, age_class) %>%
   summarise(mean_hunted = mean(n))
 
   ggplot() +
-  geom_bar(data = h9, aes(x = as.factor(month), y = mean_hunted, fill = age_class), stat = "identity") +
+  geom_bar(data = h10, aes(x = as.factor(month), y = mean_hunted, fill = age_class), stat = "identity") +
   labs(title = "Number of hunted animals per month", x = "Month", y = "Number of hunted animals") +
   scale_fill_manual(values = c("#CD5555", "black", "#1874CD")) +
   theme_minimal()
