@@ -5,8 +5,50 @@ use crate::*;
 use std::fs::File;
 use std::io::Write;
 
+pub fn save_outputs(
+    folder_name: &String,
+    all_grid_states: Vec<(usize, Vec<Vec<Cell>>)>,
+    all_group_states: Vec<(usize, Vec<Groups>)>,
+    all_global_variables: Vec<GlobalVariables>,
+    all_disperser_states: Vec<(usize, Vec<DispersingFemaleGroup>)>,
+    all_roamer_states: Vec<(usize, Vec<RoamingIndividual>)>,
+    all_carcass_states: Vec<(usize, Vec<Carcass>)>,
+    all_high_seat_states: Vec<(usize, Vec<HighSeat>)>,
+    all_hunting_statistics: Vec<(usize, HuntingStatistics)>,
+    folder_path: String,
+) {
+    // Save all grid states to a single CSV file
+    save_grid_as_csv(format!("output/{}/all_grid_states.csv", folder_name).as_str(), &all_grid_states).expect("Failed to save grid states as CSV");
 
-// Fix me to work with groups
+    // Save all individual states to a single CSV file
+    save_groups_as_csv(format!("output/{}/all_groups.csv", folder_name).as_str(), &all_group_states).expect("Failed to save groups as CSV");
+
+    // Save all global variables to a single CSV file
+    save_global_variables_as_csv(format!("output/{}/all_global_variables.csv", folder_name).as_str(), &all_global_variables).expect("Failed to save global variables as CSV");
+
+    // Save all disperser states to a single CSV file
+    save_disperser_group_as_csv(format!("output/{}/all_dispersers.csv", folder_name).as_str(), &all_disperser_states).expect("Failed to save disperser as CSV");
+
+    // Save all roamer states to a single CSV file
+    save_roamers_as_csv(format!("output/{}/all_roamers.csv", folder_name).as_str(), &all_roamer_states).expect("Failed to save roamer as CSV");
+
+    // Save all interaction layer to a single CSV file
+    //save_interaction_layer_as_csv(format!("output/{}/all_interaction_layer.csv", folder_name).as_str(), &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+
+    // Save all carcass states to a
+    save_carcasses_as_csv(format!("output/{}/all_carcasses.csv", folder_name).as_str(), &all_carcass_states).expect("Failed to save carcasses as CSV");
+
+    // Save all high seat states to a
+    save_high_seats_as_csv(format!("output/{}/all_high_seats.csv", folder_name).as_str(), &all_high_seat_states).expect("Failed to save high seats as CSV");
+
+    // Save all hunting statistics to a
+    save_hunting_statistics_as_csv(format!("output/{}/all_hunting_statistics.csv", folder_name).as_str(), &all_hunting_statistics, &all_global_variables).expect("Failed to save hunting statistics as CSV");
+
+    //copy all the files from the specific output folder to the output folder
+    copy_last_sim_to_active(folder_path);
+}
+
+
 
 pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)]) -> io::Result<()> {
     // Create or open the CSV file

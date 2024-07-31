@@ -283,7 +283,7 @@ pub fn shuffle_high_seat_occupancy(model: &mut Model, rng: &mut impl Rng, occupa
     //leave all high seats
     leave_all_high_seats(model);
     remove_all_hunting_zones(&mut model.grid);
-    //occupy 10% of high seats
+    //occupy n% of high seats
     occupy_high_seats(model, rng, occupancy_rate);
     create_hunting_zone(model);
 }

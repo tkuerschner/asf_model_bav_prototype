@@ -2652,7 +2652,8 @@ h10 <- h9 %>%
   scale_fill_manual(values = c("#CD5555", "black", "#1874CD")) +
   theme_minimal()
 
-
+ggplot()+
+geom_line(data = h1, aes(x = iteration, y = month))
 
 ```
 
@@ -2663,6 +2664,7 @@ h10 <- h9 %>%
 
 h2 <- h1 %>%
   group_by(x,y) %>%
+  filter(month == 7) %>%
   summarise(n = n())
 
   ggplot() +

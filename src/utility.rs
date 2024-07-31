@@ -1,6 +1,25 @@
 use crate::*;
 use uuid::Uuid;
 
+
+pub fn progress_time(global_variables: &mut GlobalVariables) {
+    // Increment the day
+    global_variables.day += 1;
+
+    // Check if a month has passed (28 days in a month)
+    if global_variables.day > 28 {
+        global_variables.day = 1;
+        global_variables.month += 1;
+
+        // Check if a year has passed (12 months in a year)
+        if global_variables.month > 12 {
+            global_variables.month = 1;
+            global_variables.year += 1;
+        }
+    }
+}
+
+
 //function check if a disperser group has no members
 
 pub fn check_empty_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleGroup>) {
@@ -65,3 +84,14 @@ pub fn generate_unique_simulation_id() -> String {
     uuid.hyphenated().to_string().replace("-", "")
 }
 
+pub fn copy_last_sim_to_active(folder_path: String) {
+    let output_folder = Path::new("output");
+    let output_files = fs::read_dir(folder_path).unwrap();
+    for file in output_files {
+        let file = file.unwrap();
+        let path = file.path();
+        let file_name = path.file_name().unwrap().to_str().unwrap();
+        let output_file = output_folder.join(file_name);
+        fs::copy(path, output_file).expect("Failed to copy file to output folder");
+    }
+    }

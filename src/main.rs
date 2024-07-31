@@ -913,22 +913,6 @@ pub fn update_counter(globals: &mut GlobalVariables , groups: &mut Vec<Groups>, 
 
 }
  
-pub fn progress_time(global_variables: &mut GlobalVariables) {
-    // Increment the day
-    global_variables.day += 1;
-
-    // Check if a month has passed (28 days in a month)
-    if global_variables.day > 28 {
-        global_variables.day = 1;
-        global_variables.month += 1;
-
-        // Check if a year has passed (12 months in a year)
-        if global_variables.month > 12 {
-            global_variables.month = 1;
-            global_variables.year += 1;
-        }
-    }
-}
 
 // General setup
 
@@ -984,62 +968,14 @@ fn main() {
     //purge old log file if it exists and was not saved
     let _ = std::fs::remove_file("logs/outputLog.log");
     let sim_id = generate_unique_simulation_id();
-    // check the logs folder, if there is 10 ore more files in there zip them and move them to the archive folder
-   // let log_folder = Path::new("logs");
-   // let archive_folder = Path::new("logs/archive");
-   // let log_files = fs::read_dir(log_folder).unwrap();
-   // let mut log_files_count = 0;
-   // let mut has_archived = false;
-   // for _ in log_files {
-   //     log_files_count += 1;
-   // }
-//
-   // if log_files_count >= 10 {
-   //     has_archived = true;
-   //     let now = Local::now();
-   //     let zip_name = format!("log_archive_{}_{}_{}_{}_{}.zip", now.year(), now.month(), now.day(), now.hour(), now.minute());
-   //     let zip_path = archive_folder.join(zip_name);
-   //     let mut zip = ZipWriter::new(fs::File::create(zip_path).unwrap());
-   //     let options = FileOptions::default().compression_method(CompressionMethod::Stored);
-   //     let log_files = fs::read_dir(log_folder).unwrap();
-   //     for file in log_files {
-   //         let file = file.unwrap();
-   //         let path = file.path();
-   //         let file_name = path.file_name().unwrap().to_str().unwrap();
-   //         zip.start_file(file_name, options).unwrap();
-   //         let mut file = fs::File::open(path).unwrap();
-   //         io::copy(&mut file, &mut zip).unwrap();
-   //     }
-   // }
-
-    // pause execution for 30 second to allow the zip file to be created
-    //thread::sleep(Duration::from_secs(30));
 
      // Initialize the logger
-     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     
-    // Define grid dimensions
-    //let grid_size = 25;
-
-    //assign_to_constants(&Input);
-    
-    //let mut input_json = String::new();
-    //io::stdin().read_to_string(&mut input_json).expect("Failed to read from stdin");
-//
-    //// Deserialize JSON into input structure
-    //let input: Input = serde_json::from_str(&input_json).expect("Failed to deserialize JSON");
-//
-    //assign_to_constants(&input);
-
-   
-
     // variable that is set to the system time when the simulation starts
     
-  
     let start_time = Instant::now();
-    //if has_archived {
-    //    log::info!("Archived log files");
-    //}
+
 
     log::info!("--------------------------->>> Starting simulation {} at time: {:?}", sim_id, start_time);
 
@@ -1047,11 +983,11 @@ fn main() {
     let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
-   //let file_path = "input/landscape/test.asc";
-   // let file_path = "input/landscape/wb_50x50_prob_pred_s18.asc";
+  //let file_path = "input/landscape/test.asc";
+  //let file_path = "input/landscape/wb_50x50_prob_pred_s18.asc";
 
     // Setup the landscape and individuals
-
+    log::info!("Setting up the landscape and individuals");
     let (mut grid, mut groups) = setup(file_path, num_groups); 
 
     // adjust attraction points
@@ -1062,11 +998,7 @@ fn main() {
     log::info!("Removing attraction points with quality 0");
     remove_ap_on_cells_with_quality_0(&mut grid);
     
-        
-
-   
-
-
+    log::info!("Initializing individual vectors");
     //create vector for dispersing individuals using the struct in dispersal.rs
     let disperser_vector: &mut Vec<DispersingIndividual> = &mut Vec::new();
     let dispersing_groups_vector: &mut Vec<DispersingFemaleGroup> = &mut Vec::new();
@@ -1080,8 +1012,6 @@ fn main() {
     //high seat vector
     let high_seat_vector: &mut Vec<HighSeat> = &mut Vec::new();
     
-   // place_new_attraction_points(&mut grid, &mut groups, 5);
-
     // Vector to store grid states for all iterations
     let mut all_grid_states: Vec<(usize, Vec<Vec<Cell>>)> = Vec::new();
 
@@ -1123,19 +1053,16 @@ fn main() {
         n_roamers: 0,
         good_year: false,
         current_time: 0,
-        // Add more variables as needed here
     };
 
-    //let interaction_layer_tmp = create_interaction_layer();
-    //let interaction_layer_tmp = 0;
-    
      // Create an instance of InteractionLayer
      let interaction_layer_tmp = InteractionLayer::new();
 
      // Create an instance of Hunting statistics
-    let hunting_statistics = HuntingStatistics::new();
+     let hunting_statistics = HuntingStatistics::new();
 
      // create the model
+     log::info!("Creating the model");
      let mut model = Model {
         grid: grid,
         groups: groups,
@@ -1149,34 +1076,30 @@ fn main() {
         
     };
     
- 
-
     // Allocate survival probabilities
     let survival_prob = SurvivalProbability {
         adult: ADULT_SURVIVAL_DAY,
         piglet: PIGLET_SURVIVAL_DAY,
     };
-    
-   // place_attraction_points(&mut grid, 3,6,1600);
 
     //Debug print:
     println!("Setup complete -> starting iteration");
 
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
-
+        log::info!("Starting iteration: {}", iteration);
         if model.global_variables.day == 1 && model.global_variables.month == 1 {
+            log::info!("good year check: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             good_year_check(&mut model, &mut rng); // check if it is a good year
             roamer_density_dependent_removal(&mut model); //roamers leave the area i.e. are removed when there are more males then females
         }
         
-
+        log::info!("Checking and removing empty groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         check_for_empty_groups(&mut model.groups);
         check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
-        log::info!("Checking for empty groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        free_cells_of_empty_groups(&model.groups, &mut model.grid);
         log::info!("Freeing cells of empty groups and deleting group: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         delete_groups_without_members(&mut model.groups);
+        free_cells_of_empty_groups(&model.groups, &mut model.grid);
         check_for_empty_groups(&mut model.groups);
 
         //test outsource into file TODO
@@ -1197,8 +1120,7 @@ fn main() {
                 log::info!("Placing high seats done");
         }
 
-        if model.global_variables.day == 1 {
-            
+        if model.global_variables.day == 28 {
             if hunting_per_month > 0.0 {
                 log::info!("Shuffling high seat occupancy: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             shuffle_high_seat_occupancy(&mut model, &mut rng, hunting_per_month)
@@ -1206,23 +1128,20 @@ fn main() {
                 log::info!("Removing all high seats and hunting zones: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
                 leave_all_high_seats(&mut model);
                 remove_all_hunting_zones(&mut model.grid);
+                // DEBUG REMOVE ME check if there is any cell with hunting zone true left
+                if model.grid.iter().any(|row| row.iter().any(|cell| cell.hunting_zone)) {
+                    println!("There are still cells with hunting zone true left");
+                }
             }
-
         }
-
       }
 
         //dispersal
         if iteration > 100 {
 
-            //DEBUG FIX me: those 2 functions are breaking the simulation
-        //free_group_cells(&mut groups, &mut grid);
-        //delete_groups_without_members(&mut groups);
-            
-        //println!("Dispersal triggered");
         if model.global_variables.day == 1 {
            // println!("Dispersal triggered: year {}, month {}, day {}", global_variables.year, global_variables.month, global_variables.day);
-            log::info!("Dispersal triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+            log::info!("Dispersal: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             dispersal_assignment(&mut model.groups, disperser_vector, &mut model.dispersers);
             //assign_dispersal_targets_individuals( disperser_vector, &groups);
             log::info!("Assigning dispersal targets to individuals: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
@@ -1248,7 +1167,7 @@ fn main() {
           //  remove_ap_from_freed_cells(&mut grid);
         }
 
-       
+        log::info!("Removing groups without members: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         delete_groups_without_members(&mut model.groups);
 
         // Simulate movement of individuals
@@ -1268,27 +1187,28 @@ fn main() {
         if model.global_variables.day == 5 {
             //debug print REMOVE ME
             //print!("reproduction is triggered");
-            log::info!("Reproduction triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-          reproduction(model.global_variables.month, &mut model.groups, iteration, model.global_variables.good_year);  // Adjust num_new_individuals               //   <-----------------temp OFF
+            log::info!("Reproduction: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+            reproduction(model.global_variables.month, &mut model.groups, iteration, model.global_variables.good_year);  // Adjust num_new_individuals               //   <-----------------temp OFF
         }
 
         if model.global_variables.day == 15 {
 
          //mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
-         log::info!("Mortality triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+         log::info!("Mortality: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
            // combined_mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality);
             execute_mortality(&mut model, &survival_prob)
         }
 
-        log::info!("Carcass handling triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        log::info!("Carcass handling: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         handle_carcasses(&mut model);
 
         //age individuals by one day
-        log::info!("Ageing triggered: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        log::info!("Ageing: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         ageing(&mut model);                                         //   <-----------------temp OFF
         
 
         //Updating various counters such as number of individuals
+        log::info!("Updating counters: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         update_counter(&mut model.global_variables, &mut model.groups, &disperser_vector, &roamer_vector);
 
         // Update group memory
@@ -1371,7 +1291,7 @@ fn main() {
 
         model.interaction_layer.clear_interaction_layer(); // clear the interaction layer for the next iteration
  
-
+        log::info!("Iteration complete: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
     }
     println!("Simulation complete, saving output\n");
 
@@ -1382,171 +1302,38 @@ fn main() {
     println!("Time taken to run simulation: {:?}", time_taken);
     log::info!("Time taken to run simulation: {:?}", time_taken);
 
-   //let time_rn = Local::now();
-   //let folder_name = format!("output/simulation_{}_{}", sim_id, time_rn.format("%Y_%m_%d_%H_%M"));
-   //fs::create_dir_all(&folder_name).expect("Failed to create folder");
+    let time_rn = Local::now();
+    let folder_name = format!("simulation_{}_t_{}", sim_id, time_rn.format("%Y_%m_%d_%H_%M"));
+    let folder_path = format!("output/{}", folder_name);
 
-   let time_rn = Local::now();
-   let folder_name = format!("simulation_{}_t_{}", sim_id, time_rn.format("%Y_%m_%d_%H_%M"));
-   let folder_path = format!("output/{}", folder_name);
-
-   // Create the directory
-   println!("Creating directory: {}", folder_path);
-   match fs::create_dir_all(&folder_path) {
-       Ok(_) => println!("Directory created successfully: {}", folder_path),
-       Err(e) => {
-           println!("Failed to create directory: {}. Error: {:?}", folder_path, e);
-           return;
-       }
-   }
-
+    // Create the directory
+    println!("Creating directory: {}", folder_path);
+    match fs::create_dir_all(&folder_path) {
+        Ok(_) => println!("Directory created successfully: {}", folder_path),
+        Err(e) => {
+            println!("Failed to create directory: {}. Error: {:?}", folder_path, e);
+            return;
+        }
+    }
 
     // Ensure directory creation is flushed to stdout
     std::io::stdout().flush().unwrap();
 
-    // Save all grid states to a single CSV file
-    save_grid_as_csv(format!("output/{}/all_grid_states.csv", folder_name).as_str(), &all_grid_states).expect("Failed to save grid states as CSV");               
+    save_outputs(&folder_name, all_grid_states, all_group_states, all_global_variables, all_disperser_states, all_roamer_states, all_carcass_states, all_high_seat_states, all_hunting_statistics, folder_path);
 
-   // Save all individual states to a single CSV file
-    save_groups_as_csv(format!("output/{}/all_groups.csv", folder_name).as_str(), &all_group_states).expect("Failed to save groups as CSV");
-
-    // Save all global variables to a single CSV file
-    save_global_variables_as_csv(format!("output/{}/all_global_variables.csv", folder_name).as_str(), &all_global_variables).expect("Failed to save global variables as CSV");
-
-    save_disperser_group_as_csv(format!("output/{}/all_dispersers.csv", folder_name).as_str(), &all_disperser_states).expect("Failed to save disperser as CSV");
-
-    save_roamers_as_csv(format!("output/{}/all_roamers.csv", folder_name).as_str(), &all_roamer_states).expect("Failed to save roamer as CSV");
-
-    //save_interaction_layer_as_csv(format!("output/{}/all_interaction_layer.csv", folder_name).as_str(), &all_interaction_layers).expect("Failed to save interaction layer as CSV");
-
-    save_carcasses_as_csv(format!("output/{}/all_carcasses.csv", folder_name).as_str(), &all_carcass_states).expect("Failed to save carcasses as CSV");
-
-    save_high_seats_as_csv(format!("output/{}/all_high_seats.csv", folder_name).as_str(), &all_high_seat_states).expect("Failed to save high seats as CSV");
-
-    save_hunting_statistics_as_csv(format!("output/{}/all_hunting_statistics.csv", folder_name).as_str(), &all_hunting_statistics, &all_global_variables).expect("Failed to save hunting statistics as CSV");
-
-    //save_interaction_layer_as_bson(format!("output/{}/all_interaction_layer.bson", folder_name).as_str(), &all_interaction_layers).expect("Failed to save interaction layer as BSON");
-
-    //copy all the files from the specific output folder to the output folder
-    copy_last_sim_to_active(folder_path);
-
- 
-    // variable that is set to the system time when the save is complete
-    //let save_time = Local::now();
     let save_time = Instant::now();
-    //variable showing the difference between the end time and the save time
     let time_taken_save = save_time.duration_since(end_time);
     println!("Time taken to save output: {:?}", time_taken_save);
     log::info!("Time taken to save output: {:?}", time_taken_save);
     
-
     //rename the log file to include date and time to the minute
     let now = Local::now();
     log::info!("--------------------------->>> Simulation complete at time: {:?}", now);
     let log_file = format!("logs/log_{}_{}.log",sim_id, now.format("%Y_%m_%d_%H_%M"));
     fs::rename("logs/outputLog.log", log_file.clone()).expect("Failed to rename log file");
-       //copy log file to output folder
-    let log_file_output = format!("output/{}/log_{}.log", folder_name, now.format("%Y_%m_%d_%H_%M"));
+    //copy log file to output folder
+    let log_file_output = format!("logs/log_{}_{}.log",sim_id, now.format("%Y_%m_%d_%H_%M"));
     fs::copy(log_file, log_file_output).expect("Failed to copy log file to output folder");
-
-
-
-    // check the logs folder, if there is 10 ore more files in there zip them and move them to the archive folder
-    //let log_folder = Path::new("logs");
-    //let archive_folder = Path::new("logs/archive");
-    //let log_files = fs::read_dir(log_folder).unwrap();
-    //let mut log_files_count = 0;
-    //for _ in log_files {
-    //    log_files_count += 1;
-    //}
-//
-    // if log_files_count >= 10 {
-    //    let now = Local::now();
-    //    let zip_name = format!("log_archive_{}_{}_{}_{}_{}.zip", now.year(), now.month(), now.day(), now.hour(), now.minute());
-    //    let zip_path = archive_folder.join(zip_name);
-    //    let mut zip = ZipWriter::new(fs::File::create(zip_path).unwrap());
-    //    let options = FileOptions::default().compression_method(CompressionMethod::Stored);
-    //    let log_files = fs::read_dir(log_folder).unwrap();
-    //    for file in log_files {
-    //        let file = file.unwrap();
-    //        let path = file.path();
-    //        let file_name = path.file_name().unwrap().to_str().unwrap();
-    //        zip.start_file(file_name, options).unwrap();
-    //        let mut file = fs::File::open(path).unwrap();
-    //        io::copy(&mut file, &mut zip).unwrap();
-    //    }
-    //}
 
 }
 
-fn copy_last_sim_to_active(folder_path: String) {
-    let output_folder = Path::new("output");
-    let output_files = fs::read_dir(folder_path).unwrap();
-    for file in output_files {
-        let file = file.unwrap();
-        let path = file.path();
-        let file_name = path.file_name().unwrap().to_str().unwrap();
-        let output_file = output_folder.join(file_name);
-        fs::copy(path, output_file).expect("Failed to copy file to output folder");
-    }
-    }
-
-
-
-
-
-//save as image
-
-//fn save_grid_as_image(iteration: usize, grid: &mut [Vec<Cell>], individuals: &[Individual]) {
-//    let width = grid.len();
-//    let height = grid[0].len();
-//
-//    // Create an RGB image with white background
-//    let mut image = RgbImage::new(width as u32, height as u32);
-//    for pixel in image.pixels_mut() {
-//        *pixel = Rgb([255, 255, 255]);
-//    }
-//
-//    // Set individual positions on the image and update counters
-//    for individual in individuals {
-//        let x = individual.x as u32;
-//        let y = individual.y as u32;
-//        let color = Rgb([0, 0, 255]); // Blue color for individuals
-//
-//        image.put_pixel(x, y, color);
-//
-//        // Increment counter for the cell
-//        grid[individual.x][individual.y].counter += 1;
-//    }
-//
-//    // Save the image to a file with a name corresponding to the iteration and counter
-//    let filename = format!("grid_image_iter{}_counter{}.png", iteration, grid[0][0].counter);
-//
-//    // Remove existing file if it exists
-//    if fs::metadata(&filename).is_ok() {
-//        fs::remove_file(&filename).expect("Failed to remove existing file");
-//    }
-//
-//    // Save the new image
-//    image.save(&filename).expect("Failed to save image");
-//}
-
-//save as multiple csv
-
-//fn save_grid_as_csv(iteration: usize, grid: &[Vec<Cell>]) -> io::Result<()> {
-//    // Create or open the CSV file
-//    let filename = format!("grid_state_iter{}.csv", iteration);
-//    let mut file = File::create(&filename)?;
-//
-//    // Write the header line
-//    writeln!(file, "x,y,quality,counter")?;
-//
-//    // Write each cell's data
-//    for (x, row) in grid.iter().enumerate() {
-//       for (y, cell) in row.iter().enumerate() {
-//           writeln!(file, "{},{},{},{}", x, y, cell.quality, cell.counter)?;
-//       }
-//   }
-//
-//    println!("Grid state saved to: {}", filename);
-//    Ok(())

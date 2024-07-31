@@ -206,7 +206,7 @@ pub fn roamer_density_dependent_removal(model: &mut Model) {
 
     if n_roaming_individuals > n_adult_female {
         let n_to_remove = n_roaming_individuals - n_adult_female;
-
+        log::info!("Removing {} roamers due to density dependent mortality", n_to_remove);
         for _ in 0..n_to_remove {
             let index = rand::thread_rng().gen_range(0..model.roamers.len());
             model.roamers.remove(index);
