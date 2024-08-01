@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::*;
 
 // Static counter for roamer_id
@@ -172,19 +174,34 @@ pub fn initial_roamer_dispersal_target(roamers: &mut Vec<RoamingIndividual>, gri
  }
 //}
 
-pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, grid: &Vec<Vec<Cell>>, groups: &Vec<Groups>, rng: &mut impl Rng,  i_layer: &mut InteractionLayer, time: usize) {
-    
-    for roamer in roamers.iter_mut().filter(|roamer| roamer.initial_dispersal == true) {
+pub fn initial_roamer_dispersal_movement(model: &mut Model ,  rng: &mut impl Rng, time: usize) {
+
+    let mut vec_ids_hunted_roamers: Vec<u32> = Vec::new(); 
+    for roamer in model.roamers.iter_mut().filter(|roamer| roamer.initial_dispersal == true) {
         let mut ptt = 0;
+        let this_roamer_id = roamer.roamer_id;
+        let mut hunted = false;
         while roamer.daily_distance > 0 && roamer.initial_dispersal == true && ptt < 1000{
             let move_towards_target = rand::thread_rng().gen_bool(0.25);
 
             //log::info!("Dispersing roamer {:?} is moving towards target: {:?}", roamer.roamer_id, move_towards_target);
 
             if move_towards_target {
-                move_towards_target_cell_roamer(roamer, grid, i_layer);
+                move_towards_target_cell_roamer(roamer, &model.grid, &mut model.interaction_layer);
+
+                if hunting_check(&mut model.grid,&mut model.high_seats, rng, roamer.roamer_x, roamer.roamer_y) {
+                    
+                    model.hunting_statistics.add_hunted_individual(roamer.roamer_x, roamer.roamer_y, roamer.sex.clone(), roamer.age, roamer.age_class, roamer.individual_id, Some(roamer.origin_group_id), IndividualType::Roamer, model.global_variables.current_time);
+                    hunted = true;
+                    //prepare this roamer for removal and end movement loop
+                    break;
+
+                }
+
+
+
               //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
-              i_layer.add_entity_and_record_movement(
+              model.interaction_layer.add_entity_and_record_movement(
                 roamer.origin_group_id,
                 "roamer",
                 time,
@@ -202,17 +219,25 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                        // log::info!("Roamer {:?} reached target", roamer.roamer_id);                        
                         roamer.initial_dispersal = false;
                         //set_list_of_target_groups(roamer, groups);
-                        get_3_groups_in_range(roamer, groups);
+                        get_3_groups_in_range(roamer, &model.groups);
                         select_target_group(roamer, rng);
                         roamer.target_group_id = roamer.target_group;
-                        evaluate_and_set_target_cell(roamer, groups);
+                        evaluate_and_set_target_cell(roamer, &model.groups);
                         break;
                     }
                 }
             } else {
-                move_randomly_roamer(roamer, grid);
+                move_randomly_roamer(roamer, &model.grid);
+                if hunting_check(&mut model.grid,&mut model.high_seats, rng, roamer.roamer_x, roamer.roamer_y) {
+                    
+                    model.hunting_statistics.add_hunted_individual(roamer.roamer_x, roamer.roamer_y, roamer.sex.clone(), roamer.age, roamer.age_class, roamer.individual_id, Some(roamer.origin_group_id), IndividualType::Roamer, model.global_variables.current_time);
+                    hunted = true;
+                    //prepare this roamer for removal and end movement loop
+                    break;
+
+                }
               //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
-              i_layer.add_entity_and_record_movement(
+              model.interaction_layer.add_entity_and_record_movement(
                 roamer.origin_group_id,
                 "roamer",
                 time,
@@ -230,16 +255,23 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
                        // log::info!("Roamer {:?} reached target", roamer.roamer_id);
                         roamer.initial_dispersal = false;
                          //set_list_of_target_groups(roamer, groups);
-                         get_3_groups_in_range(roamer, groups);
+                         get_3_groups_in_range(roamer, &model.groups);
                         select_target_group(roamer, rng);
                         roamer.target_group_id = roamer.target_group;
-                        evaluate_and_set_target_cell(roamer, groups);
+                        evaluate_and_set_target_cell(roamer, &model.groups);
                         break;
                     }
                 }
             }
             ptt += 1;
         }
+
+        if hunted {
+            vec_ids_hunted_roamers.push(this_roamer_id as u32);
+        }
+
+
+
         if ptt == 1000 {
             log::info!("Roamer {:?} movement loop timeout", roamer.roamer_id);
         }
@@ -247,6 +279,12 @@ pub fn initial_roamer_dispersal_movement(roamers: &mut Vec<RoamingIndividual>, g
         if roamer.initial_dispersal == true {
             roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
         }
+    }
+    // remove hunted roamers
+    // take all the roamer id from the vec and remove them from the roamers vector
+    for id in vec_ids_hunted_roamers.iter() {
+        let index = model.roamers.iter().position(|r| r.roamer_id == *id as usize).unwrap();
+        model.roamers.remove(index);
     }
 }
 

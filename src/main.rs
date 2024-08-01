@@ -1160,7 +1160,7 @@ fn main() {
         log::info!("Initial roamer target assignment: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         initial_roamer_dispersal_target(&mut model.roamers,  &mut model.grid, &mut rng);
         log::info!("Initial roamer movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        initial_roamer_dispersal_movement(&mut model.roamers, &mut model.grid, &mut model.groups, &mut rng, &mut model.interaction_layer, iteration);
+        initial_roamer_dispersal_movement(&mut model, &mut rng,  iteration);
         // Free territory of groups with no members
         if model.global_variables.day == 1 {
           //  free_group_cells(&mut groups, &mut grid);
