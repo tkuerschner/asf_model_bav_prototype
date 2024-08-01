@@ -110,6 +110,9 @@ impl HuntingStatistics {
         self.hunted_individuals.push(hunted_individual);
     }
 
+    pub fn clear_hunting_statistics(&mut self) {
+        self.hunted_individuals.clear();
+    }
 }
 
 

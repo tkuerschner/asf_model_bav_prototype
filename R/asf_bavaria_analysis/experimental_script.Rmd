@@ -2653,8 +2653,11 @@ h10 <- h9 %>%
   theme_minimal()
 
 ggplot()+
-geom_line(data = h1, aes(x = iteration, y = month))
+geom_line(data = h1, aes(x = iteration, y = (month)))
 
+h10 %>% filter(month == 7)
+head(h1 %>% filter(month == 7))
+(h1 %>% filter(id == 669))
 ```
 
 ```{r}

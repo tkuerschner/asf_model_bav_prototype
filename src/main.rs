@@ -1249,6 +1249,9 @@ fn main() {
             // Save the hunting statistics for the current iteration
             all_hunting_statistics.push((iteration, model.hunting_statistics.clone()));
 
+            // clear the hunting statistics for the next iteration
+            model.hunting_statistics.clear_hunting_statistics();
+
            // purge_interaction_layer( &mut model.interaction_layer);
 
         // Stop the sim when all individuals are dead
@@ -1319,7 +1322,7 @@ fn main() {
     // Ensure directory creation is flushed to stdout
     std::io::stdout().flush().unwrap();
 
-    save_outputs(&folder_name, all_grid_states, all_group_states, all_global_variables, all_disperser_states, all_roamer_states, all_carcass_states, all_high_seat_states, all_hunting_statistics, folder_path);
+    save_outputs(&folder_name, all_grid_states, all_group_states, all_global_variables, all_disperser_states, all_roamer_states, all_carcass_states, all_high_seat_states, all_hunting_statistics, folder_path.clone());
 
     let save_time = Instant::now();
     let time_taken_save = save_time.duration_since(end_time);
@@ -1332,8 +1335,10 @@ fn main() {
     let log_file = format!("logs/log_{}_{}.log",sim_id, now.format("%Y_%m_%d_%H_%M"));
     fs::rename("logs/outputLog.log", log_file.clone()).expect("Failed to rename log file");
     //copy log file to output folder
-    let log_file_output = format!("logs/log_{}_{}.log",sim_id, now.format("%Y_%m_%d_%H_%M"));
-    fs::copy(log_file, log_file_output).expect("Failed to copy log file to output folder");
+    let log_file_output = format!("{}/log_{}_{}.log", folder_path, sim_id, now.format("%Y_%m_%d_%H_%M"));
+    fs::copy(log_file.clone(), log_file_output).expect("Failed to copy log file to output folder");
+    //remove the original log file
+    fs::remove_file(log_file).expect("Failed to remove original log file");
 
 }
 
