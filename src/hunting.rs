@@ -183,9 +183,6 @@ pub fn place_high_seats(model: &mut Model) {
 }
 
 
-
-
-
 pub fn create_hunting_zone(model: &mut Model) {
     for hs in &model.high_seats {
         if hs.is_occupied {

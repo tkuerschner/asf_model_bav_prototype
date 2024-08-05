@@ -36,6 +36,8 @@ pub struct RoamingIndividual {
     pub reached_target: bool,
     pub stay_time: usize,
     pub staying_with_target_group: bool,
+    pub infection_stage: InfectionStage,
+    pub time_of_infection: Option<usize>,
 }
 
 impl RoamingIndividual {
@@ -87,6 +89,8 @@ pub fn roamer_assignemnt(roamers: &mut Vec<RoamingIndividual>, groups: &mut Vec<
                 reached_target: false,
                 stay_time: 5 + rand::thread_rng().gen_range(0..10), // Random stay time between 5 and 15 days
                 staying_with_target_group: false,
+                infection_stage: InfectionStage::NotInfected,
+                time_of_infection: None,
             };
            
               roamers.push(roamer);
@@ -212,6 +216,7 @@ pub fn initial_roamer_dispersal_movement(model: &mut Model ,  rng: &mut impl Rng
                 roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
                 roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
                 roamer.roamer_is_infected(),
+                roamer.infection_stage.clone(),
             );
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
@@ -248,6 +253,7 @@ pub fn initial_roamer_dispersal_movement(model: &mut Model ,  rng: &mut impl Rng
                 roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
                 roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
                 roamer.roamer_is_infected(),
+                roamer.infection_stage.clone(),
             );
                 if let Some((target_x, target_y)) = roamer.target_cell {
                     if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
@@ -430,7 +436,9 @@ fn move_randomly_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>) {
     }
 }
 
-pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_layer: &mut InteractionLayer, time: usize) {
+pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &mut Vec<Vec<Cell>>, i_layer: &mut InteractionLayer, time: usize, rng: &mut impl Rng, high_seats: &mut Vec<HighSeat>, hunting_statistics: &mut HuntingStatistics) -> bool {
+    let mut to_be_removed = false;
+
     while roamer.daily_distance > 0 && !roamer.staying_with_target_group && !roamer.initial_dispersal && !roamer.reached_target {
         let move_towards_target = rand::thread_rng().gen_bool(0.25);
         
@@ -439,6 +447,15 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
         } else {
             move_randomly_roamer(roamer, grid);
         }
+
+        if hunting_check(grid, high_seats, rng, roamer.roamer_x, roamer.roamer_y) {
+           
+        hunting_statistics.add_hunted_individual(roamer.roamer_x, roamer.roamer_y, roamer.sex.clone(), roamer.age, roamer.age_class, roamer.individual_id, Some(roamer.origin_group_id) , IndividualType::GroupMember, time);
+
+            to_be_removed = true;
+            break;
+
+           }
 
         i_layer.add_entity_and_record_movement(
             roamer.origin_group_id,
@@ -451,31 +468,8 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
             roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
             roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
             roamer.roamer_is_infected(),
+            roamer.infection_stage.clone(),
         );
-
-
-
-
-        //experimental
-
-       //let nearby_high_seats = i_layer.query_high_seats_in_radius(roamer.roamer_x as f64, roamer.roamer_y as f64, 3.0);
-
-      // if !nearby_high_seats.is_empty() {
-      //    //println!(
-      //    //    "Roamer ID: {} is near the following high seats:",
-      //    //    roamer.individual_id
-      //    //);
-      //     for (hs_id, distance) in nearby_high_seats {
-      //        // println!("  High Seat ID: {}, Distance: {}", hs_id, distance);
-      //     }
-      // } else {
-      //    // println!("Roamer ID: {} is not near any high seats.", roamer.individual_id);
-      // }
-
-     //experimental
-
-
-
 
         if let Some((target_x, target_y)) = roamer.target_cell {
             if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
@@ -487,9 +481,15 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_laye
         }
     }
 
+    if to_be_removed {
+       return true
+    }
+
     if !roamer.reached_target {
         roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
     }
+
+    return false
 }
 
 
@@ -646,7 +646,7 @@ fn stay_with_target_group(roamer: &mut RoamingIndividual) {
     }
 }
 
-fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<Cell>>, i_layer: &mut InteractionLayer, time: usize){
+fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &mut Vec<Vec<Cell>>, i_layer: &mut InteractionLayer, time: usize, rng: &mut impl Rng, high_seats: &mut Vec<HighSeat>, hunting_statistics: &mut HuntingStatistics) -> bool {
     //let target_group: &Groups = groups.iter().find(|g| g.group_id == roamer.target_group.unwrap()).unwrap();
     //let tx = target_group.x;
     //let ty = target_group.y;
@@ -657,13 +657,24 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
         roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
     }
 
+
     while roamer.daily_distance > 0 && roamer.staying_with_target_group == true && roamer.reached_target == false{
         //log::info!("Roamer {:?} is moving with group: {:?}", roamer.roamer_id, true);
         let move_towards_target = rand::thread_rng().gen_bool(0.25);
-
+        let mut to_be_removed = false;    
         if move_towards_target {
             move_towards_target_cell_roamer(roamer, grid, i_layer);
           //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
+
+          if hunting_check(grid, high_seats, rng, roamer.roamer_x, roamer.roamer_y) {
+           
+            hunting_statistics.add_hunted_individual(roamer.roamer_x, roamer.roamer_y, roamer.sex.clone(), roamer.age, roamer.age_class, roamer.individual_id, Some(roamer.origin_group_id) , IndividualType::GroupMember, time);
+    
+                to_be_removed = true;
+                break;
+    
+               }
+
           i_layer.add_entity_and_record_movement(
             roamer.origin_group_id,
             "roamer",
@@ -675,6 +686,7 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
             roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
             roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
             roamer.roamer_is_infected(),
+            roamer.infection_stage.clone(),
         );
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
@@ -683,8 +695,22 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
                     break;
                 }
             }
+
+            if to_be_removed {
+                return true
+             }
+             
         } else {
             move_randomly_roamer(roamer, grid);
+
+            if hunting_check(grid, high_seats, rng, roamer.roamer_x, roamer.roamer_y) {
+           
+                hunting_statistics.add_hunted_individual(roamer.roamer_x, roamer.roamer_y, roamer.sex.clone(), roamer.age, roamer.age_class, roamer.individual_id, Some(roamer.origin_group_id) , IndividualType::GroupMember, time);
+        
+                    to_be_removed = true;
+                    break;
+        
+                   }
           //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
           i_layer.add_entity_and_record_movement(
             roamer.origin_group_id,
@@ -697,6 +723,7 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
             roamer.roamer_x as f64, // Convert coordinates to f64 if necessary
             roamer.roamer_y as f64,  // Convert coordinates to f64 if necessary
             roamer.roamer_is_infected(),
+            roamer.infection_stage.clone(),
         );
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
@@ -706,21 +733,31 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &Vec<Vec<
                 }
             }
 
+            if to_be_removed {
+                return true
+             }
+
         }
+        
     }
     //log::info!("Roamer {:?} finished moving with group for today", roamer.roamer_id);
     stay_with_target_group(roamer);
     roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+    return false
   
 }
 
-pub fn execute_roaming(roamers: &mut Vec<RoamingIndividual>, groups: &Vec<Groups>, grid: &Vec<Vec<Cell>>, rng: &mut impl Rng, i_layer: &mut InteractionLayer, time: usize) {
+pub fn execute_roaming(roamers: &mut Vec<RoamingIndividual>, groups: &Vec<Groups>, grid: &mut Vec<Vec<Cell>>, rng: &mut impl Rng, i_layer: &mut InteractionLayer, time: usize, hs_vec: &mut Vec<HighSeat>, hunting_statistics: &mut HuntingStatistics) {
+    let mut vec_ids_hunted_roamers: Vec<u32> = Vec::new(); 
     for roamer in roamers.iter_mut().filter(|roamer| roamer.initial_dispersal == false) {
         roaming_check(roamer, groups, rng);
         let mut just_moved_with_group = false;
         
         if roamer.staying_with_target_group == true {
-            move_roamer_with_target_group(roamer, grid, i_layer, time);
+            if move_roamer_with_target_group(roamer, grid, i_layer, time, rng, hs_vec, hunting_statistics){
+                //add this roamers id to a list to be removed later
+                vec_ids_hunted_roamers.push(roamer.roamer_id as u32);
+            }
             if roamer.stay_time <= 0 {
                 roamer.staying_with_target_group = false;
                 roamer.reached_target = false;
@@ -731,9 +768,20 @@ pub fn execute_roaming(roamers: &mut Vec<RoamingIndividual>, groups: &Vec<Groups
         }
         
         if just_moved_with_group == false {
-            move_roamer(roamer, grid, i_layer, time);
+           if move_roamer(roamer, grid, i_layer, time, rng, hs_vec, hunting_statistics){
+            //add this roamers id to a list to be removed later
+            vec_ids_hunted_roamers.push(roamer.roamer_id as u32);
+
+            }
+           }
+        }
+
+        // remove hunted roamers
+        // take all the roamer id from the vec and remove them from the roamers vector
+        for id in vec_ids_hunted_roamers.iter() {
+            let index = roamers.iter().position(|r| r.roamer_id == *id as usize).unwrap();
+            roamers.remove(index);
         }
         
-   
     }     
-}
+
