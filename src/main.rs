@@ -1154,7 +1154,7 @@ fn main() {
             check_empty_disperser_group(dispersing_groups_vector);
             log::info!("Moving dispersers: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
-            move_female_disperser_group(&mut model.dispersers, &mut model.grid, &mut model.groups, &mut rng, model.global_variables.month, &mut model.interaction_layer, iteration);
+            move_female_disperser_group(&mut model, &mut rng, iteration);
 
         }
         log::info!("Initial roamer target assignment: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);

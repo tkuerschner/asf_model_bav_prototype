@@ -56,6 +56,20 @@ impl DispersingFemaleGroup {
         infected
     }
 
+pub fn get_id_random_group_member(&self) -> usize {
+    if let Some(index) = self.dispersing_individuals.choose(&mut rand::thread_rng()) {
+        index.individual_id
+    } else {
+        0
+    }
+}
+
+pub fn remove_member_by_id(&mut self, id: usize) {
+    if let Some(index) = self.dispersing_individuals.iter().position(|x| x.individual_id == id) {
+        self.dispersing_individuals.remove(index);
+    }
+}
+
 }
 
 pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &mut Vec<DispersingIndividual>, dispersing_groups: &mut Vec<DispersingFemaleGroup>) {
@@ -228,10 +242,10 @@ fn merge_dispersing_group_back_to_origin(dispersing_group: &mut DispersingFemale
 
 }
 
-pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleGroup>, grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng, month: u32, i_layer: &mut InteractionLayer, time: usize) {
+pub fn move_female_disperser_group(model: &mut Model, rng: &mut impl Rng, time: usize) {
         let mut groups_to_remove = Vec::new(); // Vector to store indices of groups to remove
        // println!("Number of dispersing groups start: {}", dispersing_groups.len());
-        for (index, disperser_group) in dispersing_groups.iter_mut().enumerate() {
+        for (index, disperser_group) in model.dispersers.iter_mut().enumerate() {
             let mut reached_target = false;
 
             if !disperser_group.dispersing_individuals.is_empty() {
@@ -241,9 +255,27 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
                 let move_towards_target = rand::thread_rng().gen_bool(0.25);
 
                 if move_towards_target {
-                    move_towards_target_cell_group(disperser_group, grid);
+                    move_towards_target_cell_group(disperser_group, &model.grid);
+
+                    if hunting_check(&mut model.grid, &mut model.high_seats, rng, disperser_group.disp_grp_x, disperser_group.disp_grp_y) {
+                     
+
+                        let hunted_id = disperser_group.get_id_random_group_member();
+                        let hi = disperser_group.dispersing_individuals.iter_mut().find(|individual| individual.individual_id == hunted_id).unwrap();
+
+                        model.hunting_statistics.add_hunted_individual(disperser_group.disp_grp_x, disperser_group.disp_grp_y, hi.sex.clone(), hi.age, hi.age_class, hi.individual_id, Some(hi.origin_group_id), IndividualType::Disperser, model.global_variables.current_time);
+
+                        disperser_group.remove_member_by_id(hunted_id);
+
+                        if disperser_group.dispersing_individuals.is_empty() {
+                            break;
+                        }
+                    }
+
+
+
                     //record_movement_in_interaction_layer(i_layer, disperser_group.disp_grp_x, disperser_group.disp_grp_y, time, disperser_group.dispersing_individuals.last().unwrap().origin_group_id,  "disperser", disperser_group.dispersing_individuals.last().unwrap().disperser_id);
-                    i_layer.add_entity_and_record_movement(
+                    model.interaction_layer.add_entity_and_record_movement(
                         disperser_group.dispersing_individuals.last().unwrap().origin_group_id,
                         "disperser",
                         time,
@@ -262,10 +294,25 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
                         break;
                     }
                 } else {
-                    move_randomly_group(disperser_group, grid);
+                    move_randomly_group(disperser_group, &model.grid);
+
+                    if hunting_check(&mut model.grid, &mut model.high_seats, rng, disperser_group.disp_grp_x, disperser_group.disp_grp_y) {
+                     
+
+                        let hunted_id = disperser_group.get_id_random_group_member();
+                        let hi = disperser_group.dispersing_individuals.iter_mut().find(|individual| individual.individual_id == hunted_id).unwrap();
+
+                        model.hunting_statistics.add_hunted_individual(disperser_group.disp_grp_x, disperser_group.disp_grp_y, hi.sex.clone(), hi.age, hi.age_class, hi.individual_id, Some(hi.origin_group_id), IndividualType::Disperser, model.global_variables.current_time);
+
+                        disperser_group.remove_member_by_id(hunted_id);
+
+                        if disperser_group.dispersing_individuals.is_empty() {
+                            break;
+                        }
+                    }
 
                     //record_movement_in_interaction_layer(i_layer, disperser_group.disp_grp_x, disperser_group.disp_grp_y, time, disperser_group.dispersing_individuals.last().unwrap().origin_group_id,  "disperser", disperser_group.dispersing_individuals.last().unwrap().disperser_id);
-                    i_layer.add_entity_and_record_movement(
+                    model.interaction_layer.add_entity_and_record_movement(
                         disperser_group.dispersing_individuals.last().unwrap().origin_group_id,
                         "disperser",
                         time,
@@ -302,7 +349,7 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
 
             if reached_target {
                 //println!("disperser reached target");
-                handle_reached_target(disperser_group, grid, groups, rng, &mut groups_to_remove, index, month );
+                handle_reached_target(disperser_group, &mut model.grid, &mut model.groups, rng, &mut groups_to_remove, index, model.global_variables.month );
             }
 
             }
@@ -319,7 +366,7 @@ pub fn move_female_disperser_group(dispersing_groups: &mut Vec<DispersingFemaleG
      //}
      
     // only keep the groups not marked for removal
-    dispersing_groups.retain(|dispersing_group| !dispersing_group.marked_for_removal);
+    model.dispersers.retain(|dispersing_group| !dispersing_group.marked_for_removal);
     
     
 }

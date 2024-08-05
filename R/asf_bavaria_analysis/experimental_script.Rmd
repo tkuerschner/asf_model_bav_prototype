@@ -2641,23 +2641,27 @@ h1 <- hunting_stats
 #cut the last 5 iterations from the data
 h9 <- h1 %>% filter(iteration < max(h1$iteration) - 5)
 h10 <- h9 %>%
-  group_by( age_class, iteration, month, year) %>%
+  group_by( age_class, iteration, month, year, type_individual) %>%
   summarise(n = n()) %>%
-  group_by(month, year, age_class) %>%
+  group_by(month, year, age_class, type_individual) %>%
   summarise(mean_hunted = mean(n))
 
   ggplot() +
   geom_bar(data = h10, aes(x = as.factor(month), y = mean_hunted, fill = age_class), stat = "identity") +
-  labs(title = "Number of hunted animals per month", x = "Month", y = "Number of hunted animals") +
+  labs(title = "Mean Number of hunted animals per month", x = "Month", y = "Mean Number of hunted animals") +
   scale_fill_manual(values = c("#CD5555", "black", "#1874CD")) +
+  facet_wrap(~type_individual) +
   theme_minimal()
 
 ggplot()+
 geom_line(data = h1, aes(x = iteration, y = (month)))
 
-h10 %>% filter(month == 7)
-head(h1 %>% filter(month == 7))
-(h1 %>% filter(id == 669))
+
+
+
+
+
+
 ```
 
 ```{r}
