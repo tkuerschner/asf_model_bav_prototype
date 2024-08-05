@@ -29,8 +29,10 @@ pub struct DispersingIndividual {
     pub time_of_reproduction: usize,
     pub origin_group_id: usize,
     pub disperser_id: usize,
-    pub target_cell:Option<(usize,usize)>,
+    pub target_cell: Option<(usize,usize)>,
     pub daily_distance: usize,
+    pub infection_stage: InfectionStage,
+    pub time_of_infection: Option<usize>,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct DispersingFemaleGroup {
@@ -48,7 +50,7 @@ impl DispersingFemaleGroup {
     pub fn infected_member_present(&self)->bool{
         let mut infected = false;
         for member in &self.dispersing_individuals {
-            if member.health_status == HealthStatus::Infected {
+            if member.health_status == HealthStatus::Infected && member.infection_stage == InfectionStage::Symptomatic {
                 infected = true;
                 break;
             }
@@ -115,6 +117,8 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
                 disperser_id: generate_disperser_id(),
                 target_cell: None,
                 daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
+                infection_stage: InfectionStage::NotInfected,
+                time_of_infection: None,
             };
             // Add the dispersing individual to the dispersing_by_group map
             let dispersing_group = dispersing_by_group.entry(group.group_id as u64).or_insert_with(Vec::new);
@@ -157,6 +161,8 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
                 origin_group_id: dispersing_individual.origin_group_id,
                 has_dispersed: false, // Mark as dispersed
                 current_group_id: group_id as usize, // Update current group ID
+                time_of_infection: None,
+                infection_stage: InfectionStage::NotInfected,
             };
             group.group_members.push(group_member);
            // println!("Dispersing individual merged back into original group");
@@ -231,6 +237,8 @@ fn merge_dispersing_group_back_to_origin(dispersing_group: &mut DispersingFemale
                         origin_group_id: disperser.origin_group_id,
                         has_dispersed: true,
                         current_group_id: origin_group_id,
+                        time_of_infection: None,
+                        infection_stage: InfectionStage::NotInfected,
                 };
                 origin_group.group_members.push(group_member);
 
@@ -272,7 +280,11 @@ pub fn move_female_disperser_group(model: &mut Model, rng: &mut impl Rng, time: 
                         }
                     }
 
-
+                    let inf_here = disperser_group.infected_member_present();
+                    let mut stage = InfectionStage::NotInfected;
+                    if inf_here {
+                       stage = InfectionStage::Symptomatic;
+                    }
 
                     //record_movement_in_interaction_layer(i_layer, disperser_group.disp_grp_x, disperser_group.disp_grp_y, time, disperser_group.dispersing_individuals.last().unwrap().origin_group_id,  "disperser", disperser_group.dispersing_individuals.last().unwrap().disperser_id);
                     model.interaction_layer.add_entity_and_record_movement(
@@ -285,7 +297,9 @@ pub fn move_female_disperser_group(model: &mut Model, rng: &mut impl Rng, time: 
                         1.0, // Assuming interaction_strength is default
                         disperser_group.disp_grp_x as f64, // Convert coordinates to f64 if necessary
                         disperser_group.disp_grp_y as f64,  // Convert coordinates to f64 if necessary
-                        disperser_group.infected_member_present(),
+                        inf_here,
+                        stage,
+
                     );
 
                     if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
@@ -311,6 +325,12 @@ pub fn move_female_disperser_group(model: &mut Model, rng: &mut impl Rng, time: 
                         }
                     }
 
+                    let inf_here = disperser_group.infected_member_present();
+                    let mut stage = InfectionStage::NotInfected;
+                    if inf_here {
+                       stage = InfectionStage::Symptomatic;
+                    }
+
                     //record_movement_in_interaction_layer(i_layer, disperser_group.disp_grp_x, disperser_group.disp_grp_y, time, disperser_group.dispersing_individuals.last().unwrap().origin_group_id,  "disperser", disperser_group.dispersing_individuals.last().unwrap().disperser_id);
                     model.interaction_layer.add_entity_and_record_movement(
                         disperser_group.dispersing_individuals.last().unwrap().origin_group_id,
@@ -322,7 +342,8 @@ pub fn move_female_disperser_group(model: &mut Model, rng: &mut impl Rng, time: 
                         1.0, // Assuming interaction_strength is default
                         disperser_group.disp_grp_x as f64, // Convert coordinates to f64 if necessary
                         disperser_group.disp_grp_y as f64,  // Convert coordinates to f64 if necessary
-                        disperser_group.infected_member_present(),
+                        inf_here,
+                        stage,
                     );
                     if disperser_group.disp_grp_x == disperser_group.target_cell.unwrap().0 && disperser_group.disp_grp_y == disperser_group.target_cell.unwrap().1 {
                         reached_target = true;
@@ -412,6 +433,8 @@ fn handle_reached_target(
                 origin_group_id: disperser.origin_group_id,
                 has_dispersed: true,
                 current_group_id: new_group_id,
+                time_of_infection: None,
+                infection_stage: InfectionStage::NotInfected,
             };
             //filter for group with group_id == new_group_id and push new_group_member to group_members
 
