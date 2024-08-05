@@ -4,6 +4,7 @@ use crate::*;
 //use bson::{to_bson, Bson, doc,Document};
 use std::fs::File;
 use std::io::Write;
+use std::string;
 
 pub fn save_outputs(
     folder_name: &String,
@@ -55,7 +56,7 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,individual_id,group_id,x,y,sex,age,age_class,known_cells,target_cell,core_cell,movement_type,remaining_stay_time,origin_group,ap_list")?;//,group_member_ids")?;
+    writeln!(file, "iteration,individual_id,group_id,x,y,sex,age,age_class,known_cells,target_cell,core_cell,movement_type,remaining_stay_time,origin_group,ap_list,infection_stage")?;//,group_member_ids")?;
 
     // Write each individual's data for each iteration
     for (iteration, groups) in group_states {
@@ -112,13 +113,14 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
 
                 let age_class_str: String = format!("{}", group_members.age_class);
                 let sex_str: String = format!("{}", group_members.sex);
+                let stage_string: String = format!("{}", group_members.infection_stage);
                 //let target_cell_str: String = format!("[{:?}]", group.target_cell);
                 //let core_cell_str: String = format!("[{:?}]", group.core_cell);
                 //let remaining_stay_stime_str: String = format!("{}", group.remaining_stay_time);
                 
                 writeln!(
                     file,
-                    "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                    "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
                     iteration,
                     group_members.individual_id,
                     group.group_id,
@@ -134,6 +136,7 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
                     group.remaining_stay_time,
                     group_members.origin_group_id,
                     ap_list_str,
+                    stage_string,
                     //remaining_stay_stime_str,
                     //group_member_ids_str,
                     //last_three_cells_str
@@ -205,15 +208,18 @@ pub fn save_disperser_group_as_csv(filename: &str, disperser_states: &[(usize, V
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,individual_id,disperser_id,age,age_class,sex,health_status,origin_group_id,disperser_group_x,disperser_group_y,disperser_group_id")?;
+    writeln!(file, "iteration,individual_id,disperser_id,age,age_class,sex,health_status,origin_group_id,disperser_group_x,disperser_group_y,disperser_group_id,infection_stage")?;
 
     // Write each disperser's data for each iteration
     for (iteration, disperser_groups) in disperser_states {
         for disperser_group in disperser_groups {
             for disperser_group_member in disperser_group.dispersing_individuals.iter() {
+
+                let string_infection_stage: String = format!("{}", disperser_group_member.infection_stage);
+
                 writeln!(
                     file,
-                    "{},{},{},{},{},{},{},{},{},{},{}",
+                    "{},{},{},{},{},{},{},{},{},{},{},{}",
                     iteration,
                     disperser_group_member.individual_id,
                     disperser_group_member.disperser_id,
@@ -224,7 +230,8 @@ pub fn save_disperser_group_as_csv(filename: &str, disperser_states: &[(usize, V
                     disperser_group_member.origin_group_id,
                     disperser_group.disp_grp_x,
                     disperser_group.disp_grp_y,
-                    disperser_group.disp_grp_id                    
+                    disperser_group.disp_grp_id,
+                    string_infection_stage,                    
           
             )?;
         }
@@ -240,7 +247,7 @@ pub fn save_roamers_as_csv(filename: &str, roamer_states: &[(usize, Vec<RoamingI
     // Create or open the CSV file
     let mut file = File::create(filename)?;
 
-    writeln!(file, "iteration,roamer_id,individual_id,age,age_class,sex,health_status,origin_group_id,roamer_x,roamer_y,known_groups,target_group,daily_distance,target_group_id,reached_target,stay_time,staying_with_target_group,target_cell,initial_dispersal")?;
+    writeln!(file, "iteration,roamer_id,individual_id,age,age_class,sex,health_status,origin_group_id,roamer_x,roamer_y,known_groups,target_group,daily_distance,target_group_id,reached_target,stay_time,staying_with_target_group,target_cell,initial_dispersal,infection_stage")?;
 
     // Write each roamer's data for each iteration
     for (iteration, roamers) in roamer_states {
@@ -259,9 +266,11 @@ pub fn save_roamers_as_csv(filename: &str, roamer_states: &[(usize, Vec<RoamingI
                 .collect::<Vec<String>>()
                 .join(";");
 
+            let stage_string: String = format!("{}", roamer.infection_stage);
+
             writeln!(
                 file,
-                "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
                 iteration,
                 roamer.roamer_id,
                 roamer.individual_id,
@@ -280,7 +289,8 @@ pub fn save_roamers_as_csv(filename: &str, roamer_states: &[(usize, Vec<RoamingI
                 roamer.stay_time,
                 roamer.staying_with_target_group,
                 target_cell_string,
-                roamer.initial_dispersal
+                roamer.initial_dispersal,
+                stage_string,
                 
             )?;
         }
