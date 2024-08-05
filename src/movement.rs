@@ -48,6 +48,14 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                 //move_to_random_adjacent_cells(grid.len(), individual, rng);
                 move_to_random_adjacent_cells_2(&model.grid, group, rng);
                 //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
+
+                let inf_here = group.infected_member_present();
+                let mut stage = InfectionStage::NotInfected;
+                if inf_here {
+                   stage = InfectionStage::Symptomatic;
+                }
+
+
                 model.interaction_layer.add_entity_and_record_movement(
                     group.group_id, 
                     "group", 
@@ -58,9 +66,8 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     1.0, 
                     group.x as f64, 
                     group.y as f64,
-                    group.infected_member_present(),
-
-
+                    inf_here,
+                    stage,
                 );
                 
                 if hunting_check(&mut model.grid, &mut model.high_seats, rng, group.x, group.y) {
@@ -81,6 +88,8 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                          break;
                     }
 
+                    group_carcass_contact_handling(group, rng, &model.carcasses, model.global_variables.current_time);
+
 
                 group.daily_movement_distance -= 1;
             } else {
@@ -95,6 +104,13 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     
                   move_one_step_towards_target_cell_with_random(group, rng, &model.grid);
 
+                  let inf_here = group.infected_member_present();
+                  let mut stage = InfectionStage::NotInfected;
+                  if inf_here {
+                     stage = InfectionStage::Symptomatic;
+                  }
+  
+
                   model.interaction_layer.add_entity_and_record_movement(
                     group.group_id, 
                     "group", 
@@ -105,7 +121,8 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     1.0, 
                     group.x as f64, 
                     group.y as f64,
-                    group.infected_member_present(),
+                    inf_here,
+                    stage,
                 );
 
                 if hunting_check(&mut model.grid, &mut model.high_seats, rng, group.x, group.y) {
@@ -176,6 +193,12 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     if ((group.x as isize) - (group.target_cell.unwrap().0 as isize)).abs() <= 3
                     && ((group.y as isize) - (group.target_cell.unwrap().1 as isize)).abs() <= 3
                     {
+                        let inf_here = group.infected_member_present();
+                        let mut stage = InfectionStage::NotInfected;
+                        if inf_here {
+                           stage = InfectionStage::Symptomatic;
+                        }
+
                         move_towards_highest_quality(&model.grid, group, rng);
                         model.interaction_layer.add_entity_and_record_movement(
                             group.group_id, 
@@ -188,7 +211,8 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                             1.0, 
                             group.x as f64, 
                             group.y as f64,
-                            group.infected_member_present(),
+                            inf_here,
+                            stage,
                         );
 
                         if hunting_check(&mut model.grid, &mut model.high_seats, rng, group.x, group.y) {
@@ -213,6 +237,12 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     }else {
                         move_one_step_towards_target_cell_with_random(group,rng,&model.grid);
 
+                        let inf_here = group.infected_member_present();
+                        let mut stage = InfectionStage::NotInfected;
+                        if inf_here {
+                           stage = InfectionStage::Symptomatic;
+                        }
+
                         model.interaction_layer.add_entity_and_record_movement(
                             group.group_id, 
                             "group", 
@@ -223,7 +253,8 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                             1.0, 
                             group.x as f64, 
                             group.y as f64,
-                            group.infected_member_present(),
+                            inf_here,
+                            stage,
                         );
 
                         if hunting_check(&mut model.grid, &mut model.high_seats, rng, group.x, group.y) {
