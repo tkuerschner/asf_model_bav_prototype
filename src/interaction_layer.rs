@@ -16,10 +16,11 @@ pub struct Entity {
     pub x: f64,  // Float x coordinate
     pub y: f64,  // Float y coordinate
     pub infected: bool,
+    pub infection_stage: InfectionStage,
 }
 
 impl Entity {
-    pub fn new(group_id: usize, individual_type: &str, time: usize, time_left: usize, duration: usize, individual_id: usize, interaction_strength: f64, x: f64, y: f64, infected: bool) -> Self {
+    pub fn new(group_id: usize, individual_type: &str, time: usize, time_left: usize, duration: usize, individual_id: usize, interaction_strength: f64, x: f64, y: f64, infected: bool, infection_stage: InfectionStage) -> Self {
         Entity {
             group_id,
             individual_type: individual_type.to_string(),
@@ -31,6 +32,7 @@ impl Entity {
             x,
             y,
             infected,
+            infection_stage,
         }
     }
 
@@ -84,6 +86,7 @@ impl InteractionLayer {
         x: f64,
         y: f64,
         infected: bool,
+        infection_stage: InfectionStage,
     ) {
              // Create new entity
              let entity = Entity::new(
@@ -97,6 +100,7 @@ impl InteractionLayer {
                 x,
                 y,
                 infected,
+                infection_stage,
             );
 
         // Record movement in interaction layer
