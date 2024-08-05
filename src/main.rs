@@ -1,5 +1,7 @@
 use rand::Rng;
 use rand::seq::SliceRandom;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 //use rand_distr::num_traits::int;
 //use core::time;
 use std::collections::HashSet;
@@ -63,7 +65,7 @@ mod utility;
 use utility::*;
 
 mod pathogen;
-//use pathogen::*;
+use pathogen::*;
 
 mod movement;
 use movement::*;
@@ -220,6 +222,8 @@ impl Groups {
     let origin_group_id = self.group_id;
     let has_dispersed = false;
     let current_group_id = self.group_id;
+    let time_of_infection = None;
+    let infection_stage = InfectionStage::NotInfected;
 
     // Create a new group member
     let new_member = GroupMember {
@@ -234,6 +238,9 @@ impl Groups {
         origin_group_id,
         has_dispersed,
         current_group_id,
+        time_of_infection,
+        infection_stage,
+
     };
 
     // Add the new group member to the group
@@ -575,6 +582,8 @@ pub struct GroupMember {
     origin_group_id: usize,
     has_dispersed: bool,
     current_group_id: usize,
+    time_of_infection: Option<usize>,
+    infection_stage: InfectionStage,
 }
 
 
@@ -767,6 +776,11 @@ const MAX_STAY_TIME: usize = 14;
 const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
 const GODD_YEAR_CHANCE: usize = 15; // 15% chance of a good year
 const BURN_IN_PERIOD: usize = 0; // 365 * 2; // 2 years burn in period
+const BETA_W: f64 = 0.01; // within group transmission rate // FIX ME
+const BETA_B: f64 = 0.001; // between group transmission rate // FIX ME
+const BETA_C: f64 = 0.9; // carcass transmission rate // FIX ME
+const CARCASS_CONTACT_PROB : f64 = 0.01; // carcass contact probability // FIX ME
+const P_SYMPTOMATIC: f64 = 0.9; // probability of being symptomatic // FIX ME
 
 
 
@@ -980,6 +994,8 @@ fn main() {
     log::info!("--------------------------->>> Starting simulation {} at time: {:?}", sim_id, start_time);
 
     let mut rng = rand::thread_rng();
+    let seed = [0u8; 32]; // or any other seed
+    let mut rng2: StdRng = SeedableRng::from_seed(seed);
     let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
@@ -1134,6 +1150,12 @@ fn main() {
                 }
             }
         }
+        log::info!("Within group pathogen transmission: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
+        pathogen_transmission_within_groups(&mut model, &mut rng);
+
+
+        pathogen_progression(&mut model, &mut rng2);
+
       }
 
         //dispersal
@@ -1176,7 +1198,7 @@ fn main() {
         log::info!("Check AP of groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         check_attraction_points_in_territory(&mut model.grid, &mut model.groups, 3, &mut rng);
         log::info!("Roaming movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        execute_roaming(&mut model.roamers, &mut model.groups, &mut model.grid, &mut rng, &mut model.interaction_layer, iteration);
+        execute_roaming(&mut model.roamers, &mut model.groups, &mut model.grid, &mut rng, &mut model.interaction_layer, iteration, &mut model.high_seats, &mut model.hunting_statistics);
         log::info!("Group movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         delete_groups_without_members(&mut model.groups);
         move_groups(&mut rng,   iteration, &mut model);
