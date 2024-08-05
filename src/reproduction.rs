@@ -97,6 +97,8 @@ pub fn reproduction(month: u32, groups: &mut Vec<Groups>, current_tick: usize, y
                     origin_group_id: group.group_id,
                     has_dispersed: false,
                     current_group_id: group.group_id,
+                    time_of_infection: None,
+                    infection_stage: InfectionStage::NotInfected,
                 };
 
                 group.group_members.push(new_member);
