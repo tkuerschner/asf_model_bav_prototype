@@ -153,3 +153,31 @@ pub fn remove_carcasses(model: &mut Model) {
     remove_invalid_carcasses(model);
 }
 
+pub fn infected_carcass_here(carcasses: &Vec<Carcass> , x: usize, y: usize) -> bool {
+    carcasses.iter().any(|c| c.carcass_x == x && c.carcass_y == y && c.is_infected)
+    
+}
+
+pub fn group_carcass_contact_handling(this_group: &mut Groups, rng: &mut impl Rng,c: &Vec<Carcass>, time: usize) { 
+
+    if infected_carcass_here(c, this_group.x, this_group.y){
+        for member in this_group.group_members.iter_mut() {
+            if member.health_status == HealthStatus::Susceptible {
+                if individual_carcass_contact_probability(rng) {
+                if rng.gen_bool(BETA_C) {
+                    member.health_status = HealthStatus::Infected;
+                    member.time_of_infection = Some(time);
+                }
+             }
+            }
+        }
+    }
+}
+
+pub fn individual_carcass_contact_probability(rng: &mut impl Rng) -> bool {
+    if rng.gen_bool(CARCASS_CONTACT_PROB) {
+        true
+    } else {
+        false
+    }
+}
