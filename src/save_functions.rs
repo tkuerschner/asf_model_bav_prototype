@@ -56,7 +56,7 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
     let mut file = File::create(filename)?;
 
     // Write the header line
-    writeln!(file, "iteration,individual_id,group_id,x,y,sex,age,age_class,known_cells,target_cell,core_cell,movement_type,remaining_stay_time,origin_group,ap_list,infection_stage")?;//,group_member_ids")?;
+    writeln!(file, "iteration,individual_id,group_id,x,y,sex,age,age_class,known_cells,target_cell,core_cell,movement_type,remaining_stay_time,origin_group,ap_list,infection_stage,health_status")?;//,group_member_ids")?;
 
     // Write each individual's data for each iteration
     for (iteration, groups) in group_states {
@@ -114,13 +114,14 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
                 let age_class_str: String = format!("{}", group_members.age_class);
                 let sex_str: String = format!("{}", group_members.sex);
                 let stage_string: String = format!("{}", group_members.infection_stage);
+                let infected_string: String = format!("{}", group_members.health_status);
                 //let target_cell_str: String = format!("[{:?}]", group.target_cell);
                 //let core_cell_str: String = format!("[{:?}]", group.core_cell);
                 //let remaining_stay_stime_str: String = format!("{}", group.remaining_stay_time);
                 
                 writeln!(
                     file,
-                    "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                    "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
                     iteration,
                     group_members.individual_id,
                     group.group_id,
@@ -137,6 +138,7 @@ pub fn save_groups_as_csv(filename: &str, group_states: &[(usize, Vec<Groups>)])
                     group_members.origin_group_id,
                     ap_list_str,
                     stage_string,
+                    infected_string,
                     //remaining_stay_stime_str,
                     //group_member_ids_str,
                     //last_three_cells_str

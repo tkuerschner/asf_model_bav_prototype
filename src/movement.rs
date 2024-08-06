@@ -236,7 +236,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                         group.daily_movement_distance -= 1;
                     }else {
                         move_one_step_towards_target_cell_with_random(group,rng,&model.grid);
-
+                        
                         let inf_here = group.infected_member_present();
                         let mut stage = InfectionStage::NotInfected;
                         if inf_here {

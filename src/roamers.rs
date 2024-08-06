@@ -671,8 +671,6 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &mut Vec<
             hunting_statistics.add_hunted_individual(roamer.roamer_x, roamer.roamer_y, roamer.sex.clone(), roamer.age, roamer.age_class, roamer.individual_id, Some(roamer.origin_group_id) , IndividualType::GroupMember, time);
     
                 to_be_removed = true;
-                break;
-    
                }
 
           i_layer.add_entity_and_record_movement(
@@ -688,6 +686,11 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &mut Vec<
             roamer.roamer_is_infected(),
             roamer.infection_stage.clone(),
         );
+
+        if to_be_removed {
+            return true
+         }
+
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                     // Roamer reached target
@@ -696,9 +699,7 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &mut Vec<
                 }
             }
 
-            if to_be_removed {
-                return true
-             }
+           
              
         } else {
             move_randomly_roamer(roamer, grid);
@@ -708,9 +709,9 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &mut Vec<
                 hunting_statistics.add_hunted_individual(roamer.roamer_x, roamer.roamer_y, roamer.sex.clone(), roamer.age, roamer.age_class, roamer.individual_id, Some(roamer.origin_group_id) , IndividualType::GroupMember, time);
         
                     to_be_removed = true;
-                    break;
+                    
         
-                   }
+            }
           //  record_movement_in_interaction_layer_for_roamers(i_layer, roamer.roamer_x, roamer.roamer_y, time, roamer.origin_group_id,  "roamer", roamer.roamer_id);
           i_layer.add_entity_and_record_movement(
             roamer.origin_group_id,
@@ -725,6 +726,11 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &mut Vec<
             roamer.roamer_is_infected(),
             roamer.infection_stage.clone(),
         );
+
+        if to_be_removed {
+            return true
+         }
+
             if let Some((target_x, target_y)) = roamer.target_cell {
                 if roamer.roamer_x == target_x && roamer.roamer_y == target_y {
                     // Roamer reached target
@@ -732,13 +738,7 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &mut Vec<
                     break;
                 }
             }
-
-            if to_be_removed {
-                return true
-             }
-
-        }
-        
+        }     
     }
     //log::info!("Roamer {:?} finished moving with group for today", roamer.roamer_id);
     stay_with_target_group(roamer);

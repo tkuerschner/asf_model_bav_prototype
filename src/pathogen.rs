@@ -10,6 +10,7 @@ use crate::*;
 pub enum InfectionStage {
     Incubation,
     Symptomatic,
+    HighlyInfectious,
     Recovered,
     Vaccinated,
     Dead,
@@ -21,6 +22,7 @@ impl fmt::Display for InfectionStage {
         match self {
             InfectionStage::Incubation => write!(f, "Incubation"),
             InfectionStage::Symptomatic => write!(f, "Symptomatic"),
+            InfectionStage::HighlyInfectious => write!(f, "HighlyInfectious"),
             InfectionStage::Recovered => write!(f, "Recovered"),
             InfectionStage::Vaccinated => write!(f, "Vaccinated"),
             InfectionStage::Dead => write!(f, "Dead"),
@@ -28,10 +30,6 @@ impl fmt::Display for InfectionStage {
         }
     }
 }
-
-
-
-
 
 pub fn infected_in_group(model: &mut Model, _rng: &mut impl Rng, group_nr: usize) -> bool {
     let mut infected = false;
@@ -46,7 +44,6 @@ pub fn infected_in_group(model: &mut Model, _rng: &mut impl Rng, group_nr: usize
         }
     infected
 }
-
 
 pub fn pathogen_transmission_within_groups(model: &mut Model, rng: &mut impl Rng) {
     // Iterate through all groups
@@ -64,18 +61,33 @@ pub fn pathogen_transmission_within_groups(model: &mut Model, rng: &mut impl Rng
             })
             .collect();
 
-            let infection_density_factor = infected_indices.len() as f64 / group.group_members.len() as f64;
+        let highly_infectious_indices: Vec<usize> = group.group_members
+            .iter()
+            .enumerate()
+            .filter_map(|(index, member)| {
+                if member.health_status == HealthStatus::Infected && member.infection_stage == InfectionStage::HighlyInfectious {
+                    Some(index)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+            // density factor for infected individuals
+            let infection_density_factor = infected_indices.len()  as f64 / group.group_members.len() as f64;
+            // density factor for highly infectious individuals
+            let highly_infectious_density_factor = highly_infectious_indices.len() as f64 / (group.group_members.len() * 10) as f64; //FIX ME
 
         // Iterate over infected members by their indices
         for &infected_index in infected_indices.iter() {
             // Check if member is infected
-            if group.group_members[infected_index].health_status == HealthStatus::Infected && group.group_members[infected_index].infection_stage == InfectionStage::Symptomatic {
+            if group.group_members[infected_index].health_status == HealthStatus::Infected && (group.group_members[infected_index].infection_stage == InfectionStage::Symptomatic || group.group_members[infected_index].infection_stage == InfectionStage::HighlyInfectious) {
                 // Iterate through all group members (to potentially infect)
                 for member in group.group_members.iter_mut() {
                     // Check if member is susceptible and not already infected
                     if member.health_status == HealthStatus::Susceptible {
                         // Check if transmission is successful
-                        if rng.gen_bool(BETA_W * infection_density_factor) {
+                        if rng.gen_bool(BETA_W * (infection_density_factor + highly_infectious_density_factor)) {
                             member.health_status = HealthStatus::Infected;
                             member.time_of_infection = Some(model.global_variables.current_time);
                         }
@@ -85,8 +97,6 @@ pub fn pathogen_transmission_within_groups(model: &mut Model, rng: &mut impl Rng
         }
     }
 }
-
-
 
 
 pub fn pathogen_progression(model: &mut Model, rng: &mut StdRng) {
@@ -101,14 +111,20 @@ pub fn pathogen_progression(model: &mut Model, rng: &mut StdRng) {
             s.spawn(move |_| {
                 for member in &mut group.group_members {
                     if member.health_status == HealthStatus::Infected {
+                        //println!("{} ", member.infection_stage);
                         if let Some(time_of_infection) = member.time_of_infection {
                             let time_since_infection = current_time - time_of_infection;
+                            //println!("{} ", time_since_infection);
                             if time_since_infection >= 7 {
                                 if rng_clone.gen_bool(p_symptomatic) {
                                     member.infection_stage = InfectionStage::Symptomatic;
+                                    //println!("{} ", member.infection_stage);
                                 } else {
                                     member.infection_stage = InfectionStage::Recovered;
                                 }
+                            }
+                            if time_since_infection >= 10 {
+                                member.infection_stage = InfectionStage::HighlyInfectious;
                             }
                             if time_since_infection >= 14 {
                                 member.infection_stage = InfectionStage::Dead;
@@ -131,6 +147,9 @@ pub fn pathogen_progression(model: &mut Model, rng: &mut StdRng) {
                                 roamer.infection_stage = InfectionStage::Symptomatic;
                             } else {
                                 roamer.infection_stage = InfectionStage::Recovered;
+                            }
+                            if time_since_infection >= 10 {
+                                roamer.infection_stage = InfectionStage::HighlyInfectious;
                             }
                             if time_since_infection >= 14 {
                                 roamer.infection_stage = InfectionStage::Dead;
@@ -156,6 +175,9 @@ pub fn pathogen_progression(model: &mut Model, rng: &mut StdRng) {
                                     d_member.infection_stage = InfectionStage::Recovered;
                                 }
                             }
+                            if time_since_infection >= 10 {
+                                d_member.infection_stage = InfectionStage::HighlyInfectious;
+                            }
                             if time_since_infection >= 14 {
                                 d_member.infection_stage = InfectionStage::Dead;
                             }
@@ -165,5 +187,32 @@ pub fn pathogen_progression(model: &mut Model, rng: &mut StdRng) {
             });
         }
     }).unwrap();
+
+    remove_dead_individuals(model);
 }
 
+
+pub fn remove_dead_individuals(model: &mut Model) {
+    
+    // Remove dead individuals from groups
+    for group in &mut model.groups {
+        group.group_members.retain(|member| member.infection_stage != InfectionStage::Dead);
+    }
+
+    // Remove dead individuals from roamers
+    model.roamers.retain(|roamer| roamer.infection_stage != InfectionStage::Dead);
+
+    // Remove dead individuals from dispersers
+    for disperser in &mut model.dispersers {
+        disperser.dispersing_individuals.retain(|d_member| d_member.infection_stage != InfectionStage::Dead);
+    }
+}
+
+
+pub fn experimental_outbreak(model: &mut Model){
+
+    for c in model.carcasses.iter_mut(){
+        c.is_infected = true;
+    }
+
+}

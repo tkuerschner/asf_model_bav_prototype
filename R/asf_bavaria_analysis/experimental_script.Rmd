@@ -2657,11 +2657,6 @@ ggplot()+
 geom_line(data = h1, aes(x = iteration, y = (month)))
 
 
-
-
-
-
-
 ```
 
 ```{r}
@@ -2689,6 +2684,103 @@ h2 <- h1 %>%
     panel.grid = element_blank(),
     plot.title = element_text(hjust = 0.5, size = 20)
   )
+
+
+```
+
+```{r merge all individuals together}
+
+#head(groups)
+#head(dispersers)
+#head(roamers)
+
+
+ga1 <- groups %>% dplyr::select(iteration, group_id, x, y, sex, age, age_class, movement_type, infection_stage, health_status, individual_id)
+
+#add origin_group_id to ga1 and fill with group_id
+ga1$origin_group_id <- ga1$group_id
+#add individual_type to ga1 and fill with "group_member"
+ga1$individual_type <- "group_member"
+#head(ga1)
+
+da1 <- dispersers %>% dplyr::select(iteration, individual_id, disperser_id, disperser_group_x, disperser_group_y, age, age_class, sex, health_status, infection_stage, origin_group_id)
+
+#add individual_type to da1 and fill with "disperser"
+da1$individual_type <- "disperser"
+
+#head(da1)
+
+ra1 <- roamers %>% dplyr::select(iteration, roamer_id, roamer_x, roamer_y, age, age_class, sex, health_status, infection_stage, origin_group_id, individual_id)
+
+#add individual_type to ra1 and fill with "roamer"
+ra1$individual_type <- "roamer"
+#head(ra1)
+
+
+# Renaming coordinates in da1 and ra1 to x and y
+da1 <- da1 %>%
+  rename(x = disperser_group_x, y = disperser_group_y)
+
+ra1 <- ra1 %>%
+  rename(x = roamer_x, y = roamer_y)
+
+all_individuals <- ga1 %>%
+  full_join(da1, by = c("iteration", "individual_id", "age", "infection_stage", "health_status", "x", "y", "sex", "age_class", "origin_group_id", "individual_type")) %>%
+  full_join(ra1, by = c("iteration", "individual_id", "age", "infection_stage", "health_status", "x", "y", "sex", "age_class", "origin_group_id", "individual_type"))
+
+
+head(all_individuals)
+
+```
+
+```{r}
+
+#plot all individuals
+
+#get number of individuals per type and iteration
+
+all_individuals2 <- all_individuals %>%
+  group_by(iteration, individual_type) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_line(data = all_individuals2, aes(x = iteration, y = n, color = individual_type)) +
+  labs(title = "Number of individuals per type over time", x = "Iteration", y = "Number of individuals") +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+  all_individuals3 <- all_individuals %>%
+  group_by(iteration, health_status) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_line(data = all_individuals3, aes(x = iteration, y = n, color = health_status)) +
+  labs(title = "Number of individuals infection status", x = "Iteration", y = "Number of individuals") +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+
+  all_individuals4 <- all_individuals %>%
+  group_by(iteration, health_status, individual_type) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_line(data = all_individuals4, aes(x = iteration, y = n, color = health_status, lty = individual_type)) +
+  labs(title = "Number of individuals per type and infections tatus over time", x = "Iteration", y = "Number of individuals") +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+  all_individuals5 <- all_individuals %>%
+  group_by(iteration, health_status, infection_stage) %>%
+  summarise(n = n()) %>%
+  filter(infection_stage != "NotInfected")
+
+  ggplot() +
+  geom_line(data = all_individuals5, aes(x = iteration, y = n, color = health_status, lty = infection_stage)) +
+  labs(title = "Number of individuals  infections stage over time", x = "Iteration", y = "Number of individuals") +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
 
 
 ```

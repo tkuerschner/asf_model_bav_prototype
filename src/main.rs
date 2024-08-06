@@ -1103,6 +1103,9 @@ fn main() {
 
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
+
+        model.global_variables.current_time = iteration;
+
         log::info!("Starting iteration: {}", iteration);
         if model.global_variables.day == 1 && model.global_variables.month == 1 {
             log::info!("good year check: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
@@ -1157,6 +1160,17 @@ fn main() {
         pathogen_progression(&mut model, &mut rng2);
 
       }
+
+
+      //FIX ME TESTER
+        if iteration == 200 {
+            experimental_outbreak(&mut model);
+        }
+
+
+
+
+
 
         //dispersal
         if iteration > 100 {
