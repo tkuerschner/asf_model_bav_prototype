@@ -95,3 +95,64 @@ pub fn copy_last_sim_to_active(folder_path: String) {
         fs::copy(path, output_file).expect("Failed to copy file to output folder");
     }
     }
+
+    pub fn generate_iteration_sim_output_row(model: &mut Model){
+        let row = vec![
+            model.global_variables.current_time.to_string(),
+            model.global_variables.day.to_string(),
+            model.global_variables.month.to_string(),
+            model.global_variables.year.to_string(),
+            model.global_variables.good_year.to_string(),
+            model.global_variables.current_time.to_string(),
+            count_all_group_members(model).to_string(),
+            count_all_roamers(model).to_string(),
+            count_all_dispersing_individuals(model).to_string(),
+            count_infected_individuals(model).to_string(),
+        ];
+        model.metadata.iteration_output.push(row);
+
+    }
+
+    pub fn count_all_group_members(model: &mut Model) -> usize {
+        let mut count = 0;
+        for group in model.groups.iter() {
+            count += group.group_members.len();
+        }
+        count
+    }
+
+    pub fn count_all_roamers(model: &mut Model) -> usize {
+        model.roamers.len()
+    }
+
+    pub fn count_all_dispersing_individuals(model: &mut Model) -> usize {
+        let mut count = 0;
+        for disperser in model.dispersers.iter() {
+            count += disperser.dispersing_individuals.len();
+        }
+        count
+    }
+
+    pub fn count_infected_individuals(model: &mut Model) -> usize {
+        let mut count = 0;
+        for group in model.groups.iter() {
+            for member in group.group_members.iter() {
+                if member.health_status == HealthStatus::Infected {
+                    count += 1;
+                }
+            }
+        }
+        for roamer in model.roamers.iter() {
+            if roamer.health_status == HealthStatus::Infected {
+                count += 1;
+            }
+        }
+        for disperser in model.dispersers.iter() {
+            for member in disperser.dispersing_individuals.iter() {
+                if member.health_status == HealthStatus::Infected {
+                    count += 1;
+                }
+            }
+        }
+        count
+    }
