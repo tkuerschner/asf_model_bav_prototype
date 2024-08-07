@@ -2776,10 +2776,11 @@ all_individuals2 <- all_individuals %>%
   filter(infection_stage != "NotInfected")
 
   ggplot() +
-  geom_line(data = all_individuals5, aes(x = iteration, y = n, color = health_status, lty = infection_stage)) +
-  labs(title = "Number of individuals  infections stage over time", x = "Iteration", y = "Number of individuals") +
+  geom_line(data = all_individuals5, aes(x = iteration, y = n, color = infection_stage, lty = infection_stage)) +
+  labs(title = "Number of individuals infections stage over time", x = "Iteration", y = "Number of individuals") +
   scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
   theme_minimal()
+
 
 
 

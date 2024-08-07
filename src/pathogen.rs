@@ -188,7 +188,6 @@ pub fn pathogen_progression(model: &mut Model, rng: &mut StdRng) {
         }
     }).unwrap();
 
-    remove_dead_individuals(model);
 }
 
 

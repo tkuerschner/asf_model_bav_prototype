@@ -1,62 +1,6 @@
 use crate::*;
 
 
-//pub fn combined_mortality(surv_prob: &SurvivalProbability, model: &mut Model){
-//    for group in model.groups.iter_mut() {
-//        let current_group_size = group.group_members.len();
-//        let max_group_size = group.max_size;
-//        let diff = current_group_size as i32 - max_group_size as i32;
-//        let surv_prob_adult;
-//        let surv_prob_piglet;
-//        let mut overcap_check = false;
-//        let dead_group_members: Vec<GroupMember> = Vec::new();
-//
-//        if diff > 0 { // if the group size is greater than the max group size
-//            let decrease = diff as f64 * 0.001; // decrease the survival probability by 0.1% for each individual over the max group size
-//            surv_prob_adult =   surv_prob.adult - (surv_prob.adult * decrease); 
-//            surv_prob_piglet =  surv_prob.piglet - (surv_prob.piglet * decrease);
-//            overcap_check = true;
-//            
-//        } else { // if the group size is less than the max group size
-//            surv_prob_adult = surv_prob.adult;
-//            surv_prob_piglet = surv_prob.piglet;
-//        }
-//
-//        let retained_group_members: Vec<GroupMember> = group.group_members
-//        .drain(..)
-//        .filter(|member| {
-//            let random_number: f64 = rand::thread_rng().gen_range(0.0..1.0);
-//            let rounded_number = (random_number * 1e4).round() / 1e4;
-//
-//            if member.age_class != AgeClass::Piglet {
-//                if rounded_number < surv_prob_adult {
-//                    true
-//                } else {
-//                    if overcap_check {
-//                        model.global_variables.overcapacity_mortality += 1;
-//                    } else {
-//                        model.global_variables.random_mortality += 1;
-//                    }   
-//                    false
-//                }
-//            } else {
-//                if rounded_number < surv_prob_piglet {
-//                    true
-//                } else {
-//                    if overcap_check {
-//                        model.global_variables.overcapacity_mortality += 1;
-//                    } else {
-//                        model.global_variables.random_mortality += 1;
-//                    }
-//                    false
-//                }
-//            }
-//        })
-//        .collect();
-//    group.group_members.extend_from_slice(&retained_group_members);
-//    }
-//}
-
 pub fn combined_mortality(surv_prob: &SurvivalProbability, model: &mut Model) {
     let mut dead_group_members = Vec::new();
 

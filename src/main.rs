@@ -38,7 +38,7 @@ use save_functions::*;
 
 // Some individual related functions
 mod ageing;
-use ageing::{ageing};
+use ageing::*;
 
 mod reproduction;
 use reproduction::*;
@@ -79,7 +79,7 @@ use hunting::*;
 
 
 
-  // Register Ctrl+C handler
+
 
 
 // Define a struct to represent a group
@@ -95,6 +95,23 @@ pub struct Model {
     pub carcasses: Vec<Carcass>,
     pub high_seats: Vec<HighSeat>,
     pub hunting_statistics: HuntingStatistics,
+    pub metadata: SimMetaData,
+}
+
+#[derive(Debug, Clone)]
+pub struct SimMetaData {
+    pub iteration_output: Vec<Vec<String>>,
+    pub simulation_id: String,
+}
+
+impl SimMetaData {
+    pub fn new() -> SimMetaData {
+        SimMetaData {
+            iteration_output: Vec::new(),
+            simulation_id: "NA".to_string(),
+        }
+    }
+    
 }
 
 
@@ -376,65 +393,7 @@ impl Groups {
             }
         }
     }
-
-    //pub fn dummy_expand_territory_with_natural_shape(&self, grid: &Vec<Vec<Cell>>) -> usize {
-    //    // Constants for desired number of cells and shape
-    //    //let min_desired_cells = 200;
-    //    let max_desired_cells = 800;
-    //    let shape_factor = 0.5; // Adjust shape factor for desired shape
-    //
-    //    let mut territory_cells = HashSet::new();
-    //    if let Some((x, y)) = self.core_cell {
-    //        // Start with the core cell
-    //        territory_cells.insert((x, y));
-    //
-    //        // Keep track of the number of cells claimed
-    //        let mut claimed_cells = 1;
-    //
-    //        // Expand territory until desired number of cells is reached or max iterations exceeded
-    //        while claimed_cells < max_desired_cells {
-    //            // Clone the current set of territory cells
-    //            let current_territory_cells = territory_cells.clone();
-    //            // Iterate over the current territory cells
-    //            for (x, y) in current_territory_cells {
-    //                // Iterate over neighboring cells
-    //                for dx in -1..=1 {
-    //                    for dy in -1..=1 {
-    //                        if dx == 0 && dy == 0 {
-    //                            continue;
-    //                        }
-    //                        let new_x = x as isize + dx;
-    //                        let new_y = y as isize + dy;
-    //                        // Check if the neighboring cell is within grid bounds
-    //                        if new_x >= 0
-    //                            && new_x < grid.len() as isize
-    //                            && new_y >= 0
-    //                            && new_y < grid[0].len() as isize
-    //                        {
-    //                            let new_x = new_x as usize;
-    //                            let new_y = new_y as usize;
-    //                            // Check if the cell is unoccupied and has positive quality
-    //                            if !grid[new_x][new_y].territory.is_taken && grid[new_x][new_y].quality > 0.0 {
-    //                                // Calculate distance from core cell
-    //                                let distance = ((new_x as f64 - x as f64).powi(2) + (new_y as f64 - y as f64).powi(2)).sqrt();
-    //                                // Bias selection based on distance for circular shape
-    //                                let random_value = rand::random::<f64>();
-    //                                if random_value < 1.0 / (1.0 + shape_factor * distance) {
-    //                                    territory_cells.insert((new_x, new_y));
-    //                                    claimed_cells += 1;
-    //                                }
-    //                            }
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //
-    //    // Return the number of cells claimed
-    //    territory_cells.len()
-    //}
-    
+   
     pub fn expand_territory_with_natural_shape_and_radius(&mut self, grid: &mut Vec<Vec<Cell>>) {
     // Constants for desired number of cells, shape, and radius
     let min_desired_cells = 1000;
@@ -526,13 +485,6 @@ impl Groups {
     }
 }
 
-//function to return true if a specific group members health status is infected
-//pub fn is_infected(group: &Groups, member_id: usize) -> bool {
-//    let member = group.group_members.iter().find(|&member| member.individual_id == member_id).//unwrap();
-//    member.health_status == HealthStatus::Infected
-//
-//}
-
     pub fn infected_member_present(&self)->bool{
         let mut infected = false;
         for member in &self.group_members {
@@ -544,7 +496,6 @@ impl Groups {
         infected
     }
 }
-
 
 
 static mut INDIVIDUAL_COUNTER: usize = 0;
@@ -659,8 +610,6 @@ pub struct SurvivalProbability{
     piglet: f64,
 }
 
-
-
 // Define a struct to represent global variables
 #[derive(Debug, Clone)]
 pub struct GlobalVariables {
@@ -762,13 +711,13 @@ default_daily_movement_distance:usize,
 
 // consants
 const MAX_AGE: u32 = 365 * 12;
-const PRESENCE_TIME_LIMIT: usize = 5;
-const MOVE_CHANCE_PERCENTAGE: usize = 5;
+//const PRESENCE_TIME_LIMIT: usize = 5;
+//const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
-const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 2; 
-const ADULT_SURVIVAL: f64 = 0.65;
-const PIGLET_SURVIVAL: f64 = 0.5;
+//const MAX_LAST_VISITED_CELLS: usize = 3;
+const RUNTIME: usize = 365 * 20; 
+//const ADULT_SURVIVAL: f64 = 0.65;
+//const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
 const PIGLET_SURVIVAL_DAY: f64 = 0.9438;
 const MIN_STAY_TIME: usize = 1;
@@ -1055,7 +1004,8 @@ fn main() {
     // Vector to store hunting statistics for all iterations
     let mut all_hunting_statistics: Vec<(usize, HuntingStatistics)> = Vec::new();
 
-    
+    let mut all_sim_meta_data:  Vec<(usize, SimMetaData)> = Vec::new();
+
        let global_variables = GlobalVariables {
         age_mortality: 0,
         random_mortality: 0,
@@ -1077,6 +1027,9 @@ fn main() {
      // Create an instance of Hunting statistics
      let hunting_statistics = HuntingStatistics::new();
 
+     // Create an instance of SimMetaData
+        let sim_meta_data = SimMetaData::new();
+
      // create the model
      log::info!("Creating the model");
      let mut model = Model {
@@ -1089,8 +1042,12 @@ fn main() {
         carcasses: carcass_vector.clone(),
         high_seats: high_seat_vector.clone(),
         hunting_statistics: hunting_statistics,
+        metadata: sim_meta_data,
         
     };
+
+    model.metadata.simulation_id = sim_id.clone();
+
     
     // Allocate survival probabilities
     let survival_prob = SurvivalProbability {
@@ -1104,6 +1061,7 @@ fn main() {
     // Simulate and save the grid state and individual state for each iteration
     for iteration in 1..= RUNTIME {
 
+        remove_dead_individuals(&mut model);
         model.global_variables.current_time = iteration;
 
         log::info!("Starting iteration: {}", iteration);
@@ -1315,6 +1273,11 @@ fn main() {
 
         });
 
+
+        // generate a sim output row
+        generate_iteration_sim_output_row(&mut model);
+
+        all_sim_meta_data.push((iteration, model.metadata.clone()));
 
         // Debug print time
 
