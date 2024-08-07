@@ -2799,7 +2799,63 @@ ggplot()+
 geom_line(data = so, aes(x = iteration, y = current_time))
 
 ggplot()+
-geom_line(data = so, aes(x = iteration, y = as.factor(month)))
+geom_line(data = so, aes(x = iteration, y = (month)))
+
+
+all_i <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_individuals))+
+labs(title = "Number of individuals over time", x = "Iteration", y = "Number of individuals")+
+theme_minimal()
+
+all_inf <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_infected))+
+labs(title = "Number of infected individuals over time", x = "Iteration", y = "Number of infected individuals")+
+theme_minimal()
+
+all_dead <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_dead))+
+labs(title = "Number of dead individuals over time", x = "Iteration", y = "Number of dead individuals")+
+theme_minimal()
+
+all_roa <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_roamers))+
+labs(title = "Number of roamers over time", x = "Iteration", y = "Number of roamers")+
+theme_minimal()
+
+all_disp <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_dispersers))+
+labs(title = "Number of dispersers over time", x = "Iteration", y = "Number of dispersers")+
+theme_minimal()
+
+all_inc <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_incubating))+
+labs(title = "Number of incubating individuals over time", x = "Iteration", y = "Number of incubating individuals")+
+theme_minimal()
+
+all_sus <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_susceptible))+
+labs(title = "Number of susceptible individuals over time", x = "Iteration", y = "Number of susceptible individuals")+  
+theme_minimal()
+
+all_sym <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_symptomatic))+
+labs(title = "Number of symptomatic individuals over time", x = "Iteration", y = "Number of symptomatic individuals")+
+theme_minimal()
+
+all_hinf <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_highly_infectious))+
+labs(title = "Number of highly infectious individuals over time", x = "Iteration", y = "Number of highly infectious individuals")+
+theme_minimal()
+
+all_rec <- ggplot()+
+geom_line(data = so, aes(x = iteration, y = n_recovered))+
+labs(title = "Number of recovered individuals over time", x = "Iteration", y = "Number of recovered individuals")+
+theme_minimal()
+
+#put all plots in a grid
+library(gridExtra)
+grid.arrange(all_i, all_inf, all_dead, all_roa, all_disp, all_inc, all_sus, all_sym, all_hinf, all_rec, ncol = 2)
+
 
 
 ```
