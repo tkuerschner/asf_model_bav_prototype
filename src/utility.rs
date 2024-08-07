@@ -97,17 +97,23 @@ pub fn copy_last_sim_to_active(folder_path: String) {
     }
 
     pub fn generate_iteration_sim_output_row(model: &mut Model){
+        let stage_count = count_infection_stage(model);
         let row = vec![
             model.global_variables.current_time.to_string(),
             model.global_variables.day.to_string(),
             model.global_variables.month.to_string(),
             model.global_variables.year.to_string(),
             model.global_variables.good_year.to_string(),
-            model.global_variables.current_time.to_string(),
             count_all_group_members(model).to_string(),
             count_all_roamers(model).to_string(),
             count_all_dispersing_individuals(model).to_string(),
             count_infected_individuals(model).to_string(),
+            stage_count.0.to_string(),
+            stage_count.1.to_string(),
+            stage_count.2.to_string(),
+            stage_count.3.to_string(),
+            stage_count.4.to_string(),
+            stage_count.5.to_string(),
         ];
         model.metadata.iteration_output.push(row);
 
@@ -156,3 +162,53 @@ pub fn copy_last_sim_to_active(folder_path: String) {
         }
         count
     }
+
+    // count the number of individuals per InfectionStage
+    pub fn count_infection_stage(model: &mut Model) -> (usize, usize, usize, usize, usize, usize) {
+        let mut incubation = 0;
+        let mut symptomatic = 0;
+        let mut infected = 0;
+        let mut recovered = 0;
+        let mut dead = 0;
+        let mut susceptible = 0;
+        for group in model.groups.iter() {
+            for member in group.group_members.iter() {
+                match member.infection_stage {
+                    InfectionStage::Incubation => incubation += 1,
+                    InfectionStage::Symptomatic => symptomatic += 1,
+                    InfectionStage::HighlyInfectious => infected += 1,
+                    InfectionStage::Recovered => recovered += 1,
+                    InfectionStage::Dead => dead += 1,
+                    InfectionStage::NotInfected => susceptible += 1,
+                    _ => (),
+                }
+            }
+        }
+        for roamer in model.roamers.iter() {
+            match roamer.infection_stage {
+                InfectionStage::Incubation => incubation += 1,
+                InfectionStage::Symptomatic => symptomatic += 1,
+                InfectionStage::HighlyInfectious => infected += 1,
+                InfectionStage::Recovered => recovered += 1,
+                InfectionStage::Dead => dead += 1,
+                InfectionStage::NotInfected => susceptible += 1,
+                _ => (),
+            }
+        }
+        for disperser in model.dispersers.iter() {
+            for member in disperser.dispersing_individuals.iter() {
+                match member.infection_stage {
+                    InfectionStage::Incubation => incubation += 1,
+                    InfectionStage::Symptomatic => symptomatic += 1,
+                    InfectionStage::HighlyInfectious => infected += 1,
+                    InfectionStage::Recovered => recovered += 1,
+                    InfectionStage::Dead => dead += 1,
+                    InfectionStage::NotInfected => susceptible += 1,
+                    _ => (),
+                }
+            }
+        }
+        (incubation, symptomatic, infected, recovered, dead, susceptible)
+    }
+
+ 

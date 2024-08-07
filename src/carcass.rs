@@ -107,7 +107,7 @@ pub fn create_carcass<T: CarcassSource>(
 
     let lifetime_adjusted: u32;
     if source.age_class() == AgeClass::Piglet {
-         lifetime_adjusted = 75;
+         lifetime_adjusted = 150;
     } else {
          lifetime_adjusted = 150; //FIX ME get the correct values
     }

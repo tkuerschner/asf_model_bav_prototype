@@ -17,6 +17,7 @@ pub fn save_outputs(
     all_high_seat_states: Vec<(usize, Vec<HighSeat>)>,
     all_hunting_statistics: Vec<(usize, HuntingStatistics)>,
     folder_path: String,
+    meta_data: Vec<(usize, SimMetaData)>,
 ) {
     // Save all grid states to a single CSV file
     save_grid_as_csv(format!("output/{}/all_grid_states.csv", folder_name).as_str(), &all_grid_states).expect("Failed to save grid states as CSV");
@@ -44,6 +45,8 @@ pub fn save_outputs(
 
     // Save all hunting statistics to a
     save_hunting_statistics_as_csv(format!("output/{}/all_hunting_statistics.csv", folder_name).as_str(), &all_hunting_statistics, &all_global_variables).expect("Failed to save hunting statistics as CSV");
+
+    save_sim_meta_data_row_output_as_csv(format!("output/{}/all_sim_output_data.csv", folder_name).as_str(), &meta_data).expect("Failed to save sim meta data as CSV");
 
     //copy all the files from the specific output folder to the output folder
     copy_last_sim_to_active(folder_path);
@@ -459,6 +462,43 @@ pub fn save_hunting_statistics_as_csv(filename: &str, hunting_statistics: &[(usi
     }
 
     println!("Hunting statistics saved to: {}", filename);
+    Ok(())
+}
+
+
+pub fn save_sim_meta_data_row_output_as_csv(filename: &str, mdata: &Vec<(usize, SimMetaData)> ) -> io::Result<()> {
+    // Create or open the CSV file
+    let mut file = File::create(filename)?;
+
+    // Write the header line
+    writeln!(file, "iteration,current_time,day,month,year,good_year,n_individuals,n_roamers,n_dispersers,n_infected,n_incubating,n_symptomatic,n_highly_infectious,n_recovered,n_dead,n_susceptible")?;
+
+    // Iterate through the metadata and write each row
+    for (iteration, sim_meta_data) in mdata.iter() {
+        for row in &sim_meta_data.iteration_output {
+            writeln!(
+                file,
+                "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                iteration,
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+                row[6],
+                row[7],
+                row[8],
+                row[9],
+                row[10],
+                row[11],
+                row[12],
+                row[13],
+                row[14],
+            )?;
+        }
+    }
+    println!("Row output saved to: {}", filename);
     Ok(())
 }
 

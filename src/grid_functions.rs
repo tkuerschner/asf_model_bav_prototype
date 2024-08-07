@@ -803,7 +803,7 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
                // create random ap in the groups territory
                // filter cells_of_group to exclude is_ap == true
                 let territory_of_group: Vec<(usize, usize)> = cells_of_group.iter().filter(|(x, y)| grid[*x][*y].territory.is_ap == false).cloned().collect();
-                let random_ap = territory_of_group.choose(rng).unwrap();
+                let random_ap = territory_of_group.choose(rng).unwrap(); // FIX ME: sometimes this returns None
                 grid[random_ap.0][random_ap.1].territory.is_ap = true;
                 ap_count += 1;
              }

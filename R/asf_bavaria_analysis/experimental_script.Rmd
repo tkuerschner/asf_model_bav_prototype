@@ -62,6 +62,8 @@ carcasses <- read.csv("./output/all_carcasses.csv", header = T)
 high_seats <- read.csv("./output/all_high_seats.csv", header = T)
 
 hunting_stats <- read.csv("./output/all_hunting_statistics.csv", header = T)
+
+sum_output <- read.csv("./output/all_sim_output_data.csv", header = T)
 ```
 
 ```{r data prep}
@@ -2786,3 +2788,18 @@ all_individuals2 <- all_individuals %>%
 
 ```
 
+```{r sum_output}
+
+so <- sum_output
+head(so)
+
+so %>% filter(iteration == 8)
+
+ggplot()+
+geom_line(data = so, aes(x = iteration, y = current_time))
+
+ggplot()+
+geom_line(data = so, aes(x = iteration, y = as.factor(month)))
+
+
+```
