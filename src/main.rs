@@ -715,7 +715,7 @@ const MAX_AGE: u32 = 365 * 12;
 //const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 //const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 20; 
+const RUNTIME: usize = 365 * 2; 
 //const ADULT_SURVIVAL: f64 = 0.65;
 //const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -1246,6 +1246,8 @@ fn main() {
             // clear the hunting statistics for the next iteration
             model.hunting_statistics.clear_hunting_statistics();
 
+            all_sim_meta_data.push((iteration, model.metadata.clone()));
+
            // purge_interaction_layer( &mut model.interaction_layer);
 
         // Stop the sim when all individuals are dead
@@ -1275,6 +1277,7 @@ fn main() {
 
 
         // generate a sim output row
+        log::info!("Generating iteration sim output row: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         generate_iteration_sim_output_row(&mut model);
 
         all_sim_meta_data.push((iteration, model.metadata.clone()));
@@ -1321,7 +1324,7 @@ fn main() {
     // Ensure directory creation is flushed to stdout
     std::io::stdout().flush().unwrap();
 
-    save_outputs(&folder_name, all_grid_states, all_group_states, all_global_variables, all_disperser_states, all_roamer_states, all_carcass_states, all_high_seat_states, all_hunting_statistics, folder_path.clone());
+    save_outputs(&folder_name, all_grid_states, all_group_states, all_global_variables, all_disperser_states, all_roamer_states, all_carcass_states, all_high_seat_states, all_hunting_statistics, folder_path.clone(), all_sim_meta_data);
 
     let save_time = Instant::now();
     let time_taken_save = save_time.duration_since(end_time);
