@@ -97,6 +97,7 @@ pub fn copy_last_sim_to_active(folder_path: String) {
     }
 
     pub fn generate_iteration_sim_output_row(model: &mut Model){
+        let stage_count = count_infection_stage(model);
         let row = vec![
             model.global_variables.current_time.to_string(),
             model.global_variables.day.to_string(),
@@ -107,12 +108,12 @@ pub fn copy_last_sim_to_active(folder_path: String) {
             count_all_roamers(model).to_string(),
             count_all_dispersing_individuals(model).to_string(),
             count_infected_individuals(model).to_string(),
-            count_infection_stage(model).0.to_string(),
-            count_infection_stage(model).1.to_string(),
-            count_infection_stage(model).2.to_string(),
-            count_infection_stage(model).3.to_string(),
-            count_infection_stage(model).4.to_string(),
-            count_infection_stage(model).5.to_string(),
+            stage_count.0.to_string(),
+            stage_count.1.to_string(),
+            stage_count.2.to_string(),
+            stage_count.3.to_string(),
+            stage_count.4.to_string(),
+            stage_count.5.to_string(),
         ];
         model.metadata.iteration_output.push(row);
 

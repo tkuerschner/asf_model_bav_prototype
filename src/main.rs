@@ -111,6 +111,9 @@ impl SimMetaData {
             simulation_id: "NA".to_string(),
         }
     }
+    pub fn clear(&mut self) {
+        self.iteration_output.clear();
+    }
     
 }
 
@@ -1281,6 +1284,9 @@ fn main() {
         generate_iteration_sim_output_row(&mut model);
 
         all_sim_meta_data.push((iteration, model.metadata.clone()));
+
+        // purge sim_output_row
+        model.metadata.clear();
 
         // Debug print time
 
