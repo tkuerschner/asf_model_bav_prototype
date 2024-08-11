@@ -124,11 +124,11 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
             let dispersing_group = dispersing_by_group.entry(group.group_id as u64).or_insert_with(Vec::new);
             dispersing_group.push(dispersing_individual.clone());
             }
-
+            //log::info!("Number of dispersers: {}", members_to_disperse_indices.len());
         }
      }
     }
-
+    log::info!("Number of dispersers: {}", dispersing_individuals.len());
     // Iterate over dispersing_by_group to create DispersingFemaleGroup instances as needed
     for (group_id, dispersing_individuals) in dispersing_by_group {
         // If there are at least two individuals, create a dispersing group
