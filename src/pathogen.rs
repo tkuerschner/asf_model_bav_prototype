@@ -37,7 +37,7 @@ pub fn infected_in_group(model: &mut Model, _rng: &mut impl Rng, group_nr: usize
     let group = model.groups.iter_mut().find(|group| group.group_id == group_nr).unwrap();
         //iterate though group members
         for member in group.group_members.iter_mut() {
-            if member.health_status == HealthStatus::Infected && member.infection_stage == InfectionStage::Symptomatic {
+            if member.health_status == HealthStatus::Infected && (member.infection_stage == InfectionStage::Symptomatic || member.infection_stage == InfectionStage::HighlyInfectious) {
                 infected = true;
                 break;
             }
@@ -89,6 +89,7 @@ pub fn pathogen_transmission_within_groups(model: &mut Model, rng: &mut impl Rng
                         // Check if transmission is successful
                         if rng.gen_bool(BETA_W * (infection_density_factor + highly_infectious_density_factor)) {
                             member.health_status = HealthStatus::Infected;
+                            member.infection_stage = InfectionStage::Incubation;
                             member.time_of_infection = Some(model.global_variables.current_time);
                         }
                     }
