@@ -166,6 +166,7 @@ pub fn group_carcass_contact_handling(this_group: &mut Groups, rng: &mut impl Rn
                 if individual_carcass_contact_probability(rng) {
                 if rng.gen_bool(BETA_C) {
                     member.health_status = HealthStatus::Infected;
+                    member.infection_stage = InfectionStage::Incubation;
                     member.time_of_infection = Some(time);
                 }
              }
