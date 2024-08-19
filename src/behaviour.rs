@@ -3,8 +3,8 @@ use crate::*;
 
 #[derive(Debug)]
 pub enum GroupBehaviour {
-  Homerange_movement,
-  Exploratory_movement,
+  HomerangeMovement,
+  ExploratoryMovement,
 }
 #[derive(Debug)]
 pub enum DisperserBehaviour {
@@ -21,10 +21,10 @@ impl GroupBehaviour {
 pub fn set_behaviour(&self, behaviour: GroupBehaviour) {
     
     match behaviour {
-        GroupBehaviour::Homerange_movement => {
+        GroupBehaviour::HomerangeMovement => {
             println!("Homerange movement");
         }
-        GroupBehaviour::Exploratory_movement => {
+        GroupBehaviour::ExploratoryMovement => {
             println!("Exploratory movement");
         }
     }

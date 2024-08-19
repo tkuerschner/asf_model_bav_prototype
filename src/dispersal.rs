@@ -397,8 +397,8 @@ fn handle_reached_target(
     grid: &mut Vec<Vec<Cell>>,
     groups: &mut Vec<Groups>,
     rng: &mut impl Rng,
-    groups_to_remove: &mut Vec<usize>,
-    index: usize,
+    _groups_to_remove: &mut Vec<usize>,
+    _index: usize,
     month: u32,
 ) {
     if !is_valid_territory(grid, disperser_group.target_cell.unwrap().0, disperser_group.target_cell.unwrap().1) {

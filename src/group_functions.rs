@@ -1,7 +1,7 @@
 use crate::*;
 
 
-pub fn group_setup(cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, num_groups: usize) -> Vec<Groups> { 
+pub fn group_setup(_cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, num_groups: usize) -> Vec<Groups> { 
 
     // Create individuals with unique IDs, group IDs, and memory
     let mut group: Vec<Groups> = Vec::with_capacity(num_groups);
@@ -147,14 +147,14 @@ pub fn calculate_max_group_size_for_group(grid: &Vec<Vec<Cell>>, group_id: usize
     tmp_size as usize
 }
 
-pub fn count_group_members(group: &Groups) -> usize {
-    group.group_members.len()
-}
-
-pub fn count_dispersers_in_disperser_group(disperser_group: &mut DispersingFemaleGroup) -> usize {
-   disperser_group.dispersing_individuals.len()
-
-}
+//pub fn count_group_members(group: &Groups) -> usize {
+//    group.group_members.len()
+//}
+//
+//pub fn count_dispersers_in_disperser_group(disperser_group: &mut DispersingFemaleGroup) -> usize {
+//   disperser_group.dispersing_individuals.len()
+//
+//}
 
 // function to update the memory of a group
 pub fn update_memory(memory: &mut HashSet<(usize, usize)>, order: &mut Vec<(usize, usize)>, new_cell: (usize, usize), max_size: usize) {
@@ -319,8 +319,8 @@ pub fn free_cells_of_empty_groups(groups: &Vec<Groups>, grid: &mut Vec<Vec<Cell>
 }
 
 pub fn handle_empty_groups(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Cell>>) {
-    delete_groups_without_members(groups);
     free_cells_of_empty_groups(groups, grid);
+    delete_groups_without_members(groups);
 }
 
 //get all group ids

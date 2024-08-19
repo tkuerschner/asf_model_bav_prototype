@@ -647,38 +647,26 @@ pub struct LandscapeMetadata {
 // Define a struct to represent the output
 #[derive(Debug)]
 struct Output {
-    iteration: usize,
-    id: usize,
-    group_id: usize,
-    x: usize,
-    y: usize,
-    sex: String,
-    age: u32,
-    age_class: String,
-    known_cells: Vec<(usize, usize)>,
-    target_cell: Option<(usize, usize)>,
-    core_cell: Option<(usize, usize)>,
-    movement_type: String,
-    remaining_stay_time: usize,
+
 }
 
 // Define a struct to represent the input
-#[derive(Debug)]
-struct Input {
-max_age: u32,
-presence_time_limit: usize,
-move_chance_percentage: usize,
-max_known_cells: usize,
-runtime: usize,
-adult_survival: f64,
-piglet_survival: f64,
-adult_survival_day: f64,
-piglet_survival_day: f64,
-min_stay_time:usize,
-max_stay_time:usize,
-default_daily_movement_distance:usize,
-
-}
+//#[derive(Debug)]
+//struct Input {
+//max_age: u32,
+//presence_time_limit: usize,
+//move_chance_percentage: usize,
+//max_known_cells: usize,
+//runtime: usize,
+//adult_survival: f64,
+//piglet_survival: f64,
+//adult_survival_day: f64,
+//piglet_survival_day: f64,
+//min_stay_time:usize,
+//max_stay_time:usize,
+//default_daily_movement_distance:usize,
+//
+//}
 
 //lazy_static! { //Default values
 //    static ref MAX_AGE: Mutex<u32> = Mutex::new(365 * 12);
@@ -1067,7 +1055,7 @@ fn main() {
         if model.global_variables.day == 1 && model.global_variables.month == 1 {
             log::info!("good year check: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             good_year_check(&mut model, &mut rng); // check if it is a good year
-           // roamer_density_dependent_removal(&mut model); //roamers leave the area i.e. are removed when there are more males then females
+            roamer_density_dependent_removal(&mut model); //roamers leave the area i.e. are removed when there are more males then females
         }
         
         log::info!("Checking and removing empty groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
@@ -1075,8 +1063,9 @@ fn main() {
         check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
         log::info!("Freeing cells of empty groups and deleting group: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
 
-        free_cells_of_empty_groups(&model.groups, &mut model.grid);
-        delete_groups_without_members(&mut model.groups);
+        //free_cells_of_empty_groups(&model.groups, &mut model.grid);
+        //delete_groups_without_members(&mut model.groups);
+        handle_empty_groups(&mut model.groups, &mut model.grid);
         check_for_empty_groups(&mut model.groups);
 
         //test outsource into file TODO

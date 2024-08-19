@@ -24,7 +24,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
 
         //println!("Movement called"); //<------ DEBUG print
 
-        let realign_time = 3; //number of steps before realigning towards the target
+        //let realign_time = 3; //number of steps before realigning towards the target
 
         while group.daily_movement_distance > 0  {
 

@@ -697,6 +697,11 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     
         return;
     }
+
+    if cells_of_group.len() < 10 {
+        println!("Number of cells in group: {}", cells_of_group.len());
+        return;
+    }
         
 
     //get the min x and y coordinates of the group

@@ -207,24 +207,24 @@ impl Clone for InteractionLayer {
     }
 }
 
-// function to go through the tree, for each entity there check if there are OTHER entities in radius 4, if not, remove the entity
-pub fn remove_entities_without_neighbors(interaction_layer: &mut InteractionLayer) {
-    interaction_layer.remove_entities_without_neighbors();
-}
-
-// take the remaining entities and calculate the interactions based on distance 4 - 0.2, 3 - 0.4, 2 - 0.6, 1 - 0.8, 0 - 1.0 then out an entity with this interaction strength into a new kd tree
-
-pub fn calculate_interactions(interaction_layer: &InteractionLayer, query_x: f64, query_y: f64) {
-    let query_point = [query_x, query_y];
-    let nearest_neighbors = interaction_layer.kd_tree.nearest(&query_point, 10, &squared_euclidean).unwrap();
-
-    // Process results (entities closest to query_point)
-    for neighbor in nearest_neighbors {
-        let entity_id = neighbor.1;
-        let entity = &interaction_layer.entities[*entity_id];
-        println!("Entity ID: {}, Coordinates: ({}, {})", entity.individual_id, entity.x, entity.y);
-    }
-}
+//// function to go through the tree, for each entity there check if there are OTHER entities in radius 4, if not, remove the entity
+//pub fn remove_entities_without_neighbors(interaction_layer: &mut InteractionLayer) {
+//    interaction_layer.remove_entities_without_neighbors();
+//}
+//
+//// take the remaining entities and calculate the interactions based on distance 4 - 0.2, 3 - 0.4, 2 - 0.6, 1 - 0.8, 0 - 1.0 then out an entity with this interaction strength into a new kd tree
+//
+//pub fn calculate_interactions(interaction_layer: &InteractionLayer, query_x: f64, query_y: f64) {
+//    let query_point = [query_x, query_y];
+//    let nearest_neighbors = interaction_layer.kd_tree.nearest(&query_point, 10, &squared_euclidean).unwrap();
+//
+//    // Process results (entities closest to query_point)
+//    for neighbor in nearest_neighbors {
+//        let entity_id = neighbor.1;
+//        let entity = &interaction_layer.entities[*entity_id];
+//        println!("Entity ID: {}, Coordinates: ({}, {})", entity.individual_id, entity.x, entity.y);
+//    }
+//}
 
 // function to find out if any other male roamer is withing a radius of 10 cells
 

@@ -3023,3 +3023,18 @@ ggplot()+
 geom_line(data = oneR, aes(x = iteration, y = age))
 
 ```
+
+
+```{r}
+
+grpd1 <- read.csv("./output/all_groups_parallel.csv", header = T)
+
+
+#compare if the content of the two dataframes is the same
+
+identical(groups, grpd1)
+
+head(grpd1)
+head(groups)
+
+```

@@ -15,6 +15,8 @@ kdtree = "0.6"
 crossbeam = "0.8"
 uuid = { version = "1.2", features = ["v4"] }
 
+rayon = "1.7"
+
 #serde = { version = "1", features = ["derive"] }
 #serde_json = "1"
 #lazy_static = "1.4"

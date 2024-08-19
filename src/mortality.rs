@@ -144,13 +144,12 @@ pub fn roamer_density_dependent_removal(model: &mut Model) {
     
     let n_adult_female = model.groups.iter().map(|group| group.group_members.iter().filter(|member| member.age_class == AgeClass::Adult && member.sex == Sex::Female).count()).sum::<usize>();
 
-    let n_roaming_individuals = model.roamers.len();
-
+    let n_roaming_adults = model.roamers.iter().filter(|roamer| roamer.age_class == AgeClass::Adult).count();
     // as long as there are more roamers then adult females, remove random roamer
 
-    if n_roaming_individuals > n_adult_female {
-        let n_to_remove = n_roaming_individuals - n_adult_female;
-        log::info!("Removing {} roamers due to density dependent mortality since there are {} adult females", n_to_remove, n_adult_female);
+    if n_roaming_adults > n_adult_female {
+        let n_to_remove = n_roaming_adults - n_adult_female;
+        log::info!("Removing {} adult male roamers due to density dependent mortality since there are {} adult females", n_to_remove, n_adult_female);
         for _ in 0..n_to_remove {
             let index = rand::thread_rng().gen_range(0..model.roamers.len());
             model.roamers.remove(index);
