@@ -45,7 +45,7 @@ pub fn combined_mortality(surv_prob: &SurvivalProbability, model: &mut Model) {
 
     // Create carcasses for all dead group members outside the loop
     for member in dead_group_members {
-        create_carcass(member, model);
+        create_carcass(&member, model);
     }
 }
 
@@ -84,7 +84,7 @@ pub fn disperser_mortality(
 
     // Create carcasses for all dead dispersing individuals outside the loop
     for member in dead_dispersing_individuals {
-        create_carcass(member, model);
+        create_carcass(&member, model);
     }
 }
 
@@ -113,7 +113,7 @@ pub fn roamer_mortality(surv_prob: &SurvivalProbability, model: &mut Model) {
     });
 
     for member in dead_roamers {
-        create_carcass(member, model);
+        create_carcass(&member, model);
     }
 }
 
@@ -150,7 +150,7 @@ pub fn roamer_density_dependent_removal(model: &mut Model) {
 
     if n_roaming_individuals > n_adult_female {
         let n_to_remove = n_roaming_individuals - n_adult_female;
-        log::info!("Removing {} roamers due to density dependent mortality", n_to_remove);
+        log::info!("Removing {} roamers due to density dependent mortality since there are {} adult females", n_to_remove, n_adult_female);
         for _ in 0..n_to_remove {
             let index = rand::thread_rng().gen_range(0..model.roamers.len());
             model.roamers.remove(index);

@@ -120,11 +120,18 @@ pub fn copy_last_sim_to_active(folder_path: String) {
     }
 
     pub fn count_all_group_members(model: &mut Model) -> usize {
-        let mut count = 0;
+        let mut member_count = 0;
+        let mut female_member_count = 0;
+        let mut male_member_count = 0;
+        let mut female_adult_count: usize = 0;
+        let mut male_adult_count: usize = 0;
+        let mut female_adult_count: usize = 0;
+        let mut male_piglet_count: usize = 0;
+
         for group in model.groups.iter() {
-            count += group.group_members.len();
+            member_count += group.group_members.len();
         }
-        count
+        member_count
     }
 
     pub fn count_all_roamers(model: &mut Model) -> usize {

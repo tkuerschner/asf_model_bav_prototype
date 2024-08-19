@@ -75,6 +75,8 @@ use carcass::*;
 
 mod hunting;
 use hunting::*;
+
+mod behaviour;
 //type InteractionLayer = HashMap<(usize, usize, usize), InteractionCell>;
 
 
@@ -718,7 +720,7 @@ const MAX_AGE: u32 = 365 * 12;
 //const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 //const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 20; 
+const RUNTIME: usize = 365 * 10; 
 //const ADULT_SURVIVAL: f64 = 0.65;
 //const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -873,10 +875,6 @@ pub fn update_counter(globals: &mut GlobalVariables , groups: &mut Vec<Groups>, 
     globals.n_groups = groups.len();
 
     
-    
-    
-   
-
 }
  
 
@@ -898,8 +896,6 @@ pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>
     //let SurvivalProbability {adult = ADULT_SURVIVAL, piglet = PIGLET_SURVIVAL}
     //let mut survival_prob: Vec<SurvivalProbability> = Vec::new();
    
-   
-
     //extract cell info
     let cell_info_list = extract_cell_info(&grid);
 
@@ -1052,7 +1048,7 @@ fn main() {
     model.metadata.simulation_id = sim_id.clone();
 
     
-    // Allocate survival probabilities
+    // Allocate survival probabilitiesall_grom1
     let survival_prob = SurvivalProbability {
         adult: ADULT_SURVIVAL_DAY,
         piglet: PIGLET_SURVIVAL_DAY,
@@ -1071,15 +1067,16 @@ fn main() {
         if model.global_variables.day == 1 && model.global_variables.month == 1 {
             log::info!("good year check: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             good_year_check(&mut model, &mut rng); // check if it is a good year
-            roamer_density_dependent_removal(&mut model); //roamers leave the area i.e. are removed when there are more males then females
+           // roamer_density_dependent_removal(&mut model); //roamers leave the area i.e. are removed when there are more males then females
         }
         
         log::info!("Checking and removing empty groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         check_for_empty_groups(&mut model.groups);
         check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
         log::info!("Freeing cells of empty groups and deleting group: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
-        delete_groups_without_members(&mut model.groups);
+
         free_cells_of_empty_groups(&model.groups, &mut model.grid);
+        delete_groups_without_members(&mut model.groups);
         check_for_empty_groups(&mut model.groups);
 
         //test outsource into file TODO

@@ -2784,6 +2784,52 @@ all_individuals2 <- all_individuals %>%
   theme_minimal()
 
 
+all_roamers <- all_individuals %>% filter(individual_type == "roamer") %>% group_by(iteration, age_class) %>% summarise(n = n())
+
+  ggplot() +  
+  geom_line(data = all_roamers, aes(x = iteration, y = n, color = age_class)) + 
+  labs(title = "Number of roamers over time", x = "Iteration", y = "Number of roamers") +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+all_roamers2 <- all_individuals %>% filter(individual_type == "roamer") %>% group_by(iteration) %>% summarise(n = n())
+
+
+ ggplot() +  
+  geom_line(data = all_roamers2, aes(x = iteration, y = n)) + 
+  labs(title = "Number of roamers over time", x = "Iteration", y = "Number of roamers") +
+  scale_color_manual(values = c("#CD5555", "black", "#1874CD")) +
+  theme_minimal()
+
+all_roamers3 <- all_individuals %>% filter(individual_type == "roamer") %>% group_by(iteration, roamer_id, age) %>% summarise(n = n())
+
+ggplot()+
+geom_line(data = all_roamers3, aes(x = iteration, y = age, color = as.factor(roamer_id)))+
+labs(title = "age", x = "Iteration", y = "age")+
+theme_minimal() +
+theme(legend.position = "none")
+#scale_color_manual(values = c("#CD5555", "black", "#1874CD"))+
+
+all_roamers4 <- all_individuals %>% filter(individual_type == "roamer") %>% group_by(iteration, roamer_id, age, age_class) %>% summarise(n = n())
+
+ggplot()+
+geom_line(data = all_roamers4, aes(x = iteration, y = age, color = as.factor(roamer_id)))+
+labs(title = "age", x = "Iteration", y = "age")+
+facet_wrap(~age_class)+
+theme_minimal() +
+theme(legend.position = "none")
+
+
+all_grom1 <- all_individuals %>% filter(individual_type == "group_member" , sex == "female", age_class != "Piglett") %>% group_by(iteration, individual_id, age, age_class) %>% summarise(n = n())
+
+
+ggplot()+
+geom_line(data = all_grom1, aes(x = iteration, y = age, color = as.factor(individual_id)))+
+labs(title = "age", x = "Iteration", y = "age")+
+facet_wrap(~age_class)+
+theme_minimal() +
+theme(legend.position = "none")
+
 
 
 ```
@@ -2854,8 +2900,126 @@ theme_minimal()
 
 #put all plots in a grid
 library(gridExtra)
-grid.arrange(all_i, all_inf, all_dead, all_roa, all_disp, all_inc, all_sus, all_sym, all_hinf, all_rec, ncol = 2)
+grid.arrange(all_i, all_roa, all_disp, all_sus, all_inf, all_dead,  all_inc, all_sym, all_hinf, all_rec, ncol = 2)
 
 
+#number of adult females over time
+
+ai2 <- all_individuals %>%
+  filter(age_class  == "Adult", sex == "female") %>%
+  group_by(iteration) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_line(data = ai2, aes(x = iteration, y = n)) +
+  labs(title = "Number of female adults over time", x = "Iteration", y = "Number of female adults") +
+  theme_minimal()
+
+
+ai3 <- all_individuals %>%
+  filter(age_class  == "Adult", sex == "male") %>%
+  group_by(iteration) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_line(data = ai3, aes(x = iteration, y = n)) +
+  labs(title = "Number of male adults over time", x = "Iteration", y = "Number of male adults") +
+  theme_minimal()
+
+ai4 <- all_individuals %>%
+  filter(age_class  == "Yearling", sex == "male") %>%
+  group_by(iteration) %>%
+  summarise(n = n())
+
+  ggplot() +
+  geom_line(data = ai4, aes(x = iteration, y = n)) +
+  labs(title = "Number of male adults over time", x = "Iteration", y = "Number of male adults") +
+  theme_minimal()
+
+
+```
+
+```{r}
+
+c1 <- carcasses 
+
+#plot carcases over time
+
+c2 <- c1 %>%
+  group_by(iteration, is_infected, age_class ) %>%
+  summarise(n_carcasses = n())
+  head(c2)
+
+ggplot()+
+geom_line(data = c2, aes(x = iteration, y = n_carcasses, color = age_class)) +
+labs(title = "Number of carcasses over time", x = "Iteration", y = "Number of carcasses") +
+facet_wrap(~is_infected) +
+theme_minimal()
+
+```
+
+```{r}
+
+#numer of groups over time and number of members per group as a seperate plot
+
+g1 <- groups %>%
+  group_by(iteration) %>%
+  summarise(n_groups = n_distinct(group_id))
+
+g2 <- groups %>%
+  group_by(iteration, group_id) %>%
+  summarise(n_members = n())
+
+  ggplot() +
+  geom_line(data = g1, aes(x = iteration, y = n_groups)) +
+  labs(title = "Number of groups over time", x = "Iteration", y = "Number of groups") +
+  theme_minimal()
+
+  ggplot() +
+  geom_line(data = g2, aes(x = iteration, y = n_members)) +
+  labs(title = "Number of group members over time", x = "Iteration", y = "Number of group members") +
+  facet_wrap(~group_id) +
+  theme_minimal()
+
+
+ g8 <- groups %>% 
+ filter(group_id == 4) %>% 
+  group_by(iteration) %>%
+  summarise(n_members = n())
+
+
+ #plot individual vount of group 8 over time
+
+  g8  %>%
+  ggplot() +
+  geom_line(aes(x = iteration, y = n_members)) +
+  labs(title = "Number of group members over time", x = "Iteration", y = "Number of group members") +
+  theme_minimal()
+
+  #plot territoy of group 8 over time
+head(g4)
+
+
+  g4 %>% filter(territory_of_group == 4) %>%
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") 
+
+
+  head(all_individuals)
+
+  allr <- all_individuals %>% filter(individual_type == "roamer")
+
+head(allr)
+
+
+oneR <- allr %>% filter(individual_id == 11)
+
+
+unique(oneR$age_class )
+
+ggplot()+
+geom_line(data = oneR, aes(x = iteration, y = age))
 
 ```

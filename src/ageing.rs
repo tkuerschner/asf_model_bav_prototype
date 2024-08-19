@@ -134,13 +134,16 @@ pub fn ageing(model: &mut Model) {
         s.spawn(move |_| {
             for roamer in &mut * roamers {
                 roamer.age += 1;
-                roamer.age_class = if roamer.age < PIGLET_AGE {
-                    AgeClass::Piglet
-                } else if roamer.age < YEARLING_AGE {
-                    AgeClass::Yearling
-                } else {
-                    AgeClass::Adult
-                };
+                if roamer.age_class != AgeClass::Adult {
+                 roamer.age_class = if roamer.age < PIGLET_AGE {
+                     AgeClass::Piglet
+                 } else if roamer.age < YEARLING_AGE {
+                     AgeClass::Yearling
+                 } else {
+                    // println!("Roamer {} grew up: {}", roamer.individual_id ,roamer.age);
+                     AgeClass::Adult
+                 };
+                }
 
                 if roamer.age >= MAX_AGE {
                     let mut age_mortality = age_mortality_clone.lock().unwrap();

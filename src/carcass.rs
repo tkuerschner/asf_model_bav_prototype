@@ -99,9 +99,8 @@ pub struct Carcass {
     pub age_class: AgeClass,
 }
 
-pub fn create_carcass<T: CarcassSource>(
-    source: T,
-    model: &mut Model,
+pub fn create_carcass(
+    source: &dyn CarcassSource, model: &mut Model
     
 ) {
 
@@ -182,3 +181,4 @@ pub fn individual_carcass_contact_probability(rng: &mut impl Rng) -> bool {
         false
     }
 }
+
