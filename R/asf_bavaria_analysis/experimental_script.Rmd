@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 158      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 160      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -86,7 +86,6 @@ disp_event <- dispersers
 
 gr1 <- groups %>%
   group_by(iteration) %>%
-  filter(group_id == 12) %>%
   sample_n(1)
 
 #gr1 <- groups %>% filter(group_id == 2) %>% group_by(iteration) #%>%
@@ -234,8 +233,7 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/example_hr_",it,".png"), grp_pat
 
 
 grp1 <- groups %>%
-  group_by(iteration) %>% 
-  filter(group_id == 12) %>%
+  group_by(iteration) %>%
   sample_n(1)
 
 # Create a new dataframe with multiple rows per iteration
@@ -2834,6 +2832,22 @@ theme(legend.position = "none")
 
 
 
+#number of all adult females over time
+
+all_grom2 <- all_individuals %>% filter(individual_type == "group_member" , sex == "female", age_class == "Adult") %>% group_by(iteration) %>% summarise(n = n())
+
+ggplot()+
+geom_line(data = all_grom2, aes(x = iteration, y = n))
+
+
+# all adult roamers
+
+all_grom3 <- all_individuals %>% filter(individual_type == "roamer", sex == "male", age_class == "Adult") %>% group_by(iteration) %>% summarise(n = n())
+
+ggplot()+
+geom_line(data = all_grom3, aes(x = iteration, y = n))
+
+
 ```
 
 ```{r sum_output}
@@ -3028,15 +3042,52 @@ geom_line(data = oneR, aes(x = iteration, y = age))
 
 
 ```{r}
+head(all_individuals)
 
-grpd1 <- read.csv("./output/all_groups_parallel.csv", header = T)
+inflocal <- all_individuals %>% filter(health_status != "Susceptible", health_status != "Dead", health_status != "Recovered") %>% group_by(iteration, health_status, x , y) %>% summarise(n = n())
+
+#animate infected individual heatmap over time
+for( i in 200:max(inflocal$iteration)){
+inflocal2 <- inflocal %>% filter(iteration <= i)
+plot_inflocal <- ggplot() +
+  geom_tile(data = g2, aes(x = x, y = y, fill = quality), na.rm = TRUE) +
+  scale_fill_gradient(low = "#def2e5", high = "#585d58", na.value="white") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = inflocal2, aes(x = x, y = y, fill = n)) +
+  scale_fill_gradient(low = "#eac4c4", high = "red") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20),
+    legend.position = "none"  
+  )
+
+ggsave(paste0("./R/asf_bavaria_analysis/visuals/infmap/infected_individuals_map_",i,".png"), plot_inflocal, width = 25, height = 25, units = "cm", dpi = 300)
+
+}
+
+animated_plot_inflocal <- plot_inflocal +
+  transition_reveal(iteration) +
+  labs(fill = "Number of infected individuals", title = "Day: {frame_along}") +
+  enter_fade() +
+  exit_fade()
+
+anim_save("./R/asf_bavaria_analysis/visuals/infected_individuals_animation.gif", animate(animated_plot_inflocal))
 
 
-#compare if the content of the two dataframes is the same
 
-identical(groups, grpd1)
 
-head(grpd1)
-head(groups)
+```
+
+
+
+```{r}
+
+
+
 
 ```

@@ -718,10 +718,10 @@ const MAX_STAY_TIME: usize = 14;
 const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
 const GODD_YEAR_CHANCE: usize = 15; // 15% chance of a good year
 const BURN_IN_PERIOD: usize = 0; // 365 * 2; // 2 years burn in period
-const BETA_W: f64 = 0.01; // within group transmission rate // FIX ME
+const BETA_W: f64 = 0.25; // within group transmission rate // FIX ME
 const BETA_B: f64 = 0.001; // between group transmission rate // FIX ME
 const BETA_C: f64 = 0.9; // carcass transmission rate // FIX ME
-const CARCASS_CONTACT_PROB : f64 = 0.01; // carcass contact probability // FIX ME
+const CARCASS_CONTACT_PROB : f64 = 0.25; // carcass contact probability // FIX ME
 const P_SYMPTOMATIC: f64 = 0.9; // probability of being symptomatic // FIX ME
 
 
