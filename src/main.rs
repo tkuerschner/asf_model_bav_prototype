@@ -1179,7 +1179,7 @@ fn main() {
          //mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality);                    //   <-----------------temp OFF
          log::info!("Mortality: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
            // combined_mortality(&survival_prob, &mut groups, &mut global_variables.random_mortality, &mut global_variables.overcapacity_mortality);
-            execute_mortality(&mut model, &survival_prob)
+            execute_mortality(&mut model, &survival_prob);
         }
 
         log::info!("Carcass handling: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);

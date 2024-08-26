@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 157      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 158      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -86,6 +86,7 @@ disp_event <- dispersers
 
 gr1 <- groups %>%
   group_by(iteration) %>%
+  filter(group_id == 12) %>%
   sample_n(1)
 
 #gr1 <- groups %>% filter(group_id == 2) %>% group_by(iteration) #%>%
@@ -233,7 +234,8 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/example_hr_",it,".png"), grp_pat
 
 
 grp1 <- groups %>%
-  group_by(iteration) %>%
+  group_by(iteration) %>% 
+  filter(group_id == 12) %>%
   sample_n(1)
 
 # Create a new dataframe with multiple rows per iteration
