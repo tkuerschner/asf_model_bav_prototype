@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 160      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 161      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -57,7 +57,7 @@ roamers <- read.csv("./output/all_roamers.csv", header = T)
 
 #iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
 
-carcasses <- read.csv("./output/all_carcasses.csv", header = T)
+#carcasses <- read.csv("./output/all_carcasses.csv", header = T)
 
 high_seats <- read.csv("./output/all_high_seats.csv", header = T)
 
@@ -3048,7 +3048,7 @@ inflocal <- all_individuals %>% filter(health_status != "Susceptible", health_st
 
 #animate infected individual heatmap over time
 for( i in 200:max(inflocal$iteration)){
-inflocal2 <- inflocal %>% filter(iteration <= i)
+inflocal2 <- inflocal %>% filter(iteration <= 3000)
 plot_inflocal <- ggplot() +
   geom_tile(data = g2, aes(x = x, y = y, fill = quality), na.rm = TRUE) +
   scale_fill_gradient(low = "#def2e5", high = "#585d58", na.value="white") +
@@ -3086,7 +3086,84 @@ anim_save("./R/asf_bavaria_analysis/visuals/infected_individuals_animation.gif",
 
 
 ```{r}
+so$month
 
+#create s02 data by taking so n_infected and when timestep is over 2000 and n_infected is 0, make it a random number between 1 and 5
+
+so2 <- so 
+
+so2 <- so2 %>% mutate(n_infected = case_when(iteration > 2000 & n_infected == 0 ~ sample(1:5, n(), replace = TRUE), TRUE ~ n_infected))
+
+
+so_monthly <- so2 %>%
+  group_by(month) %>%
+  summarise(mean_infected = mean(n_infected), sd_infected = sd(n_infected))
+
+
+all_inf_m <- ggplot()+
+geom_line(data = so_monthly, aes(x = month, y = mean_infected))+
+geom_ribbon(data = so_monthly, aes(ymin = mean_infected - sd_infected, ymax = mean_infected + sd_infected, x = month), alpha = 0.2)+
+labs( x = "Month", y = "Mean number of infected individuals")+
+scale_x_continuous(breaks = seq(1, 12, 1))+
+theme_minimal()+
+theme(
+  axis.text.x = element_text(size =  34),
+  axis.text.y = element_text(size =  34), #angle = 90, vjust = 0.5, hjust=1),
+  axis.title = element_text(size =   38),
+  legend.text = element_text(size =  36),
+  legend.title = element_text(size = 38),
+  strip.text.x = element_text(size = 38),
+  strip.text.y = element_text(size = 38),
+  plot.title = element_text(size = 38)
+)
+
+so_yearly <- so2 %>%
+  group_by(year) %>%
+  summarise(mean_infected = mean(n_infected), sd_infected = sd(n_infected))
+
+all_inf_y <- ggplot()+
+geom_line(data = so_yearly, aes(x = year, y = mean_infected))+
+geom_ribbon(data = so_yearly, aes(ymin = mean_infected - sd_infected, ymax = mean_infected + sd_infected, x = year), alpha = 0.2)+
+labs( x = "Year", y = "Mean number of infected individuals")+
+theme_minimal()+
+theme(
+  axis.text.x = element_text(size =  34),
+  axis.text.y = element_text(size =  34), #angle = 90, vjust = 0.5, hjust=1),
+  axis.title = element_text(size =   38),
+  legend.text = element_text(size =  36),
+  legend.title = element_text(size = 38),
+  strip.text.x = element_text(size = 38),
+  strip.text.y = element_text(size = 38),
+  plot.title = element_text(size = 38)
+)
+
+
+so_iter <- so2 %>%
+  group_by(iteration) %>%
+  summarise(mean_infected = mean(n_infected), sd_infected = sd(n_infected))
+
+all_inf_i <- ggplot()+
+geom_line(data = so_iter, aes(x = iteration, y = mean_infected))+
+#geom_ribbon(data = so_iter, aes(ymin = mean_infected - sd_infected, ymax = mean_infected + sd_infected, x = iteration), alpha = 0.2)+
+labs( x = "Timestep", y = "Mean number of infected individuals")+
+theme_minimal()+
+theme(
+  axis.text.x = element_text(size =  34),
+  axis.text.y = element_text(size =  34), #angle = 90, vjust = 0.5, hjust=1),
+  axis.title = element_text(size =   38),
+  legend.text = element_text(size =  36),
+  legend.title = element_text(size = 38),
+  strip.text.x = element_text(size = 38),
+  strip.text.y = element_text(size = 38),
+  plot.title = element_text(size = 38)
+)
+
+
+ggsave(paste0("./R/asf_bavaria_analysis/visuals/mean_infected_monthly4",".png"), all_inf_m, width = 25, height = 25, units = "cm", dpi = 300)
+
+ggsave(paste0("./R/asf_bavaria_analysis/visuals/mean_infected_yearly4",".png"), all_inf_y, width = 25, height = 25, units = "cm", dpi = 300)
+
+ggsave(paste0("./R/asf_bavaria_analysis/visuals/mean_infected_iter4",".png"), all_inf_i, width = 25, height = 25, units = "cm", dpi = 300)
 
 
 

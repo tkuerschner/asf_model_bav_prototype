@@ -172,13 +172,20 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                             .into_iter()
                             .filter(|&ap| ap != closest_ap)
                             .collect();
-
+                        if other_aps.is_empty() {
+                        //random cell in trerritory
+                        let random_cell = get_random_cell_in_territory(&model.grid, group.group_id, rng);
+                        new_target_cell = random_cell;
+                        println!("No other attraction points in territory of group {}, selecting random location in territory", group.group_id);
+                        
+                        } else {
                         // Choose a random target cell from the remaining attraction points
                              new_target_cell = other_aps
                             .choose(rng)
                             .cloned()
-                            .expect("No other attraction points in territory");
+                            .expect(&format!("No other attraction points in territory of group {}", group.group_id));
                         }
+                            }
                         group.set_target_cell(new_target_cell);
                         group.remaining_stay_time = rng.gen_range(MIN_STAY_TIME..MAX_STAY_TIME);
 
@@ -186,7 +193,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                        // group.target_cell = None;
                         
                         break;
-                    }
+                    } 
 
                     
                     // if distance to current ap is more than 3 cells individuals more back towards the ap

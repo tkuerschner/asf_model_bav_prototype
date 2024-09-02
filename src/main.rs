@@ -2,6 +2,7 @@ use rand::Rng;
 use rand::seq::SliceRandom;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rayon::iter;
 //use rand_distr::num_traits::int;
 //use core::time;
 use std::collections::HashSet;
@@ -718,11 +719,11 @@ const MAX_STAY_TIME: usize = 14;
 const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
 const GODD_YEAR_CHANCE: usize = 15; // 15% chance of a good year
 const BURN_IN_PERIOD: usize = 0; // 365 * 2; // 2 years burn in period
-const BETA_W: f64 = 0.25; // within group transmission rate // FIX ME
+const BETA_W: f64 = 0.05; // within group transmission rate // FIX ME
 const BETA_B: f64 = 0.001; // between group transmission rate // FIX ME
-const BETA_C: f64 = 0.9; // carcass transmission rate // FIX ME
-const CARCASS_CONTACT_PROB : f64 = 0.25; // carcass contact probability // FIX ME
-const P_SYMPTOMATIC: f64 = 0.9; // probability of being symptomatic // FIX ME
+const BETA_C: f64 = 0.6; // carcass transmission rate // FIX ME
+const CARCASS_CONTACT_PROB : f64 = 0.10; // carcass contact probability // FIX ME
+const P_SYMPTOMATIC: f64 = 0.5; // probability of being symptomatic // FIX ME
 
 
 
@@ -1110,9 +1111,16 @@ fn main() {
 
 
       //FIX ME TESTER
-        if iteration == 200 {
+        if iteration == 1200  || iteration == 1400 || iteration == 1800  {
             experimental_outbreak(&mut model);
         }
+
+       //if iteration above 500 and then every 25 itertaion
+       if  iteration > 1500 && iteration % 25 == 0 {
+           //check if there are any infected individuals
+       
+       experimental_outbreak2(&mut model);
+       }
 
 
 

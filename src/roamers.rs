@@ -573,6 +573,9 @@ fn select_target_group(roamer: &mut RoamingIndividual, rng: &mut impl Rng) -> Op
     
     // Select a random group from the known groups
     let target_group = roamer.known_groups.choose(rng);
+    if target_group.is_none() {
+        return Some(0);
+    }
     //log::info!("Roamer {:?} selected target group: {:?}", roamer.roamer_id, target_group.unwrap());
     roamer.target_group = Some(*target_group.unwrap());
     roamer.target_group

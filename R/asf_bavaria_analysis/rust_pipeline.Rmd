@@ -38,5 +38,21 @@ print(output_data)
 
 
 
+system2("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype/target/debug/asf_model_bav_prototype.exe", stdout = TRUE)
+
+
+system2("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype/target/debug/asf_model_bav_prototype.exe", stdout = TRUE)
+
+system2("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype/target/debug/asf_model_bav_prototype.exe", stdout = TRUE)
+
+system2("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype/target/debug/asf_model_bav_prototype.exe", stdout = TRUE)
+
+system2("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype/target/debug/asf_model_bav_prototype.exe", stdout = TRUE)
+
+system2("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype/target/debug/asf_model_bav_prototype.exe", stdout = TRUE)
+
+system2("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype/target/debug/asf_model_bav_prototype.exe", stdout = TRUE)
+
+
 ```
 

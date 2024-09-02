@@ -296,7 +296,27 @@ pub fn remove_dead_individuals(model: &mut Model) {
 pub fn experimental_outbreak(model: &mut Model){
 
     for c in model.carcasses.iter_mut(){
-        c.is_infected = true;
+        // 50 50 chance of carcass being infected
+        let infected = rand::thread_rng().gen_bool(0.25);
+        if infected {
+            c.is_infected = true;
+        }
+
+        //c.is_infected = true;
+    }
+
+}
+
+pub fn experimental_outbreak2(model: &mut Model){
+
+    for c in model.carcasses.iter_mut(){
+        // 50 50 chance of carcass being infected
+        let infected = rand::thread_rng().gen_bool(0.01);
+        if infected {
+            c.is_infected = true;
+        }
+
+        //c.is_infected = true;
     }
 
 }

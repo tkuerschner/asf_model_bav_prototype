@@ -544,6 +544,16 @@ pub fn get_attraction_points_in_territory(grid: &Vec<Vec<Cell>>, group_id: usize
         .collect()
 }
 
+pub fn get_random_cell_in_territory(grid: &Vec<Vec<Cell>>, group_id: usize, rng: &mut impl Rng) -> (usize, usize) {
+    loop {
+        let x = rng.gen_range(0..grid.len());
+        let y = rng.gen_range(0..grid[0].len());
+        if grid[x][y].territory.taken_by_group == group_id {
+            return (x, y);
+        }
+    }
+}
+
 //function to remove attraction points that are on cells with quality 0
 pub fn remove_ap_on_cells_with_quality_0(grid: &mut Vec<Vec<Cell>>) {
     for row in grid.iter_mut() {
@@ -683,7 +693,7 @@ pub fn check_surrounding(cells: &Vec<Vec<Cell>>, x: usize, y: usize, extent: usi
     false
 }
 
-pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id: usize, num_points: usize, rng: &mut impl Rng) {
+pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id: usize, num_points: usize, rng: &mut impl Rng) -> bool  {
    
     //get the cells of the group
     let cells_of_group: Vec<(usize, usize)> = grid
@@ -695,13 +705,17 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     if cells_of_group.is_empty() {
         println!("No cells in group!!"); // FIX ME find a proper way to deal with those groups
     
-        return;
+        return false;
     }
 
-    if cells_of_group.len() < 10 {
-        println!("Number of cells in group: {}", cells_of_group.len());
-        return;
+    if cells_of_group.len() < 25 {
+        println!("Number of cells in group: {} < min cell count", cells_of_group.len());
+        print!("Group: {} will be deleted", group_id);
+
+        return false;
     }
+
+
         
 
     //get the min x and y coordinates of the group
@@ -815,19 +829,27 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
            //  println!("Number of ap in group after adding new ones: {}", ap_count);
             }
 
-
+return true;
 }
 
 // function to check all groups territory and if there are no attraction points call place additional attraction points in territopry
 pub fn check_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, num_points: usize, rng: &mut impl Rng) {
+    let mut groups_to_delete: Vec<usize> = Vec::new();
     for group in groups.iter_mut() {
         let group_ap = get_attraction_points_in_territory(grid, group.group_id);
         if group_ap.is_empty() {
-            place_attraction_points_in_territory(grid, group.group_id, num_points, rng);
+            if place_attraction_points_in_territory(grid, group.group_id, num_points, rng) == false {
+                groups_to_delete.push(group.group_id);
+            }
             if group_ap.is_empty() { 
                 println!("ERROR: No attraction points in territory after trying to placing new ones");
             }
         }
+    }
+    //delete groups with no attraction points
+    for group_id in groups_to_delete {
+        groups.retain(|group| group.group_id != group_id);
+        println!("Group {} deleted", group_id);
     }
 }
 
@@ -845,20 +867,31 @@ pub fn dynamic_ap(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut
     if globals.year > 2 && ((globals.day == 1 ) || (globals.day == 10 ) || (globals.day == 19 )){ // FIX ME: changed to 3 times a month
        // println!("Dynamic AP placement");
        //log::info!("Dynamic AP placement");
+       let mut groups_to_delete: Vec<usize> = Vec::new();
         for group in groups.iter_mut() {
         
             if globals.year > 2 && globals.month == 7 && globals.day == 1 {
                 remove_non_core_attraction_points_this_group(grid, group.group_id);
                 remove_non_core_attraction_points_this_group(grid, group.group_id);
-                place_attraction_points_in_territory(grid, group.group_id, 6, rng);
+                if place_attraction_points_in_territory(grid, group.group_id, 6, rng) == false {
+                    groups_to_delete.push(group.group_id);
+                }
+
                 group.current_ap = get_attraction_points_in_territory(grid, group.group_id);
             } else if globals.year > 2 && globals.month == 10 && globals.day == 1  {
                 remove_non_core_attraction_points_this_group(grid, group.group_id);
                 remove_non_core_attraction_points_this_group(grid, group.group_id);
-                place_attraction_points_in_territory(grid, group.group_id, 3, rng);
+                if place_attraction_points_in_territory(grid, group.group_id, 3, rng) == false {
+                    groups_to_delete.push(group.group_id);
+                }
                 group.current_ap = get_attraction_points_in_territory(grid, group.group_id);
             }
 
+        }
+        //delete groups with no attraction points
+        for group_id in groups_to_delete {
+            groups.retain(|group| group.group_id != group_id);
+            println!("Group {} deleted", group_id);
         }
         //println!("Dynamic AP placement done");
     }
