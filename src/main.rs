@@ -2,7 +2,7 @@ use rand::Rng;
 use rand::seq::SliceRandom;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use rayon::iter;
+//use rayon::iter;
 //use rand_distr::num_traits::int;
 //use core::time;
 use std::collections::HashSet;
