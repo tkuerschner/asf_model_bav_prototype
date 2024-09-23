@@ -320,3 +320,35 @@ pub fn experimental_outbreak2(model: &mut Model){
     }
 
 }
+
+
+pub fn experimental_outbreak3(model: &mut Model){
+
+    
+    // iterate through groups
+    for group in &mut model.groups {
+
+
+        //get first group member
+        let member = &mut group.group_members[0];
+        
+        member.health_status = HealthStatus::Infected;
+        member.infection_stage = InfectionStage::Incubation;
+        member.time_of_infection = Some(model.global_variables.current_time);
+
+
+        // iterate through group members
+        //for member in &mut group.group_members {
+        //    // 50 50 chance of member being infected
+        //    let infected = rand::thread_rng().gen_bool(0.01);
+        //    if infected {
+        //        member.health_status = HealthStatus::Infected;
+        //        member.infection_stage = InfectionStage::Incubation;
+        //        member.time_of_infection = Some(model.global_variables.current_time);
+        //    }
+        //}
+    }
+
+
+
+}

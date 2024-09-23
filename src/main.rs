@@ -1,7 +1,9 @@
+
 use rand::Rng;
 use rand::seq::SliceRandom;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rayon::iter;
 //use rayon::iter;
 //use rand_distr::num_traits::int;
 //use core::time;
@@ -933,7 +935,7 @@ fn main() {
     let mut rng = rand::thread_rng();
     let seed = [0u8; 32]; // or any other seed
     let mut rng2: StdRng = SeedableRng::from_seed(seed);
-    let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 1;//25; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
   //let file_path = "input/landscape/test.asc";
@@ -1111,17 +1113,24 @@ fn main() {
 
 
       //FIX ME TESTER
-        if iteration == 1200  || iteration == 1400 || iteration == 1800  {
-            experimental_outbreak(&mut model);
-        }
+    //    if iteration == 1200  || iteration == 1400 || iteration == 1800  {
+    //        experimental_outbreak(&mut model);
+    //    }
+//
+    //   //if iteration above 500 and then every 25 itertaion
+    //   if  iteration > 1500 && iteration % 25 == 0 {
+    //       //check if there are any infected individuals
+    //   
+    //   experimental_outbreak2(&mut model);
+    //   }
+//
+//
+//
 
-       //if iteration above 500 and then every 25 itertaion
-       if  iteration > 1500 && iteration % 25 == 0 {
-           //check if there are any infected individuals
-       
-       experimental_outbreak2(&mut model);
-       }
+      if iteration > 1000 {
 
+        experimental_outbreak3(&mut model);
+      }
 
 
 
@@ -1324,7 +1333,7 @@ fn main() {
     // Ensure directory creation is flushed to stdout
     std::io::stdout().flush().unwrap();
 
-    save_outputs(&folder_name, all_grid_states, all_group_states, all_global_variables, all_disperser_states, all_roamer_states, all_carcass_states, all_high_seat_states, all_hunting_statistics, folder_path.clone(), all_sim_meta_data);
+    save_outputs(&folder_name, all_grid_states, all_group_states, all_global_variables, all_disperser_states, all_roamer_states, all_carcass_states, all_high_seat_states, all_hunting_statistics, all_interaction_layers, folder_path.clone(), all_sim_meta_data);
 
     let save_time = Instant::now();
     let time_taken_save = save_time.duration_since(end_time);
@@ -1343,4 +1352,17 @@ fn main() {
     fs::remove_file(log_file).expect("Failed to remove original log file");
 
 }
+
+/*
+ This module represents the main file of the ASF Bavaria prototype.
+ It contains various imports, module declarations, and struct definitions.
+ The `Model` struct represents the main simulation model, containing information about groups, grid, variables, and other entities.
+ The `SimMetaData` struct represents metadata for the simulation, including iteration output and simulation ID.
+ The `Groups` struct represents a group of individuals, with properties such as group ID, position, members, and movement.
+ The `GroupMember` struct represents an individual within a group, with properties such as age, sex, health status, and infection status.
+ The module also includes various sub-modules for specific functionalities such as grid functions, saving to CSV, ageing, reproduction, and more.
+ The code also includes various helper functions for manipulating groups, territories, and other entities.
+ Overall, this code serves as the foundation for running a simulation of ASF (African Swine Fever) in Bavaria.
+
+*/
 

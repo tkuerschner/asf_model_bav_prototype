@@ -40,7 +40,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 161      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 164      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -55,9 +55,9 @@ dispersers <- read.csv("./output/all_dispersers.csv", header = T)
 
 roamers <- read.csv("./output/all_roamers.csv", header = T)
 
-#iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
+iLayer <- read.csv("./output/all_interaction_layer.csv", header = T)
 
-#carcasses <- read.csv("./output/all_carcasses.csv", header = T)
+carcasses <- read.csv("./output/all_carcasses.csv", header = T)
 
 high_seats <- read.csv("./output/all_high_seats.csv", header = T)
 
@@ -67,7 +67,7 @@ sum_output <- read.csv("./output/all_sim_output_data.csv", header = T)
 ```
 
 ```{r data prep}
-g1 <- grid # %>% filter(iteration == 1)
+g1 <- grid # %>% filter(iteration == 1)%>%
 
 g2 <- g1 %>% mutate(quality = case_when(quality == -9999 ~ 0))
 
@@ -3165,6 +3165,445 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/mean_infected_yearly4",".png"), 
 
 ggsave(paste0("./R/asf_bavaria_analysis/visuals/mean_infected_iter4",".png"), all_inf_i, width = 25, height = 25, units = "cm", dpi = 300)
 
+
+
+```
+
+
+```{r}
+
+#get only groups 1 to 27
+
+
+
+gt3 <- groups %>% filter(group_id %in% c(3,9,27))
+
+
+gr1a <- groups %>%
+  filter(group_id %in% c(3,9,27)) %>%
+  group_by(iteration) %>%
+  sample_n(1)
+
+#gr1 <- groups %>% filter(group_id == 2) %>% group_by(iteration) #%>%
+  #sample_n(1)
+
+# head(gr1)
+
+# gr1$target_cell
+
+gr1a <- gr1a %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)
+
+gr2 <- gr1a %>%
+  ungroup() %>%
+  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id)
+
+buffer_size <- 20
+
+
+terr_data2 <- g4 %>%
+  filter(territory_of_group %in% c(3,9,27)) %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+
+  dplyr::select(x, y, quality,iteration, territory_of_group)
+
+mpz_data2 <- g2 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
+
+ap_data2 <- g3 %>%
+filter(territory_of_group %in% c(3,9,27)) %>%
+ filter(
+   x >= min(gr2$x) - buffer_size &
+     x <= max(gr2$x) + buffer_size &
+     y >= min(gr2$y) - buffer_size &
+     y <= max(gr2$y) + buffer_size
+ ) %>%
+  
+  dplyr::select(x, y,iteration)
+
+
+grp_path_bp2 <- ggplot() +
+  geom_tile(data = mpz_data2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data2, aes(x = x, y = y, fill = as.factor(territory_of_group)), alpha = .5) +
+  #scale_fill_brewer(palette = "Set3") +
+  #cale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  #guides(fill = "none") +
+  #geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
+  #geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 1) +
+  #geom_point(data = gr2, aes(tx, ty, group = group_id), fill = "#c02ad3", colour = "#c02ad3", size = 2, shape = 8) +
+  #new_scale_fill() +
+  geom_point(data = ap_data2, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  new_scale_color() +
+  #geom_point(data = disp_event, aes(disperser_group_x, disperser_group_y, color = as.factor(disperser_id)),size = 1)+
+  #geom_path(data = disp_event, aes(disperser_group_x, disperser_group_y, color =  as.factor(disperser_id)),size = 1)+
+  #labs(title = "Day: {frame_along}", color = "Movement") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+
+
+grp1 <- groups %>%
+  group_by(iteration) %>%
+  filter(group_id %in% c(3,9,27))  %>%
+  sample_n(1)
+
+# Create a new dataframe with multiple rows per iteration
+
+detailed_path_df <- grp1 %>%
+  group_by(iteration) %>%
+  mutate(known_cells = gsub("\\[|\\]", "", known_cells)) %>%
+  mutate(x = strsplit(as.character(known_cells), ";")) %>%
+  unnest(x) %>%
+  separate(x, into = c("x", "y"), sep = "_", convert = TRUE) %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE) %>%
+  dplyr::select(-known_cells)
+
+
+  # Calculate space use
+space_use <- detailed_path_df %>%
+  count(x, y)
+
+
+  
+spuseplot <- ggplot() +
+  geom_tile(data = mpz_data2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data2, aes(x = x, y = y, fill = quality), alpha = .5) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  guides(fill = "none") +
+  new_scale_fill() +
+  geom_tile(data = space_use, aes(x = x, y = y, fill = log(n)), alpha = .5) +
+  scale_fill_scico(palette = "berlin") +
+  #labs(fill = "Space use", title = "Day: {current_frame}") #+
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+# geom_path(data = gr2, aes(x = x, y = y),  linewidth = .5, , color = "black", linetype = "dashed") +
+# geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 1) +
+# geom_point(data = gr2, aes(tx, ty), fill = "#c02ad3", colour = "#c02ad3", size = 3, shape = 8) +
+# new_scale_fill() +
+# geom_point(data = ap_data, aes(x = x, y = y), size = 1, color = "#003cff", fill = "blue", shape = 22) +
+# labs(title = "Day: {frame_time}", fill = "Space use", color = "Attraction point")
+
+
+animated_plot2 <- spuseplot +
+  # transition_reveal(iteration)+
+  transition_manual(iteration, cumulative = TRUE) +
+   labs(fill = "Space use", title = "Day: {current_frame}") +
+  # transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
+  # transition_time(iteration)+
+  enter_fade() +
+  exit_fade()
+
+#animated_plot2 <- spuseplot +
+#  transition_states(iteration, transition_length = 1, state_length = 1) +
+#  #transition_reveal(iteration) +
+#  enter_fade() +
+#  exit_fade()
+
+
+# summary(mpz_data)
+# summary(gr2)
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, "_spaceUseTEST2.gif"), animate(animated_plot2))
+
+```
+
+```{r}
+
+rx1 <- roamers
+head(rx1)
+
+rx1$known_groups
+
+#fitler for groups 3 9 and 27 either of them presesent in the known_groups string
+
+rx2 <- rx1 %>% filter(str_detect(known_groups, "\\b(3|9|27)\\b"))
+
+head(rx2)
+
+
+#select one roamwer that has group 3 in known_groups string , one that has group 9 and one that has group 27
+
+rx3 <- rx2 %>% filter(str_detect(known_groups, "\\b3\\b")) %>% sample_n(1)
+
+rx4 <- rx2 %>% filter(str_detect(known_groups, "\\b9\\b")) %>% sample_n(1)
+
+rx5 <- rx2 %>% filter(str_detect(known_groups, "\\b27\\b")) %>% sample_n(1)
+
+
+#raomer id of those 3
+
+rx3$roamer_id
+rx4$roamer_id
+rx5$roamer_id
+
+#filter the roamers for those 3 ids
+
+rx6 <- rx1 %>% filter(roamer_id %in% c(rx3$roamer_id, rx4$roamer_id, rx5$roamer_id))
+
+head(rx6)
+
+rcp1 <- rx6 %>% 
+  group_by(roamer_id) %>%
+  mutate(timeadj = row_number())
+
+  plot(rcp1$timeadj, rcp1$iteration)
+
+#animate that path of both roamers
+
+
+gr1 <- rcp1 %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)
+
+
+
+gr2 <- gr1 %>%
+  ungroup() %>%
+  dplyr::select(iteration, roamer_x, roamer_y, tx, ty, roamer_id)
+
+buffer_size <- 20
+
+mpz_data <- g2 %>%
+  filter(
+    x >= min(gr2$roamer_x) - buffer_size &
+      x <= max(gr2$roamer_x) + buffer_size &
+      y >= min(gr2$roamer_y) - buffer_size &
+      y <= max(gr2$roamer_y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
+
+ap_data <- g3 %>%
+ filter(
+   x >= min(gr2$roamer_x) - buffer_size &
+     x <= max(gr2$roamer_x) + buffer_size &
+     y >= min(gr2$roamer_y) - buffer_size &
+     y <= max(gr2$roamer_y) + buffer_size
+ ) %>%
+  dplyr::select(x, y,iteration)
+
+terr_data <- g4 %>%
+  filter(
+    x >= min(gr2$roamer_x) - buffer_size &
+      x <= max(gr2$roamer_x) + buffer_size &
+      y >= min(gr2$roamer_y) - buffer_size &
+      y <= max(gr2$roamer_y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality,iteration, territory_of_group)
+
+  #gr2 <- gr2 %>% filter(group_id == 1)
+ #head(mpz_data)
+ #head(ap_data)
+ #head(terr_data)
+
+gr2$group <- 1
+
+rm_path_bp <- ggplot() +
+  geom_tile(data = mpz_data2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data2, aes(x = x, y = y, fill = quality), alpha = .5) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  #guides(fill = "none") +
+  new_scale_fill() +
+  geom_tile(data = space_use, aes(x = x, y = y, fill = log(n)), alpha = .5) +
+  scale_fill_scico(palette = "berlin") +
+  geom_path(data = gr2, aes(x = roamer_x, y = roamer_y, group = as.factor(roamer_id),  color = as.factor(roamer_id)), linewidth = 1, ,linetype = "solid") +
+  geom_point(data = gr2, aes(roamer_y, roamer_y, group = seq_along(iteration), color = as.factor(roamer_id)), size = 2) +
+  scale_color_viridis_d(direction = -1)+
+  #geom_point(data = gr2, aes(tx, ty, group = as.factor(roamer_id), fill = as.factor(roamer_id), colour = as.factor(roamer_id)), size = 2, shape = 8) +
+  new_scale_fill() +
+ geom_point(data = ap_data2, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  #labs(title = "Day: {frame_along}", color = "Movement") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20),
+    legend.position = "none",
+    plot.margin = margin(-1, -1, -1, -1),
+    plot.background = element_rect(fill = "white", colour = "black")
+  ) +
+  coord_cartesian(xlim = range(mpz_data2$x), ylim = range(mpz_data2$y))
+
+
+ #ggsave("example_movement5.png", grp_path_bp, width = 25, height = 25, units = "cm", dpi = 300)
+animated_plot <- rm_path_bp +
+  # transition_states(iteration, transition_length = 0.5, state_length = 0.5) +
+  transition_reveal(iteration) +
+  labs(fill = "specific roamer movement", title = "Day: {frame_along}") +
+  #transition_time(iteration) +
+  enter_fade() +
+  exit_fade()
+
+# summary(mpz_data)
+# summary(gr2)
+anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_roamer_COBMI", it, ".gif"), animate(animated_plot)) 
+
+```
+
+```{r}
+
+head(iLayer)
+
+dfi <- iLayer %>% filter(group_id %in% c(3,9,27))
+
+head(dfi)
+
+# Function to calculate Euclidean distance
+calculate_distance <- function(x1, y1, x2, y2) {
+  sqrt((x1 - x2)^2 + (y1 - y2)^2)
+}
+
+# Create empty lists to store results
+groups_within_10_cells <- list()
+groups_near_non_groups <- list()
+
+# Iterate over each unique iteration
+unique_iterations <- unique(df$iteration)
+
+for (iteration in unique_iterations) {
+  # Subset the data for the current iteration
+  df_iteration <- df[df$iteration == iteration, ]
+  
+  # Iterate over each individual in the subset
+  for (i in 1:(nrow(df_iteration) - 1)) {
+    for (j in (i + 1):nrow(df_iteration)) {
+      # Calculate distance between individual i and j within the same iteration
+      dist <- calculate_distance(df_iteration$x[i], df_iteration$y[i], df_iteration$x[j], df_iteration$y[j])
+      
+      # Check if the distance is within 10 cells
+      if (dist <= 10) {
+        # Condition 1: Different groups within 10 cells
+        if (df_iteration$group_id[i] != df_iteration$group_id[j]) {
+          groups_within_10_cells <- append(groups_within_10_cells, list(c(df_iteration[i,], df_iteration[j,])))
+        }
+        
+        # Condition 2: A group within 10 cells of a non-group individual
+        if ((df_iteration$individual_type[i] == "group" && df_iteration$individual_type[j] != "group") ||
+            (df_iteration$individual_type[j] == "group" && df_iteration$individual_type[i] != "group")) {
+          groups_near_non_groups <- append(groups_near_non_groups, list(c(df_iteration[i,], df_iteration[j,])))
+        }
+      }
+    }
+  }
+}
+
+# Convert lists to data frames (optional)
+result_groups_within_10_cells <- df[unlist(groups_within_10_cells), ]
+result_groups_near_non_groups <- df[unlist(groups_near_non_groups), ]
+
+# View the results
+print(result_groups_within_10_cells)
+print(result_groups_near_non_groups)
+
+head(result_groups_within_10_cells)
+
+
+
+
+```
+
+```{r}
+
+dfi
+
+#plot interation map of dfi
+
+dfi2 <- dfi %>% filter(iteration == 3000)
+
+#create a spatial map of interactions
+
+dfi3 <- dfi %>% group_by(x, y) %>% filter(individual_type != "roamer", individual_type != "disperser") %>% summarise(n = n()) %>% filter(n > 90) %>% filter(n < 100)
+
+#plot the map
+
+ggplot() +
+geom_tile(data = mpz_data2, aes(x = x, y = y, fill = quality)) +
+scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+new_scale_fill() +
+  geom_tile(data = dfi3, aes(x = x, y = y, fill = n)) +
+  scale_fill_gradient(low = "#d7e18b", high = "#cb4a05") +
+  labs(fill = "Number of interactions") +
+  theme_minimal()+
+   theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20),
+    #legend.position = "none",
+    plot.margin = margin(-1, -1, -1, -1),
+    plot.background = element_rect(fill = "white", colour = "black")
+  )+
+  coord_cartesian(xlim = range(mpz_data2$x), ylim = range(mpz_data2$y))
+
+
+
+dfi3 <- dfi %>% group_by(x, y) %>% filter(individual_type != "group", individual_type != "disperser") %>% summarise(n = n()) %>% filter(n > 15)
+
+#plot the map
+
+ggplot() +
+geom_tile(data = mpz_data2, aes(x = x, y = y, fill = quality)) +
+scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+new_scale_fill() +
+  geom_tile(data = dfi3, aes(x = x, y = y, fill = n)) +
+  scale_fill_gradient(low = "#d7e18b", high = "#cb4a05") +
+  labs(fill = "Number of interactions") +
+  theme_minimal()+
+   theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20),
+    legend.position = "none",
+    plot.margin = margin(-1, -1, -1, -1),
+    plot.background = element_rect(fill = "white", colour = "black")
+  )+
+  coord_cartesian(xlim = range(mpz_data2$x), ylim = range(mpz_data2$y))
+
+
+
+
+unique(dfi$individual_type)
 
 
 ```

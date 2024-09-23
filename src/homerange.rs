@@ -1,4 +1,5 @@
 
+
 use crate::*;
 
 
@@ -70,6 +71,8 @@ use crate::*;
 //    }
 //
 //}
+
+
 
 pub fn is_valid_territory(grid: &Vec<Vec<Cell>>, x: usize, y: usize) -> bool {
     if dummy_expand_territory_with_natural_shape(x, y, grid) < 400 {
@@ -146,3 +149,5 @@ pub fn dummy_expand_territory_with_natural_shape(x: usize, y: usize, grid: &Vec<
 //pub fn territory_has_attraction_points(grid: &Vec<Vec<Cell>>, group_id: usize) -> bool {
 //   
 //}
+
+

@@ -17,6 +17,7 @@ pub fn save_outputs(
     all_carcass_states: Vec<(usize, Vec<Carcass>)>,
     all_high_seat_states: Vec<(usize, Vec<HighSeat>)>,
     all_hunting_statistics: Vec<(usize, HuntingStatistics)>,
+    all_interaction_layers: Vec<(usize, InteractionLayer)>,
     folder_path: String,
     meta_data: Vec<(usize, SimMetaData)>,
 ) {
@@ -38,7 +39,7 @@ pub fn save_outputs(
     save_roamers_as_csv(format!("output/{}/all_roamers.csv", folder_name).as_str(), &all_roamer_states).expect("Failed to save roamer as CSV");
 
     // Save all interaction layer to a single CSV file
-    //save_interaction_layer_as_csv(format!("output/{}/all_interaction_layer.csv", folder_name).as_str(), &all_interaction_layers).expect("Failed to save interaction layer as CSV");
+    save_interaction_layer_as_csv(format!("output/{}/all_interaction_layer.csv", folder_name).as_str(), &all_interaction_layers).expect("Failed to save interaction layer as CSV");
 
     // Save all carcass states to a
     save_carcasses_as_csv(format!("output/{}/all_carcasses.csv", folder_name).as_str(), &all_carcass_states).expect("Failed to save carcasses as CSV");
@@ -507,6 +508,48 @@ pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &
 }
 */
 
+
+pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &[(usize, InteractionLayer)]) -> io::Result<()> {
+    // Create or open the CSV file
+    let file = File::create(filename)?;
+    let mut writer = BufWriter::new(file);
+
+    // Write the header line
+    writeln!(writer, "iteration,x,y,time,individual_id,group_id,individual_type,time_left,duration,interaction_strength")?;
+
+    // Collect all the lines in parallel
+    let csv_lines: Vec<String> = interaction_layer_states
+        .par_iter()
+        .flat_map(|(iteration, interaction_layer)| {
+            let entities: Vec<_> = interaction_layer.iter_entities().collect();  // Collect entities into a Vec
+            entities.into_par_iter().map(move |entity| {  // Use `into_par_iter()` to take ownership of `entities`
+                format!(
+                    "{},{},{},{},{},{},{},{},{},{}",
+                    iteration,
+                    entity.x,
+                    entity.y,
+                    entity.time,
+                    entity.individual_id,
+                    entity.group_id,
+                    entity.individual_type,
+                    entity.time_left,
+                    entity.duration,
+                    entity.interaction_strength
+                )
+            }).collect::<Vec<_>>()  // Collect the inner iterator into a `Vec` so it can be returned
+        })
+        .collect();
+
+    // Write all the collected lines sequentially
+    for line in csv_lines {
+        writeln!(writer, "{}", line)?;
+    }
+
+    writer.flush()?;
+    println!("Interaction layer saved to: {}", filename);
+    Ok(())
+}
+/* 
 pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &[(usize, InteractionLayer)]) -> io::Result<()> {
     // Create or open the CSV file
     let mut file = File::create(filename)?;
@@ -537,7 +580,7 @@ pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &
     println!("Interaction layer saved to: {}", filename);
     Ok(())
 }
-
+*/
 
 /* 
 pub fn save_interaction_layer_as_csv(filename: &str, interaction_layer_states: &[(usize, InteractionLayer)]) -> io::Result<()> {
