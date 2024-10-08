@@ -1,4 +1,4 @@
-use std::vec;
+//use std::vec;
 
 use crate::*;
 
@@ -493,23 +493,23 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &mut Vec<Vec<Cell>>, i_
 }
 
 
-fn set_list_of_target_groups(roamer: &mut RoamingIndividual, groups: &Vec<Groups>) {
- // take the 5 closet groups to the current x/y and write their group_id into known_groups
-    let mut known_groups = Vec::new();
-    let mut groups_sorted = groups.iter().filter(|g| g.active == true && g.group_id != roamer.origin_group_id).cloned().collect::<Vec<Groups>>();
-    groups_sorted.sort_by(|a, b| {
-        let dist_a = (a.x as isize - roamer.roamer_x as isize).abs() + (a.y as isize - roamer.roamer_y as isize).abs();
-        let dist_b = (b.x as isize - roamer.roamer_x as isize).abs() + (b.y as isize - roamer.roamer_y as isize).abs();
-        dist_a.cmp(&dist_b)
-    });
-    for group in groups_sorted.iter().take(3) {
-        known_groups.push(group.group_id);
-    }
-    roamer.known_groups = known_groups;
-    // select a random group from the known_groups and write it into target_group
-    //let target_group = known_groups.choose(rng);
-    //roamer.target_group = Some(*target_group.unwrap());
-}
+//fn set_list_of_target_groups(roamer: &mut RoamingIndividual, groups: &Vec<Groups>) {
+// // take the 5 closet groups to the current x/y and write their group_id into known_groups
+//    let mut known_groups = Vec::new();
+//    let mut groups_sorted = groups.iter().filter(|g| g.active == true && g.group_id != roamer.origin_group_id).cloned().collect::<Vec<Groups>>();
+//    groups_sorted.sort_by(|a, b| {
+//        let dist_a = (a.x as isize - roamer.roamer_x as isize).abs() + (a.y as isize - roamer.roamer_y as isize).abs();
+//        let dist_b = (b.x as isize - roamer.roamer_x as isize).abs() + (b.y as isize - roamer.roamer_y as isize).abs();
+//        dist_a.cmp(&dist_b)
+//    });
+//    for group in groups_sorted.iter().take(3) {
+//        known_groups.push(group.group_id);
+//    }
+//    roamer.known_groups = known_groups;
+//    // select a random group from the known_groups and write it into target_group
+//    //let target_group = known_groups.choose(rng);
+//    //roamer.target_group = Some(*target_group.unwrap());
+//}
 
 fn get_3_groups_in_range(roamer: &mut RoamingIndividual, groups: &Vec<Groups>)  {
     let mut target_groups = Vec::new();

@@ -2,10 +2,7 @@
 use crossbeam::thread::scope;
 use crate::*;
 
-//pub fn within_group_pathogen_infection(model: &mut Model, rng: &mut impl Rng){
-//
-//
-//}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum InfectionStage {
     Incubation,
@@ -232,7 +229,7 @@ pub fn remove_dead_individuals(model: &mut Model) {
     }
 
     // Create carcasses for dead group members
-    for (group_index, member) in dead_group_members.iter() {
+    for (_group_index, member) in dead_group_members.iter() {
         create_carcass(member, model);
     }
 
@@ -242,7 +239,7 @@ pub fn remove_dead_individuals(model: &mut Model) {
     }
 
     // Create carcasses for dead dispersers
-    for (disperser_index, d_member) in dead_dispersers.iter() {
+    for (_disperser_index, d_member) in dead_dispersers.iter() {
         create_carcass(d_member, model);
     }
 

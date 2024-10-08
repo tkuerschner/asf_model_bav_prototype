@@ -108,12 +108,12 @@ pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>
 
 pub fn extract_metadata(reader: &mut BufReader<File>) -> Result<LandscapeMetadata> {
     // Variables to store metadata values
-    let mut ncols = 0;
+    //let mut ncols = 0;
     let mut nrows = 0;
-    let mut xllcorner = 0;
-    let mut yllcorner = 0;
-    let mut cellsize = 0.0;
-    let mut nodata_value = 0;
+    //let mut xllcorner = 0;
+    //let mut yllcorner = 0;
+    //let mut cellsize = 0.0;
+    //let mut nodata_value = 0;
 
     // Read metadata lines
     for _ in 0..6 {
@@ -139,12 +139,12 @@ pub fn extract_metadata(reader: &mut BufReader<File>) -> Result<LandscapeMetadat
 
         // Assign values to the appropriate metadata fields
         match key {
-            "NCOLS" => ncols = value as usize,
+            //"NCOLS" => ncols = value as usize,
             "NROWS" => nrows = value as usize,
-            "XLLCORNER" => xllcorner = value as usize,
-            "YLLCORNER" => yllcorner = value as usize,
-            "CELLSIZE" => cellsize = value as f64,
-            "NODATA_value" => nodata_value = value,
+            //"XLLCORNER" => xllcorner = value as usize,
+            //"YLLCORNER" => yllcorner = value as usize,
+            //"CELLSIZE" => cellsize = value as f64,
+            //"NODATA_value" => nodata_value = value,
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidData,
@@ -156,12 +156,12 @@ pub fn extract_metadata(reader: &mut BufReader<File>) -> Result<LandscapeMetadat
 
     // Create and return the metadata struct
     let metadata = LandscapeMetadata {
-        ncols,
+        //ncols,
         nrows,
-        xllcorner,
-        yllcorner,
-        cellsize,
-        nodata_value,
+        //xllcorner,
+        //yllcorner,
+        //cellsize,
+        //nodata_value,
     };
 
     Ok(metadata)

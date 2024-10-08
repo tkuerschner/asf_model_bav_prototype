@@ -5,7 +5,7 @@ use crate::*;
 use std::fs::File;
 use std::io::{self, Write, BufWriter};
 use rayon::prelude::*;
-use std::string;
+//use std::string;
 
 pub fn save_outputs(
     folder_name: &String,

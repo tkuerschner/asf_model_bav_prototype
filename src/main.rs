@@ -3,7 +3,7 @@ use rand::Rng;
 use rand::seq::SliceRandom;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use rayon::iter;
+//use rayon::iter;
 //use rayon::iter;
 //use rand_distr::num_traits::int;
 //use core::time;
@@ -553,8 +553,8 @@ struct GroupMemory {
     known_cells_order: Vec<(usize, usize)>,
     //last_visited_cells: HashSet<(usize, usize)>,
     //last_visited_cells_order: Vec<(usize, usize)>,
-    group_member_ids: Vec<usize>,
-    presence_timer: usize,
+    //group_member_ids: Vec<usize>,
+    //presence_timer: usize,
 }
 
 // Define a struct to represent an individual's health status
@@ -639,13 +639,13 @@ pub struct GlobalVariables {
 // Landscape metadata i.e. ASCII header
 #[derive(Debug)]
 pub struct LandscapeMetadata {
-    ncols: usize,
+    //ncols: usize,
     nrows: usize,
-    xllcorner: usize,
-    yllcorner: usize,
-    cellsize: f64,
-    nodata_value: i32,
-}
+    //xllcorner: usize,
+    //yllcorner: usize,
+    //cellsize: f64,
+    //nodata_value: i32,
+}//
 
 // Define a struct to represent the output
 #[derive(Debug)]
@@ -722,7 +722,7 @@ const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
 const GODD_YEAR_CHANCE: usize = 15; // 15% chance of a good year
 const BURN_IN_PERIOD: usize = 0; // 365 * 2; // 2 years burn in period
 const BETA_W: f64 = 0.05; // within group transmission rate // FIX ME
-const BETA_B: f64 = 0.001; // between group transmission rate // FIX ME
+//const BETA_B: f64 = 0.001; // between group transmission rate // FIX ME
 const BETA_C: f64 = 0.6; // carcass transmission rate // FIX ME
 const CARCASS_CONTACT_PROB : f64 = 0.10; // carcass contact probability // FIX ME
 const P_SYMPTOMATIC: f64 = 0.5; // probability of being symptomatic // FIX ME
@@ -873,7 +873,7 @@ pub fn update_counter(globals: &mut GlobalVariables , groups: &mut Vec<Groups>, 
 
 pub fn setup(file_path: &str, num_groups: usize) -> (Vec<Vec<Cell>>, Vec<Groups>) {
     // Setup the landscape (grid)
-    let (mut grid, metadata) = match landscape_setup_from_ascii(file_path) {
+    let (mut grid, _metadata) = match landscape_setup_from_ascii(file_path) {
         Ok((g, m)) => (g, m),
         Err(e) => {
             eprintln!("Error setting up landscape: {}", e);

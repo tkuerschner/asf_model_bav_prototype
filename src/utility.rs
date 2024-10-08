@@ -48,21 +48,21 @@ pub fn good_year_check(model: &mut Model, rng: &mut impl Rng ){
 
 // function to remove half of all group member and half of all roamers
 
-pub fn remove_half_of_all_groups(model: &mut Model) {
-  
-    //set the age of half of all group members and roamers to MAX_AGE + 5
-    for group in model.groups.iter_mut() {
-        let half_group_size = group.group_members.len() / 2;
-        for i in 0..half_group_size {
-            group.group_members[i].age = MAX_AGE + 5;
-        }
-    }
-
-    let half_roamers_size = model.roamers.len() / 2;
-    for i in 0..half_roamers_size {
-        model.roamers[i].age = MAX_AGE + 5;
-    }
-}
+//pub fn remove_half_of_all_groups(model: &mut Model) {
+//  
+//    //set the age of half of all group members and roamers to MAX_AGE + 5
+//    for group in model.groups.iter_mut() {
+//        let half_group_size = group.group_members.len() / 2;
+//        for i in 0..half_group_size {
+//            group.group_members[i].age = MAX_AGE + 5;
+//        }
+//    }
+//
+//    let half_roamers_size = model.roamers.len() / 2;
+//    for i in 0..half_roamers_size {
+//        model.roamers[i].age = MAX_AGE + 5;
+//    }
+//}
 
 pub fn reset_group_coordinates_to_core_cell(group: &mut Groups) -> (usize, usize) {
     group.x = group.core_cell.unwrap().0;
@@ -71,11 +71,11 @@ pub fn reset_group_coordinates_to_core_cell(group: &mut Groups) -> (usize, usize
 }
 
  // This function should return global variable current_time
-pub fn current_time(model: &mut Model) -> usize {
-
-    model.global_variables.current_time
-
-}
+//pub fn current_time(model: &mut Model) -> usize {
+//
+//   model.global_variables.current_time
+//
+//
  
 pub fn generate_unique_simulation_id() -> String {
     // Generate a UUID
@@ -121,12 +121,12 @@ pub fn copy_last_sim_to_active(folder_path: String) {
 
     pub fn count_all_group_members(model: &mut Model) -> usize {
         let mut member_count = 0;
-        let mut female_member_count = 0;
-        let mut male_member_count = 0;
-        let mut female_adult_count: usize = 0;
-        let mut male_adult_count: usize = 0;
-        let mut female_adult_count: usize = 0;
-        let mut male_piglet_count: usize = 0;
+        //let mut female_member_count = 0;
+        //let mut male_member_count = 0;
+        //let mut female_adult_count: usize = 0;
+        //let mut male_adult_count: usize = 0;
+        //let mut female_adult_count: usize = 0;
+        //let mut male_piglet_count: usize = 0;
 
         for group in model.groups.iter() {
             member_count += group.group_members.len();

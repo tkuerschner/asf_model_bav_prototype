@@ -58,9 +58,9 @@ pub fn group_setup(_cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, 
             remaining_stay_time: 0,
             memory: GroupMemory {
                 known_cells: HashSet::new(),
-                group_member_ids: Vec::new(),
+                //group_member_ids: Vec::new(),
                 known_cells_order: Vec::new(),
-                presence_timer: 0,
+                //presence_timer: 0,
             },
             movement: MovementMode::Foraging,
             group_members: vec![],
@@ -222,9 +222,9 @@ pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Ce
        remaining_stay_time: 0,
        memory: GroupMemory {
            known_cells: HashSet::new(),
-           group_member_ids: Vec::new(),
+           //group_member_ids: Vec::new(),
            known_cells_order: Vec::new(),
-           presence_timer: 0,
+           //presence_timer: 0,
        },
        movement: MovementMode::Foraging,
        group_members: Vec::new(),
@@ -282,6 +282,12 @@ pub fn free_this_cell(cell: &mut Cell) {
 
 //function to delete groups without members
 pub fn delete_groups_without_members(groups: &mut Vec<Groups>) {
+    //set empty groups to inactive
+    for group in groups.iter_mut() {
+        if group_has_no_members(group) {
+            group.active = false;
+        }
+    }
     groups.retain(|group| !group_has_no_members(group));
 }
 
