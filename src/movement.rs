@@ -157,35 +157,32 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     if group.remaining_stay_time <= 0 { //if stay time around ap is used up get a new ap to move towards
                         
                         let new_target_cell;
-                        if rng.gen_range(1..100) > 100 { // 1% chance to choose a new ap outside the territory // DEBUG TEMPORARILY DEACTIVATED
+                        if rng.gen_range(1..100) > 95 { // 2% chance to choose a new ap outside the territory // DEBUG TEMPORARILY DEACTIVATED
                            
-                           let outside_ap = get_closest_attraction_points_outside_territory(&model.grid, group);
-
-                            new_target_cell = outside_ap
-                            .choose(rng)
-                            .cloned()
-                            .expect("No other attraction points found");
+                           let outside_ap = get_closest_attraction_point_outside_territory(&model.grid, group);
+                            new_target_cell = outside_ap;
+                         
                         } else {
-                        let territory_ap = get_attraction_points_in_territory(&model.grid, group.group_id);
-                        let closest_ap = get_closest_attraction_point(group, &territory_ap);
-                        let other_aps: Vec<(usize, usize)> = territory_ap
-                            .into_iter()
-                            .filter(|&ap| ap != closest_ap)
-                            .collect();
-                        if other_aps.is_empty() {
-                        //random cell in trerritory
-                        let random_cell = get_random_cell_in_territory(&model.grid, group.group_id, rng);
-                        new_target_cell = random_cell;
-                        println!("No other attraction points in territory of group {}, selecting random location in territory", group.group_id);
-                        
-                        } else {
-                        // Choose a random target cell from the remaining attraction points
-                             new_target_cell = other_aps
-                            .choose(rng)
-                            .cloned()
-                            .expect(&format!("No other attraction points in territory of group {}", group.group_id));
+                                    let territory_ap = get_attraction_points_in_territory(&model.grid, group.group_id);
+                                    let closest_ap = get_closest_attraction_point(group, &territory_ap);
+                                    let other_aps: Vec<(usize, usize)> = territory_ap
+                                        .into_iter()
+                                        .filter(|&ap| ap != closest_ap)
+                                        .collect();
+                                    if other_aps.is_empty() {
+                                    //random cell in trerritory
+                                    let random_cell = get_random_cell_in_territory(&model.grid, group.group_id, rng);
+                                    new_target_cell = random_cell;
+                                    println!("No other attraction points in territory of group {}, selecting random location in territory", group.group_id);
+                                    
+                                    } else {
+                                    // Choose a random target cell from the remaining attraction points
+                                         new_target_cell = other_aps
+                                        .choose(rng)
+                                        .cloned()
+                                        .expect(&format!("No other attraction points in territory of group {}", group.group_id));
+                                    }
                         }
-                            }
                         group.set_target_cell(new_target_cell);
                         group.remaining_stay_time = rng.gen_range(MIN_STAY_TIME..MAX_STAY_TIME);
 
