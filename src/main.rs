@@ -639,12 +639,12 @@ pub struct GlobalVariables {
 // Landscape metadata i.e. ASCII header
 #[derive(Debug)]
 pub struct LandscapeMetadata {
-    //ncols: usize,
+    ncols: usize,
     nrows: usize,
-    //xllcorner: usize,
-    //yllcorner: usize,
-    //cellsize: f64,
-    //nodata_value: i32,
+    xllcorner: usize,
+    yllcorner: usize,
+    cellsize: f64,
+    nodata_value: i32,
 }//
 
 // Define a struct to represent the output
@@ -935,7 +935,7 @@ fn main() {
     let mut rng = rand::thread_rng();
     let seed = [0u8; 32]; // or any other seed
     let mut rng2: StdRng = SeedableRng::from_seed(seed);
-    let num_groups = 1;//25; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
 
     let file_path = "input/landscape/redDeer_global_50m.asc";
   //let file_path = "input/landscape/test.asc";
@@ -1066,8 +1066,6 @@ fn main() {
         check_and_remove_empty_dispersal_groups(dispersing_groups_vector);
         log::info!("Freeing cells of empty groups and deleting group: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
 
-        //free_cells_of_empty_groups(&model.groups, &mut model.grid);
-        //delete_groups_without_members(&mut model.groups);
         handle_empty_groups(&mut model.groups, &mut model.grid);
         check_for_empty_groups(&mut model.groups);
 
@@ -1127,10 +1125,9 @@ fn main() {
 //
 //
 
-      if iteration > 1000 {
-
-        experimental_outbreak3(&mut model);
-      }
+     // if iteration > 1000 {
+     //   experimental_outbreak3(&mut model);
+     // }
 
 
 
@@ -1143,14 +1140,13 @@ fn main() {
            // println!("Dispersal triggered: year {}, month {}, day {}", global_variables.year, global_variables.month, global_variables.day);
             log::info!("Dispersal: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             dispersal_assignment(&mut model.groups, disperser_vector, &mut model.dispersers);
-            //assign_dispersal_targets_individuals( disperser_vector, &groups);
             log::info!("Assigning dispersal targets to individuals: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             assign_dispersal_targets_groups(&mut model.dispersers, &mut model.groups, &mut model.grid, &mut rng);
             //assign male individuals as roamers
             log::info!("Assigning roamer targets to individuals: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             roamer_assignemnt(&mut model.roamers,&mut model.groups);
         }
-       // move_female_disperser(disperser_vector, &mut grid, &mut groups);
+    
             check_empty_disperser_group(dispersing_groups_vector);
             log::info!("Moving dispersers: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
             check_and_remove_empty_dispersal_groups(dispersing_groups_vector);

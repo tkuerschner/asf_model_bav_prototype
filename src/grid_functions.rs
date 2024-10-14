@@ -66,7 +66,7 @@ pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>
 
     // Determine grid size from the file
     let nrows = metadata.nrows;
-    //let ncols = metadata.ncols;
+    let ncols = metadata.ncols;
 
     // Initialize the grid with quality values from the ASCII file
     let mut grid: Vec<Vec<Cell>> = Vec::with_capacity(nrows);
@@ -108,12 +108,12 @@ pub fn landscape_setup_from_ascii(file_path: &str) -> io::Result<(Vec<Vec<Cell>>
 
 pub fn extract_metadata(reader: &mut BufReader<File>) -> Result<LandscapeMetadata> {
     // Variables to store metadata values
-    //let mut ncols = 0;
+    let mut ncols = 0;
     let mut nrows = 0;
-    //let mut xllcorner = 0;
-    //let mut yllcorner = 0;
-    //let mut cellsize = 0.0;
-    //let mut nodata_value = 0;
+    let mut xllcorner = 0;
+    let mut yllcorner = 0;
+    let mut cellsize = 0.0;
+    let mut nodata_value = 0;
 
     // Read metadata lines
     for _ in 0..6 {
@@ -139,12 +139,12 @@ pub fn extract_metadata(reader: &mut BufReader<File>) -> Result<LandscapeMetadat
 
         // Assign values to the appropriate metadata fields
         match key {
-            //"NCOLS" => ncols = value as usize,
+            "NCOLS" => ncols = value as usize,
             "NROWS" => nrows = value as usize,
-            //"XLLCORNER" => xllcorner = value as usize,
-            //"YLLCORNER" => yllcorner = value as usize,
-            //"CELLSIZE" => cellsize = value as f64,
-            //"NODATA_value" => nodata_value = value,
+            "XLLCORNER" => xllcorner = value as usize,
+            "YLLCORNER" => yllcorner = value as usize,
+            "CELLSIZE" => cellsize = value as f64,
+            "NODATA_value" => nodata_value = value,
             _ => {
                 return Err(Error::new(
                     ErrorKind::InvalidData,
@@ -156,12 +156,12 @@ pub fn extract_metadata(reader: &mut BufReader<File>) -> Result<LandscapeMetadat
 
     // Create and return the metadata struct
     let metadata = LandscapeMetadata {
-        //ncols,
+        ncols,
         nrows,
-        //xllcorner,
-        //yllcorner,
-        //cellsize,
-        //nodata_value,
+        xllcorner,
+        yllcorner,
+        cellsize,
+        nodata_value,
     };
 
     Ok(metadata)
@@ -483,24 +483,24 @@ pub fn get_free_attraction_points(grid: &Vec<Vec<Cell>>) -> Vec<(usize, usize)>{
 }
 
 // function that returns a list of the 10 attraction points closest a specific groups core cell but not taken by that group
-pub fn get_closest_attraction_points_outside_territory(grid: &Vec<Vec<Cell>>, group: &Groups) -> Vec<(usize, usize)>{
-    let all_ap: Vec<(usize, usize)> = grid
-    .iter()
-    .enumerate()
-    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.is_ap == true && cell.territory.is_taken == false && cell.territory.taken_by_group != group.group_id).map(move |(j, _)| (i, j)))
-    .collect();
-
-    let mut closest_ap = Vec::new();
-
-    for _ in 0..10 {
-        if let Some(ap) = all_ap.iter().min_by_key(|&ap| distance_squared(group.x, group.y, ap.0, ap.1)) {
-            closest_ap.push(*ap);
-        }
-    }
-
-    closest_ap
-
-}
+//pub fn get_closest_attraction_points_outside_territory(grid: &Vec<Vec<Cell>>, group: &Groups) -> Vec<(usize, usize)>{
+//    let all_ap: Vec<(usize, usize)> = grid
+//    .iter()
+//    .enumerate()
+//    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.is_ap == true && cell.territory.is_taken == false && cell.//territory.taken_by_group != group.group_id).map(move |(j, _)| (i, j)))
+//    .collect();
+//
+//    let mut closest_ap = Vec::new();
+//
+//    for _ in 0..10 {
+//        if let Some(ap) = all_ap.iter().min_by_key(|&ap| distance_squared(group.x, group.y, ap.0, ap.1)) {
+//            closest_ap.push(*ap);
+//        }
+//    }
+//
+//    closest_ap
+//
+//}
 
 pub fn get_closest_attraction_point(group: &Groups, ap_list: &[(usize, usize)]) -> (usize, usize) {
     ap_list
@@ -543,6 +543,39 @@ pub fn get_attraction_points_in_territory(grid: &Vec<Vec<Cell>>, group_id: usize
         .filter(|&(x, y)| grid[x][y].territory.taken_by_group == group_id)
         .collect()
 }
+
+//function for a group to get the closest attraction point that is NOT in the groups territory using a radius of 100 out of the territory and WITHOUT using the ap_list
+pub fn get_closest_attraction_point_outside_territory(grid: &Vec<Vec<Cell>>, group: &Groups) -> (usize, usize) {
+    let mut ap_list = Vec::new();
+    let mut ap_list_outside_territory = Vec::new();
+
+    //get all attraction points
+    for row in grid.iter() {
+        for cell in row.iter() {
+            if cell.territory.is_ap {
+                ap_list.push((cell.x_grid, cell.y_grid));
+            }
+        }
+    }
+
+    //get all attraction points outside the territory but i can be in someone else territory
+    for ap in ap_list.iter() {
+        if ap.0 < grid.len() && ap.1 < grid[0].len() {
+            if grid[ap.0][ap.1].territory.is_taken == false || grid[ap.0][ap.1].territory.taken_by_group != group.group_id {
+                ap_list_outside_territory.push(*ap);
+            }
+        }
+    }
+
+    //get the closest attraction point outside the territory
+    let closest_ap = get_closest_attraction_point(group, &ap_list_outside_territory);
+
+    closest_ap
+}
+
+
+
+
 
 pub fn get_random_cell_in_territory(grid: &Vec<Vec<Cell>>, group_id: usize, rng: &mut impl Rng) -> (usize, usize) {
     loop {
