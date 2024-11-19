@@ -1497,6 +1497,7 @@ fn main() {
     for iteration in 1..= RUNTIME {
 
         remove_dead_individuals(&mut model);
+        check_group_territory_size_and_ap(&mut model);
         model.global_variables.current_time = iteration;
 
         log::info!("Starting iteration: {}", iteration);

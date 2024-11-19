@@ -347,3 +347,34 @@ pub fn get_group_position(model: &Model, my_group: usize) -> (usize, usize) {
     
 }
 
+pub fn get_group_territory_size(grid: &Vec<Vec<Cell>>, group_id: usize) -> usize {
+    let mut territory_size = 0;
+    for row in grid.iter() {
+        for cell in row.iter() {
+            if cell.territory.is_taken && cell.territory.taken_by_group == group_id {
+                territory_size += 1;
+            }
+        }
+    }
+    territory_size
+}
+
+
+// function to check if a groups terrirory is big enough and has ap
+
+pub fn check_group_territory_size_and_ap(model: &mut Model) {
+    for group in model.groups.iter_mut() {
+        let territory_size = get_group_territory_size(&model.grid, group.group_id);
+        let aps = get_attraction_points_in_territory(&model.grid, group.group_id);
+        if territory_size < 1000 {
+            log::info!("Group {} territory size is too small: {} Group will be deleted", group.group_id, territory_size);
+            group.mfd = true;
+        }
+        if aps.is_empty() {
+            log::info!("Group {} has no attraction points in its territory. Group will be deleted", group.group_id);
+            group.mfd = true;
+        }
+    }
+
+    model.groups.retain(|group| !group.mfd);
+}
