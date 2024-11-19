@@ -21,8 +21,10 @@ for (pckg in
     "scico",
     "ggnewscale",
     "gganimate",
-    "mongolite",
-    "jsonlite"
+    "jsonlite",
+    "gridExtra",
+    "terra",
+    "sf"
 ))
 {
   if (!require(pckg, character.only = T)) {
@@ -40,7 +42,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 166      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 206      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -88,6 +90,8 @@ gr1 <- groups %>%
   group_by(iteration) %>%
   sample_n(1)
 
+
+#gr1 <- gr1 %>% filter(group_id == 110)
 #gr1 <- groups %>% filter(group_id == 2) %>% group_by(iteration) #%>%
   #sample_n(1)
 
@@ -190,7 +194,7 @@ anim_save(paste0("./R/asf_bavaria_analysis/visuals/example_movement_", it, ".gif
 #RColorBrewer::display.brewer.all()
 
 
-grp_path_bp <- ggplot() +
+(grp_path_bp <- ggplot() +
   geom_tile(data = mpz_data, aes(x = x, y = y, fill = quality)) +
   scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
   labs(fill = "Habitat quality") +
@@ -211,11 +215,12 @@ grp_path_bp <- ggplot() +
   theme_minimal() +
   theme(
     axis.text = element_blank(),
+    legend.position = "none",
     axis.title = element_blank(),
     axis.ticks = element_blank(),
     panel.grid = element_blank(),
     plot.title = element_text(hjust = 0.5, size = 20)
-  )
+  ))
 
 
 
@@ -3172,17 +3177,22 @@ ggsave(paste0("./R/asf_bavaria_analysis/visuals/mean_infected_iter4",".png"), al
 
 ```{r}
 
-#get only groups 1 to 27
 
 
+grpSel <- c(31)
 
-gt3 <- groups %>% filter(group_id %in% c(3,9,27))
+gt3 <- groups %>% filter(group_id %in% grpSel)
+
+
 
 
 gr1a <- groups %>%
-  filter(group_id %in% c(3,9,27)) %>%
+  filter(group_id %in% grpSel) %>%
   group_by(iteration) %>%
   sample_n(1)
+
+
+
 
 #gr1 <- groups %>% filter(group_id == 2) %>% group_by(iteration) #%>%
   #sample_n(1)
@@ -3204,7 +3214,7 @@ buffer_size <- 20
 
 
 terr_data2 <- g4 %>%
-  filter(territory_of_group %in% c(3,9,27)) %>%
+  filter(territory_of_group %in% grpSel) %>%
   filter(
     x >= min(gr2$x) - buffer_size &
       x <= max(gr2$x) + buffer_size &
@@ -3224,7 +3234,7 @@ mpz_data2 <- g2 %>%
   dplyr::select(x, y, quality)
 
 ap_data2 <- g3 %>%
-filter(territory_of_group %in% c(3,9,27)) %>%
+filter(territory_of_group %in% grpSel) %>%
  filter(
    x >= min(gr2$x) - buffer_size &
      x <= max(gr2$x) + buffer_size &
@@ -3266,7 +3276,7 @@ grp_path_bp2 <- ggplot() +
 
 grp1 <- groups %>%
   group_by(iteration) %>%
-  filter(group_id %in% c(3,9,27))  %>%
+  filter(group_id %in% grpSel)  %>%
   sample_n(1)
 
 # Create a new dataframe with multiple rows per iteration
@@ -3605,5 +3615,275 @@ new_scale_fill() +
 
 unique(dfi$individual_type)
 
+
+```
+
+
+```{r}
+
+
+
+
+
+
+
+
+
+
+
+for (i in 1:max(groups$group_id))
+{
+
+grpSel <- c(9)
+
+gt3 <- groups %>% filter(group_id %in% grpSel)
+
+
+
+
+gr1a <- groups %>%
+  filter(group_id %in% grpSel) %>%
+  group_by(iteration) %>%
+  sample_n(1)
+
+
+
+
+#gr1 <- groups %>% filter(group_id == 2) %>% group_by(iteration) #%>%
+  #sample_n(1)
+
+# head(gr1)
+
+# gr1$target_cell
+
+gr1a <- gr1a %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE)
+
+gr2 <- gr1a %>%
+  ungroup() %>%
+  dplyr::select(iteration, x, y, movement_type, tx, ty, group_id)
+
+buffer_size <- 20
+
+
+terr_data2 <- g4 %>%
+  filter(territory_of_group %in% grpSel) %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+
+  dplyr::select(x, y, quality,iteration, territory_of_group)
+
+mpz_data2 <- g2 %>%
+  filter(
+    x >= min(gr2$x) - buffer_size &
+      x <= max(gr2$x) + buffer_size &
+      y >= min(gr2$y) - buffer_size &
+      y <= max(gr2$y) + buffer_size
+  ) %>%
+  dplyr::select(x, y, quality)
+
+ap_data2 <- g3 %>%
+filter(territory_of_group %in% grpSel) %>%
+ filter(
+   x >= min(gr2$x) - buffer_size &
+     x <= max(gr2$x) + buffer_size &
+     y >= min(gr2$y) - buffer_size &
+     y <= max(gr2$y) + buffer_size
+ ) %>%
+  
+  dplyr::select(x, y,iteration)
+
+
+grp_path_bp2 <- ggplot() +
+  geom_tile(data = mpz_data2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data2, aes(x = x, y = y, fill = as.factor(territory_of_group)), alpha = .5) +
+  #scale_fill_brewer(palette = "Set3") +
+  #cale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  #guides(fill = "none") +
+  #geom_path(data = gr2, aes(x = x, y = y, group = group_id), linewidth = 1, , color = "black", linetype = "dashed") +
+  #geom_point(data = gr2, aes(x, y, group = seq_along(iteration), color = movement_type), size = 1) +
+  #geom_point(data = gr2, aes(tx, ty, group = group_id), fill = "#c02ad3", colour = "#c02ad3", size = 2, shape = 8) +
+  #new_scale_fill() +
+  geom_point(data = ap_data2, aes(x = x, y = y), size = 2, color = "#003cff", fill = "blue", shape = 22) +
+  new_scale_color() +
+  #geom_point(data = disp_event, aes(disperser_group_x, disperser_group_y, color = as.factor(disperser_id)),size = 1)+
+  #geom_path(data = disp_event, aes(disperser_group_x, disperser_group_y, color =  as.factor(disperser_id)),size = 1)+
+  #labs(title = "Day: {frame_along}", color = "Movement") +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+
+
+grp1 <- groups %>%
+  group_by(iteration) %>%
+  filter(group_id %in% grpSel)  %>%
+  sample_n(1)
+
+# Create a new dataframe with multiple rows per iteration
+
+detailed_path_df <- grp1 %>%
+  group_by(iteration) %>%
+  mutate(known_cells = gsub("\\[|\\]", "", known_cells)) %>%
+  mutate(x = strsplit(as.character(known_cells), ";")) %>%
+  unnest(x) %>%
+  separate(x, into = c("x", "y"), sep = "_", convert = TRUE) %>%
+  mutate(target = gsub("\\[|\\]", "", target_cell)) %>%
+  separate_rows(target, sep = ";") %>%
+  separate(target, into = c("tx", "ty"), sep = "_", convert = TRUE) %>%
+  dplyr::select(-known_cells)
+
+
+  # Calculate space use
+space_use <- detailed_path_df %>%
+  count(x, y)
+
+
+  
+spuseplot <- ggplot() +
+  geom_tile(data = mpz_data2, aes(x = x, y = y, fill = quality)) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#046104") +
+  labs(fill = "Habitat quality") +
+  new_scale_fill() +
+  geom_tile(data = terr_data2, aes(x = x, y = y, fill = quality), alpha = .5) +
+  scale_fill_gradient(low = "#c2e9cf", high = "#c2653d") +
+  guides(fill = "none") +
+  new_scale_fill() +
+  geom_tile(data = space_use, aes(x = x, y = y, fill = log(n)), alpha = .5) +
+  scale_fill_scico(palette = "berlin") +
+  #labs(fill = "Space use", title = "Day: {current_frame}") #+
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 20)
+  )
+
+ga1 <- grid.arrange(spuseplot,grp_path_bp2)
+
+ggsave(paste0("./R/asf_bavaria_analysis/visuals/allgrpTest/su_grp_", i ,".png"), ga1, width = 25, height = 25, units = "cm", dpi = 300)
+
+
+
+}
+  ```
+
+  ```{r prepare bavaria map}
+
+ #load habitat suitability map input\oct24_bavariaMaps\suitability_hr_maxent_MCP95_MW2540_cover_fractions_beta_stretch.tif
+
+habitat <- raster("./input/oct24_bavariaMaps/suitability_hr_maxent_MCP95_MW2540_cover_fractions_beta_stretch.tif")
+
+# laod bavaria shape file ./input\oct24_bavariaMaps\Bavaria.shp
+
+bavaria <- st_read("./input/oct24_bavariaMaps/Bavaria.shp")
+
+#cut the habitat raster to the bavaria shape file
+
+# Ensure both raster and shapefile are in the same CRS
+bavaria <- st_transform(bavaria, crs(habitat))
+
+# Crop the habitat raster to the bavaria shapefile
+habitat_bavaria <- crop(habitat, bavaria)
+
+# fill the area outside bavaria with NA
+
+habitat_bavaria <- mask(habitat_bavaria, bavaria)
+
+
+hab_chunk <- aggregate(habitat_bavaria, fact = 500) 
+
+# set values for each pixel
+hab_chunk <- setValues(hab_chunk, 1:ncell(hab_chunk))
+
+# convert to SPDF
+hab_chunk_grid <- as(hab_chunk,'SpatialPolygonsDataFrame')
+
+# change field name and plot
+names(hab_chunk_grid@data) <- 'ID'
+
+#spplot(hab_chunk_grid, zcol = 'ID')+layer(sp.text(coordinates(gCentroid(hab_chunk_grid, byid = T)), txt = hab_chunk_grid@data$ID, cex = 0.5))
+
+
+# convert resolution from 100m to 50m 
+habitat_bavaria <- disaggregate(habitat_bavaria, fact = 2)
+
+
+
+
+# Convert the raster to a data frame for ggplot
+habitat_bavaria_df <- as.data.frame(habitat_bavaria3, xy = TRUE)
+
+habitat_bavaria_df <- habitat_bavaria_df %>%
+  rename(value = suitability_hr_maxent_MCP95_MW2540_cover_fractions_beta) %>%
+  mutate(value = ifelse(value < 0, NA, value))
+
+
+habitat_bavaria_df2 <- habitat_bavaria_df %>%
+  filter(value >= 0.55)
+
+ggplot() +
+  geom_raster(data = habitat_bavaria_df2, aes(x = x, y = y, fill = value)) +
+  #geom_sf(data = bavaria, fill = NA, color = "black") +
+  scale_fill_viridis_c() +
+  theme_minimal()
+
+
+
+
+ #save the raster as ascii
+
+writeRaster(habitat_bavaria, "./input/oct24_bavariaMaps/hs_bavaria_10_24.asc", format = "ascii", overwrite = TRUE)
+
+
+
+```
+
+```{r}
+
+#select one polygon from hab_chunk_grid
+
+hab_chunk_grid_ex <- hab_chunk_grid[hab_chunk_grid$ID==11,]
+
+
+#plot(hab_chunk_grid_ex)
+
+habitat_bavaria2 <- crop(habitat_bavaria, hab_chunk_grid_ex)
+habitat_bavaria3 <- mask(habitat_bavaria2, hab_chunk_grid_ex)
+
+plot(habitat_bavaria3)
+
+
+writeRaster(habitat_bavaria3, "./input/oct24_bavariaMaps/hs_bavaria_chunk_11.asc", format = "ascii", overwrite = TRUE)
+
+```
+
+```{r}
+
+# first, create grid. You need to define bounds and CRS... This is only an example, could be a rasterization of your point's bbox
+r <- raster(xmn= 0, ymn= 0, xmx = 100000,ymx = 100000, resolution = 5000,
+            crs = '+proj=utm +zone=33 +ellps=WGS84 +datum=WGS84 +units=m +no_defs ')
+
+# set values for each pixel
+r <- setValues(r, 1:ncell(r))
+
+# convert to SPDF
+grid <- as(r,'SpatialPolygonsDataFrame')
 
 ```

@@ -167,7 +167,7 @@ pub fn initial_roamer_dispersal_target(roamers: &mut Vec<RoamingIndividual>, gri
          //       let new_target_cell = random_valid_cell(grid, rng);
          //       roamer.target_cell = Some(new_target_cell);
             // select a random valid cell that is not owned by the origin group
-            let target_cell = random_valid_cell(grid, rng);
+            let target_cell = random_valid_hq_cell_in_range(grid, roamer.roamer_x, roamer.roamer_y, rng);
             roamer.target_cell = Some(target_cell);
             //log::info!("Roamer {:?} has target cell {:?}", roamer.roamer_id, roamer.target_cell.unwrap());
             break;

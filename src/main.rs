@@ -3,6 +3,7 @@ use rand::Rng;
 use rand::seq::SliceRandom;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rayon::iter;
 //use rayon::iter;
 //use rayon::iter;
 //use rand_distr::num_traits::int;
@@ -24,6 +25,12 @@ use chrono::Local;
 use std::collections::HashMap;
 use std::path::Path;
 
+
+use std::collections::BinaryHeap;
+use std::cmp::Ordering;
+use std::cmp::Reverse;
+use std::collections::VecDeque;
+use noise::{NoiseFn, Perlin};
 
 //use lazy_static::lazy_static;
 //use std::sync::Mutex;
@@ -101,6 +108,7 @@ pub struct Model {
     pub high_seats: Vec<HighSeat>,
     pub hunting_statistics: HuntingStatistics,
     pub metadata: SimMetaData,
+    pub attract_points: Vec<(usize, usize)>,
 }
 
 #[derive(Debug, Clone)]
@@ -124,6 +132,69 @@ impl SimMetaData {
 
 
 
+
+     // Wrapper type for priority queue
+       #[derive(Debug, PartialEq)]
+       struct PriorityCell {
+           quality: f64,
+           position: (usize, usize),
+       }
+       
+       // Implement `Eq` for `PriorityCell`
+       impl Eq for PriorityCell {}
+       
+       // Implement `Ord` for `PriorityCell` (reverse for max-heap behavior)
+       impl Ord for PriorityCell {
+           fn cmp(&self, other: &Self) -> Ordering {
+               self.quality.partial_cmp(&other.quality).unwrap_or(Ordering::Equal).reverse()
+           }
+       }
+       
+       // Implement `PartialOrd` for `PriorityCell`
+       impl PartialOrd for PriorityCell {
+           fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+               Some(self.cmp(other))
+           }
+       }
+
+       #[derive(Debug, PartialEq)]
+struct HeapElement {
+    priority: f64,
+    coordinates: (usize, usize),
+}
+
+impl Eq for HeapElement {}
+
+impl PartialOrd for HeapElement {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        // Reverse to make higher priority values appear first in the heap
+        other.priority.partial_cmp(&self.priority)
+    }
+}
+
+impl Ord for HeapElement {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+// Wrapper struct for f32 to implement Ord
+#[derive(Debug, PartialEq, PartialOrd)]
+struct OrdFloat(f32);
+
+impl Eq for OrdFloat {}
+
+impl Ord for OrdFloat {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+
+
+
+
+
 #[derive(Debug, Clone)]
 pub struct Groups {
     group_id: usize,
@@ -139,6 +210,7 @@ pub struct Groups {
     max_size: usize,
     current_ap: Vec<(usize, usize)>,
     active: bool,
+    mfd: bool,
 }
 
 // implementation of the group struct
@@ -339,7 +411,7 @@ impl Groups {
         }
     }
 
-    pub fn expand_territory_with_natural_shape(&mut self, grid: &mut Vec<Vec<Cell>>) {
+    pub fn expand_territory_with_natural_shape2(&mut self, grid: &mut Vec<Vec<Cell>>) {
         // Constants for desired number of cells and shape
        // let min_desired_cells = 1000;
         let max_desired_cells = 1600;
@@ -401,6 +473,364 @@ impl Groups {
             }
         }
     }
+
+
+
+
+    pub fn expand_territory_with_natural_shape3(
+        &mut self,
+        grid: &mut Vec<Vec<Cell>>
+    ) {
+
+        let quality_threshold = 0.3;
+        let min_cells = 1000;
+        let max_cells = 1600;
+      
+           
+        let mut territory_cells = HashSet::new();
+
+        if let Some((x, y)) = self.core_cell {
+            // Start with the core cell
+            territory_cells.insert((x, y));
+    
+            let mut to_explore = BinaryHeap::new();
+            to_explore.push(HeapElement {
+                priority: 0.0, // Initial priority
+                coordinates: (x, y),
+            });
+            let mut iterations = 0;
+            while !to_explore.is_empty() && territory_cells.len() < max_cells && iterations < 10000 {
+                let HeapElement { coordinates: (cx, cy), .. } = to_explore.pop().unwrap();
+    
+                for dx in -1..=1 {
+                    for dy in -1..=1 {
+                        if dx == 0 && dy == 0 {
+                            continue;
+                        }
+    
+                        let nx = cx as isize + dx;
+                        let ny = cy as isize + dy;
+    
+                        if nx >= 0
+                            && ny >= 0
+                            && nx < grid.len() as isize
+                            && ny < grid[0].len() as isize
+                        {
+                            let nx = nx as usize;
+                            let ny = ny as usize;
+    
+                            let cell = &grid[nx][ny];
+    
+                            if !cell.territory.is_taken && cell.quality > 0.3 {
+                                territory_cells.insert((nx, ny));
+    
+                                to_explore.push(HeapElement {
+                                    priority: cell.quality,
+                                    coordinates: (nx, ny),
+                                });
+                            }
+                        }
+                    }
+                }
+                iterations += 1;
+            }
+    
+            // Check if the territory is smaller than the minimum required cells
+            if territory_cells.len() < min_cells {
+                eprintln!(
+                    "Group {} did not meet the required minimum cells. Expanding search...",
+                    self.group_id
+                );
+            
+                // Secondary expansion logic: Force-claim nearby eligible cells
+                for x in 0..grid.len() {
+                    for y in 0..grid[0].len() {
+                        if grid[x][y].quality > 0.3 && !grid[x][y].territory.is_taken {
+                            territory_cells.insert((x, y));
+                            grid[x][y].territory.is_taken = true;
+                            grid[x][y].territory.taken_by_group = self.group_id;
+            
+                            if territory_cells.len() >= min_cells {
+                                break;
+                            }
+                        }
+                    }
+                    if territory_cells.len() >= min_cells {
+                        break;
+                    }
+                }
+            }
+    
+            // Assign cells to the group's territory
+            for (x, y) in &territory_cells {
+                let cell = &mut grid[*x][*y];
+                cell.territory.is_taken = true;
+                cell.territory.taken_by_group = self.group_id;
+            }
+        } else {
+            eprintln!(
+                "Error: Group {} does not have a core cell assigned. Skipping territory expansion.",
+                self.group_id
+            );
+        }
+    }
+    
+    pub fn expand_territory_with_natural_shape4(&mut self, grid: &mut Vec<Vec<Cell>>) {
+        // Constants for desired number of cells
+        let min_cells = 1000;
+        let max_cells = 1600;
+    
+        // If no core cell exists, return early
+        if let Some((core_x, core_y)) = self.core_cell {
+            let mut territory_cells: HashSet<(usize, usize)> = HashSet::new();
+            let mut to_explore: VecDeque<(usize, usize)> = VecDeque::new();
+            let mut iterations = 0;
+    
+            // Start with the core cell
+            to_explore.push_back((core_x, core_y));
+            territory_cells.insert((core_x, core_y));
+    
+            // Expand the territory
+            while !to_explore.is_empty() && territory_cells.len() < max_cells && iterations < 10000 {
+                iterations += 1;
+    
+                let (x, y) = to_explore.pop_front().unwrap();
+    
+                // Explore neighboring cells
+                for dx in -1..=1 {
+                    for dy in -1..=1 {
+                        if dx == 0 && dy == 0 {
+                            continue;
+                        }
+    
+                        let new_x = x as isize + dx;
+                        let new_y = y as isize + dy;
+    
+                        // Ensure the cell is within bounds
+                        if new_x >= 0
+                            && new_x < grid.len() as isize
+                            && new_y >= 0
+                            && new_y < grid[0].len() as isize
+                        {
+                            let new_x = new_x as usize;
+                            let new_y = new_y as usize;
+    
+                            // Check eligibility of the cell
+                            if !grid[new_x][new_y].territory.is_taken
+                                && grid[new_x][new_y].quality > 0.3
+                                && !territory_cells.contains(&(new_x, new_y))
+                            {
+                                // Add the cell to the territory
+                                territory_cells.insert((new_x, new_y));
+                                to_explore.push_back((new_x, new_y));
+                            }
+                        }
+                    }
+                }
+            }
+    
+            // Check if the territory meets the minimum size
+            if territory_cells.len() < min_cells {
+                eprintln!(
+                    "Group {} did not meet the required minimum cells. Expanding search...",
+                    self.group_id
+                );
+    
+                // Try to force-claim nearby eligible cells
+                for x in 0..grid.len() {
+                    for y in 0..grid[0].len() {
+                        if !grid[x][y].territory.is_taken
+                            && grid[x][y].quality > 0.3
+                            && territory_cells.len() < min_cells
+                        {
+                            territory_cells.insert((x, y));
+                            grid[x][y].territory.is_taken = true;
+                            grid[x][y].territory.taken_by_group = self.group_id;
+                        }
+                    }
+                }
+            }
+    
+            // Finalize the territory claim
+            for (x, y) in &territory_cells {
+                grid[*x][*y].territory.is_taken = true;
+                grid[*x][*y].territory.taken_by_group = self.group_id;
+            }
+    
+            // Log the result
+            //println!(
+            //    "Group {} finalized territory with {} cells.",
+            //    self.group_id,
+            //    territory_cells.len()
+            //);
+        }
+    }
+ 
+    pub fn expand_territory_with_natural_shape5(&mut self, grid: &mut Vec<Vec<Cell>>) {
+        // Constants for desired number of cells
+        let min_cells = 1000;
+        let max_cells = 1600;
+    
+        // Default radii for the ellipsoid
+        let radius_x: f32 = 50.0;
+        let radius_y: f32 = 50.0;
+    
+        // Ensure the core cell exists
+        if let Some((core_x, core_y)) = self.core_cell {
+            let mut territory_cells: HashSet<(usize, usize)> = HashSet::new();
+            let mut to_explore: BinaryHeap<(OrdFloat, (usize, usize))> = BinaryHeap::new();
+            let mut iterations = 0;
+    
+            // Start with the core cell
+            to_explore.push((OrdFloat(0.0), (core_x, core_y)));
+            territory_cells.insert((core_x, core_y));
+    
+            // Expand the territory while keeping it within the ellipsoid
+            while !to_explore.is_empty() && territory_cells.len() < max_cells && iterations < 10000 {
+                iterations += 1;
+    
+                let (_, (x, y)) = to_explore.pop().unwrap();
+    
+                // Explore neighboring cells with a weighted priority
+                for dx in -1..=1 {
+                    for dy in -1..=1 {
+                        if dx == 0 && dy == 0 {
+                            continue; // Skip the current cell itself
+                        }
+    
+                        let new_x = x as isize + dx;
+                        let new_y = y as isize + dy;
+    
+                        // Ensure the new cell is within grid bounds
+                        if new_x >= 0
+                            && new_x < grid.len() as isize
+                            && new_y >= 0
+                            && new_y < grid[0].len() as isize
+                        {
+                            let new_x = new_x as usize;
+                            let new_y = new_y as usize;
+    
+                            // Calculate the ellipsoid distance for the candidate cell
+                            let distance_sq = (new_x as f32 - core_x as f32).powi(2) / radius_x.powi(2)
+                                + (new_y as f32 - core_y as f32).powi(2) / radius_y.powi(2);
+    
+                            // Only add cells inside the ellipsoid and not already explored
+                            if distance_sq <= 1.0
+                                && !grid[new_x][new_y].territory.is_taken
+                                && grid[new_x][new_y].quality > 0.3
+                                && !territory_cells.contains(&(new_x, new_y))
+                            {
+                                // Use distance to the core as a priority (closer cells have higher priority)
+                                to_explore.push((OrdFloat(-distance_sq), (new_x, new_y)));
+    
+                                // Insert the cell into the territory
+                                territory_cells.insert((new_x, new_y));
+                            }
+                        }
+                    }
+                }
+            }
+    
+            // Finalize the territory claim
+            for (x, y) in territory_cells {
+                grid[x][y].territory.is_taken = true;
+                grid[x][y].territory.taken_by_group = self.group_id;
+            }
+    
+            // Log the result
+            //println!(
+            //    "Group {} finalized territory with {} cells.",
+            //    self.group_id,
+            //    territory_cells.len()
+            //);
+        }
+    }
+    
+    pub fn expand_territory_with_natural_shape(&mut self, grid: &mut Vec<Vec<Cell>>) {
+        // Constants for desired number of cells
+        let min_cells = 1000;
+        let max_cells = 1600;
+    
+        // Default radii for the ellipsoid
+        let radius_x: f32 = 50.0;
+        let radius_y: f32 = 50.0;
+    
+        // Ensure the core cell exists
+        if let Some((core_x, core_y)) = self.core_cell {
+            let mut territory_cells: HashSet<(usize, usize)> = HashSet::new();
+            let mut to_explore: BinaryHeap<(OrdFloat, (usize, usize))> = BinaryHeap::new();
+            let mut iterations = 0;
+    
+            // Start with the core cell
+            to_explore.push((OrdFloat(0.0), (core_x, core_y)));
+            territory_cells.insert((core_x, core_y));
+    
+            // Expand the territory while keeping it within the ellipsoid
+            while !to_explore.is_empty() && territory_cells.len() < max_cells && iterations < 10000 {
+                iterations += 1;
+    
+                let (_, (x, y)) = to_explore.pop().unwrap();
+    
+                // Explore neighboring cells with a weighted priority
+                for dx in -1..=1 {
+                    for dy in -1..=1 {
+                        if dx == 0 && dy == 0 {
+                            continue; // Skip the current cell itself
+                        }
+    
+                        let new_x = x as isize + dx;
+                        let new_y = y as isize + dy;
+    
+                        // Ensure the new cell is within grid bounds
+                        if new_x >= 0
+                            && new_x < grid.len() as isize
+                            && new_y >= 0
+                            && new_y < grid[0].len() as isize
+                        {
+                            let new_x = new_x as usize;
+                            let new_y = new_y as usize;
+    
+                            // Calculate the ellipsoid distance for the candidate cell
+
+                            let mut rng = rand::thread_rng();
+                            let noise_factor = 0.1; // Low border fuzzyness
+                            
+                            let distance_sq = (new_x as f32 - core_x as f32).powi(2) / radius_x.powi(2)
+                                + (new_y as f32 - core_y as f32).powi(2) / radius_y.powi(2)
+                                + rng.gen_range(-noise_factor..noise_factor); // Add randomness
+
+
+                                if distance_sq <= 1.0
+                                && !grid[new_x][new_y].territory.is_taken
+                                && grid[new_x][new_y].quality > 0.3
+                                && !territory_cells.contains(&(new_x, new_y))
+                            {
+                                // Use distance to the core as a priority (closer cells have higher priority)
+                                to_explore.push((OrdFloat(-distance_sq), (new_x, new_y)));
+    
+                                // Insert the cell into the territory
+                                territory_cells.insert((new_x, new_y));
+                            }
+                        }
+                    }
+                }
+            }
+    
+            // Finalize the territory claim
+            for (x, y) in &territory_cells {
+                grid[*x][*y].territory.is_taken = true;
+                grid[*x][*y].territory.taken_by_group = self.group_id;
+            }
+    
+            // Log the result
+            //println!(
+            //    "Group {} finalized territory with {} cells.",
+            //    self.group_id,
+            //    territory_cells.len()
+            //);
+        }
+    }
+    
    
     pub fn expand_territory_with_natural_shape_and_radius(&mut self, grid: &mut Vec<Vec<Cell>>) {
     // Constants for desired number of cells, shape, and radius
@@ -502,6 +932,17 @@ impl Groups {
             }
         }
         infected
+    }
+
+    pub fn symptomatic_member_present(&self)->bool{
+        let mut symptomatic = false;
+        for member in &self.group_members {
+            if member.health_status == HealthStatus::Infected && member.infection_stage == InfectionStage::Symptomatic || member.infection_stage == InfectionStage::HighlyInfectious {
+                symptomatic = true;
+                break;
+            }
+        }
+        symptomatic
     }
 }
 
@@ -711,7 +1152,7 @@ const MAX_AGE: u32 = 365 * 12;
 //const MOVE_CHANCE_PERCENTAGE: usize = 5;
 const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
 //const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 10; 
+const RUNTIME: usize = 365 * 3; 
 //const ADULT_SURVIVAL: f64 = 0.65;
 //const PIGLET_SURVIVAL: f64 = 0.5;
 const ADULT_SURVIVAL_DAY: f64 =  0.9647;
@@ -935,11 +1376,13 @@ fn main() {
     let mut rng = rand::thread_rng();
     let seed = [0u8; 32]; // or any other seed
     let mut rng2: StdRng = SeedableRng::from_seed(seed);
-    let num_groups = 25; // FIX ME DEBUG CHANGE TO 1
+    let num_groups = 125; // FIX ME DEBUG CHANGE TO 1
 
-    let file_path = "input/landscape/redDeer_global_50m.asc";
+    //let file_path = "input/landscape/redDeer_global_50m.asc";
   //let file_path = "input/landscape/test.asc";
   //let file_path = "input/landscape/wb_50x50_prob_pred_s18.asc";
+    //let file_path = "input/oct24_bavariaMaps/hs_bavaria_10_24.asc";
+    let file_path = "input/oct24_bavariaMaps/hs_bavaria_chunk_11.asc";
 
     // Setup the landscape and individuals
     log::info!("Setting up the landscape and individuals");
@@ -996,6 +1439,8 @@ fn main() {
 
     let mut all_sim_meta_data:  Vec<(usize, SimMetaData)> = Vec::new();
 
+    let all_ap: Vec<(usize, usize)> = Vec::new();
+
        let global_variables = GlobalVariables {
         age_mortality: 0,
         random_mortality: 0,
@@ -1033,7 +1478,7 @@ fn main() {
         high_seats: high_seat_vector.clone(),
         hunting_statistics: hunting_statistics,
         metadata: sim_meta_data,
-        
+        attract_points: all_ap.clone(),
     };
 
     model.metadata.simulation_id = sim_id.clone();
@@ -1169,6 +1614,7 @@ fn main() {
         // Simulate movement of individuals
         log::info!("AP dynamic: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         dynamic_ap(&mut model.grid, &mut model.groups, &mut rng, &mut model.global_variables);
+        list_all_attraction_points(&mut model.grid, &mut model.attract_points);
         log::info!("Check AP of groups: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);
         check_attraction_points_in_territory(&mut model.grid, &mut model.groups, 3, &mut rng);
         log::info!("Roaming movement: year {}, month {}, day {}, iteration {}", model.global_variables.year, model.global_variables.month, model.global_variables.day, iteration);

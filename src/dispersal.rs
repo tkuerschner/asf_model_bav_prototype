@@ -184,14 +184,14 @@ pub fn assign_dispersal_targets_groups(dispersing_groups: &mut Vec<DispersingFem
     for (index, dispersing_group) in dispersing_groups.iter_mut().enumerate() {
 
         if dispersing_group.target_cell.is_none() {
-            let mut target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
+            let mut target_cell = select_hq_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
             
             let mut ptc = 0;
             while !check_surrounding(grid, target_cell.0, target_cell.1, 100) && ptc < 10{ // check 100 cells around the target cell if they are taken
                 //println!("Target cell is isolated, looking for new target cell");
                 //println!("Target cell: {:?}", target_cell);
 
-                target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
+                target_cell = select_hq_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
                 ptc += 1;
             }
 
@@ -486,13 +486,13 @@ fn move_randomly_group(disperser_group: &mut DispersingFemaleGroup, grid: &Vec<V
 
 pub fn redraw_dispersal_target(dispersing_group: &mut DispersingFemaleGroup, grid: &mut Vec<Vec<Cell>>, rng: &mut impl Rng, groups: &mut Vec<Groups>) {
 
-    let mut target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
+    let mut target_cell = select_hq_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
     let mut ptc = 0;
     //while !check_surrounding(grid, target_cell.0, target_cell.1, 100) && ptc < 10{ // check 100 cells around the target cell if they are taken
         while !is_valid_territory(grid, target_cell.0, target_cell.1) && ptc < 5{
         //println!("Target cell is isolated, looking for new target cell");
         //println!("Target cell: {:?}", target_cell);
-        target_cell = select_random_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
+        target_cell = select_hq_free_cell_in_range(grid, dispersing_group.disp_grp_x, dispersing_group.disp_grp_y, rng, groups);
         ptc += 1;
     }
     if !is_valid_territory(grid, target_cell.0, target_cell.1)

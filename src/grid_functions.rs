@@ -209,6 +209,34 @@ pub fn random_valid_cell(grid: &Vec<Vec<Cell>>, rng: &mut impl Rng) -> (usize, u
     }
 }
 
+// return a random cell within a radius of 2000 cells of the x and y coordinates
+
+pub fn random_valid_hq_cell_in_range(
+    grid: &Vec<Vec<Cell>>, 
+    x: usize, 
+    y: usize, 
+    rng: &mut impl Rng
+) -> (usize, usize) {
+    let mut valid_cells_in_range = Vec::new();
+
+    for (i, row) in grid.iter().enumerate() {
+        for (j, cell) in row.iter().enumerate() {
+            if cell.quality > 0.6 && distance_squared(i, j, x, y) <= 200 * 200 {
+                valid_cells_in_range.push((i, j));
+            }
+        }
+    }
+
+    if let Some(random_cell) = valid_cells_in_range.choose(rng) {
+        *random_cell
+    } else {
+        println!("No valid cells in range");
+        (1, 1)
+    }
+}
+
+
+
 pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usize, max_ap_per_chunk: usize, chunk_size: usize) {
    
     // chunk the grid in 2x2km blocks and create n ap per chunk
@@ -242,7 +270,7 @@ pub fn place_attraction_points(grid: &mut Vec<Vec<Cell>>, min_ap_per_chunk: usiz
 
         for _ in 0..num_ap {
             if let Some(cell) = chunk.choose(&mut rng) {
-                if grid[cell.0][cell.1].quality > 0.0 {
+                if grid[cell.0][cell.1].quality > 0.61 { // Min value for core cell
                     grid[cell.0][cell.1].territory.is_ap = true;
                 }
                 
@@ -354,7 +382,7 @@ pub fn place_additional_attraction_points(grid: &mut Vec<Vec<Cell>>, groups: &mu
                 let x_clamped = x_jittered as usize;
                 let y_clamped = y_jittered as usize;
 
-                if grid[x_clamped as usize][y_clamped as usize].quality > 0.0 {
+                if grid[x_clamped as usize][y_clamped as usize].quality > 0.18 { // min value for territory
                 grid[x_clamped as usize][y_clamped as usize].territory.is_ap = true;
                 }
 
@@ -545,26 +573,12 @@ pub fn get_attraction_points_in_territory(grid: &Vec<Vec<Cell>>, group_id: usize
 }
 
 //function for a group to get the closest attraction point that is NOT in the groups territory using a radius of 100 out of the territory and WITHOUT using the ap_list
-pub fn get_closest_attraction_point_outside_territory(grid: &Vec<Vec<Cell>>, group: &Groups) -> (usize, usize) {
-    let mut ap_list = Vec::new();
-    let mut ap_list_outside_territory = Vec::new();
+pub fn get_closest_attraction_point_outside_territory(global_ap_list: &Vec<(usize, usize)>, group: &Groups) -> (usize, usize) {
 
-    //get all attraction points
-    for row in grid.iter() {
-        for cell in row.iter() {
-            if cell.territory.is_ap {
-                ap_list.push((cell.x_grid, cell.y_grid));
-            }
-        }
-    }
+    let mut ap_list_outside_territory = global_ap_list.clone();
 
-    //get all attraction points outside the territory but i can be in someone else territory
-    for ap in ap_list.iter() {
-        if ap.0 < grid.len() && ap.1 < grid[0].len() {
-            if grid[ap.0][ap.1].territory.is_taken == false || grid[ap.0][ap.1].territory.taken_by_group != group.group_id {
-                ap_list_outside_territory.push(*ap);
-            }
-        }
+    for ap in &group.current_ap {
+        ap_list_outside_territory.retain(|&x| x != *ap);
     }
 
     //get the closest attraction point outside the territory
@@ -574,7 +588,17 @@ pub fn get_closest_attraction_point_outside_territory(grid: &Vec<Vec<Cell>>, gro
 }
 
 
-
+pub fn list_all_attraction_points(grid: &Vec<Vec<Cell>>, global_ap_list: &mut Vec<(usize, usize)>) {
+    global_ap_list.clear();
+    for row in grid.iter() {
+        for cell in row.iter() {
+            if cell.territory.is_ap {
+                global_ap_list.push((cell.x_grid, cell.y_grid));
+            }
+        }
+    }
+  
+}
 
 
 pub fn get_random_cell_in_territory(grid: &Vec<Vec<Cell>>, group_id: usize, rng: &mut impl Rng) -> (usize, usize) {
@@ -702,6 +726,137 @@ pub fn select_random_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usiz
    // *random_cell
 }
 
+pub fn select_hq_free_cell_in_range(grid: &Vec<Vec<Cell>>, x: usize, y: usize, rng: &mut impl Rng, groups: &Vec<Groups>) -> (usize, usize) {
+    let mut free_cells = Vec::new();
+    let mut free_cells_lq = Vec::new();
+    let mut free_cells_within_range = Vec::new();
+    let mut free_cells_lq_within_range = Vec::new();
+
+    // iterate through the grid and select all cells that are not occupied by a group and are not an attraction point and have a quality > 0.6
+    for (i, row) in grid.iter().enumerate() {
+        for (j, cell) in row.iter().enumerate() {
+            if cell.territory.is_taken == false && cell.territory.is_ap == false && cell.quality > 0.6 {
+                free_cells.push((i, j));
+            }
+            if cell.territory.is_taken == false && cell.territory.is_ap == false && cell.quality > 0.18 {
+                free_cells_lq.push((i, j));
+            }
+        }
+    }
+
+   
+    // print number of free cells
+    //println!("Number of free cells: {}", free_cells.len());
+
+    // iterate through the free cells and select all cells that are within 2000 cells of the input x and y coordinates
+    for (i, j) in free_cells {
+        if distance_squared(i, j, x, y) <= 200 * 200 { // FIX ME 2000 * 2000
+            free_cells_within_range.push((i, j));
+        }
+    }
+
+    for (i, j) in free_cells_lq {
+        if distance_squared(i, j, x, y) <= 200 * 200 { // FIX ME 2000 * 2000
+            free_cells_lq_within_range.push((i, j));
+        }
+    }
+    // print number of free cells within range
+    //println!("Number of free cells within range: {}", free_cells_within_range.len());
+
+    let mut free_cells_within_range_and_far_enough = Vec::new();
+
+    for (i, j) in free_cells_within_range {
+        let mut far_enough = true;
+        for group in groups.iter() {
+            let distance = distance_squared(i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1);
+            if distance <= 20 * 20 {
+                //println!("Cell ({}, {}) is too close to group at ({}, {}). Distance: {}", i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1, distance);
+                far_enough = false;
+                break;
+            }
+        }
+        if far_enough {
+           // println!("Cell ({}, {}) is far enough from all groups", i, j);
+            free_cells_within_range_and_far_enough.push((i, j));
+        }
+    }
+    
+    let mut free_cells_lq_within_range_and_far_enough = Vec::new();
+
+    for (i, j) in free_cells_lq_within_range {
+        let mut far_enough = true;
+        for group in groups.iter() {
+            let distance = distance_squared(i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1);
+            if distance <= 20 * 20 {
+                //println!("Cell ({}, {}) is too close to group at ({}, {}). Distance: {}", i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1, distance);
+                far_enough = false;
+                break;
+            }
+        }
+        if far_enough {
+           // println!("Cell ({}, {}) is far enough from all groups", i, j);
+           free_cells_lq_within_range_and_far_enough.push((i, j));
+        }
+    }
+    // iterate through the free cells within range and select all cells that are at least 600 cells away from the nearest cell occupied by a group
+    //for (i, j) in free_cells_within_range {
+    //    let mut far_enough = true;
+    //    for group in groups.iter() {
+    //        if distance_squared(i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1) <= 600 * 600 {
+    //            //println!("Distance to nearest group core: {}", distance_squared(i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1));
+    //            //println!("Cell ({}, {}) is too close to group at ({}, {}). Distance: {}", i, j, group.core_cell.unwrap().0, group.core_cell.unwrap().1, distance.sqrt());
+    //            far_enough = false;
+    //            break;
+    //        }
+    //    }
+    //    if far_enough {
+    //        free_cells_within_range_and_far_enough.push((i, j));
+    //    }
+    //}
+    // print number of free cells within range and far enough
+    //println!("Number of free cells within range and far enough: {}", free_cells_within_range_and_far_enough.len());
+
+    // select a random cell from the free cells within range and far enough
+    //let random_cell = free_cells_within_range_and_far_enough.choose(rng).unwrap();
+    
+    // if no cell is found return the x and y coordinates 1 / 1
+    //if free_cells_within_range_and_far_enough.len() == 0 {
+    //    return (1, 1);
+    //}
+    //else {
+    //    let random_cell = free_cells_within_range_and_far_enough.choose(rng).unwrap();
+    //    println!("Selected cell: {:?}", random_cell);
+    //    return *random_cell
+    //}
+
+    // check if number of cells is  < 10
+
+    //if free_cells_within_range_and_far_enough.len() < 10 {
+    //    println!("Number of free cells within range and far enough: {}", free_cells_within_range_and_far_enough.len());
+    //    return (1, 1);
+    //} 
+
+
+    if free_cells_within_range_and_far_enough.is_empty() {
+        println!("No free cells within range and far enough");
+        return (1, 1);
+    } else {
+       if rand::thread_rng().gen_bool(0.75) { //75% chance to select a random cell
+           let random_cell = free_cells_within_range_and_far_enough.choose(rng).unwrap();
+           //println!("Selected cell: {:?}", random_cell);
+           return *random_cell;
+       }else{
+         // Select the closest cell to the given position
+         let closest_cell = free_cells_within_range_and_far_enough.iter().min_by_key(|&&(i, j)| distance_squared(i, j, x, y)).unwrap();
+        // println!("Selected cell: {:?}", closest_cell);
+         return *closest_cell;
+        }
+    }
+
+    
+   // *random_cell
+}
+
 pub fn check_surrounding(cells: &Vec<Vec<Cell>>, x: usize, y: usize, extent: usize) -> bool {
     // Define boundaries for surrounding area
     let start_x = if x >= extent { x - extent } else { 0 };
@@ -732,7 +887,7 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     let cells_of_group: Vec<(usize, usize)> = grid
     .iter()
     .enumerate()
-    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group_id && cell.quality > 0.0).map(move |(j, _)| (i, j)))
+    .flat_map(|(i, row)| row.iter().enumerate().filter(|&(_, cell)| cell.territory.taken_by_group == group_id && cell.quality > 0.18).map(move |(j, _)| (i, j)))
     .collect();
 
     if cells_of_group.is_empty() {
@@ -743,7 +898,7 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
 
     if cells_of_group.len() < 25 {
         println!("Number of cells in group: {} < min cell count", cells_of_group.len());
-        print!("Group: {} will be deleted", group_id);
+        print!("Group: {} will be deleted ", group_id);
 
         return false;
     }
@@ -829,7 +984,7 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
             let x_clamped = x_jittered as usize;
             let y_clamped = y_jittered as usize;
 
-            if grid[x_clamped as usize][y_clamped as usize].quality > 0.0 {
+            if grid[x_clamped as usize][y_clamped as usize].quality > 0.18 {
             grid[x_clamped as usize][y_clamped as usize].territory.is_ap = true;
             }
 
@@ -873,9 +1028,12 @@ pub fn check_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, groups: &
         if group_ap.is_empty() {
             if place_attraction_points_in_territory(grid, group.group_id, num_points, rng) == false {
                 groups_to_delete.push(group.group_id);
+                group.mfd = true;
+
             }
             if group_ap.is_empty() { 
                 println!("ERROR: No attraction points in territory after trying to placing new ones");
+                group.mfd = true;
             }
         }
     }
@@ -884,6 +1042,10 @@ pub fn check_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, groups: &
         groups.retain(|group| group.group_id != group_id);
         println!("Group {} deleted", group_id);
     }
+
+    
+       groups.retain(|group|group.mfd == false);
+    
 }
 
 // function to make a specifics groups core cell an ap called by core cell x and y

@@ -19,6 +19,9 @@ impl fmt::Display for MovementMode {
     }
 }
 
+
+
+
 pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
     for group in model.groups.iter_mut() {
 
@@ -49,7 +52,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                 move_to_random_adjacent_cells_2(&model.grid, group, rng);
                 //record_movement_in_interaction_layer(  &mut i_layer,  group.x, group.y, time, group.group_id, "group",  0);
 
-                let inf_here = group.infected_member_present();
+                let inf_here = group.symptomatic_member_present();
                 let mut stage = InfectionStage::NotInfected;
                 if inf_here {
                    stage = InfectionStage::Symptomatic;
@@ -104,11 +107,11 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     
                   move_one_step_towards_target_cell_with_random(group, rng, &model.grid);
 
-                  let inf_here = group.infected_member_present();
-                  let mut stage = InfectionStage::NotInfected;
-                  if inf_here {
-                     stage = InfectionStage::Symptomatic;
-                  }
+                    let inf_here = group.symptomatic_member_present();
+                    let mut stage = InfectionStage::NotInfected;
+                    if inf_here {
+                       stage = InfectionStage::Symptomatic;
+                    }
   
 
                   model.interaction_layer.add_entity_and_record_movement(
@@ -157,9 +160,10 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     if group.remaining_stay_time <= 0 { //if stay time around ap is used up get a new ap to move towards
                         
                         let new_target_cell;
-                        if rng.gen_range(1..100) > 95 { // 2% chance to choose a new ap outside the territory // DEBUG TEMPORARILY DEACTIVATED
+                        if rng.gen_range(1..100) > 95 { // 5% chance to choose a new ap outside the territory // DEBUG fix probability
+                            
                            
-                           let outside_ap = get_closest_attraction_point_outside_territory(&model.grid, group);
+                           let outside_ap = get_closest_attraction_point_outside_territory(&model.attract_points, group);
                             new_target_cell = outside_ap;
                          
                         } else {

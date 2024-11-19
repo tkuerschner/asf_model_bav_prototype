@@ -43,3 +43,18 @@ Documentation/modelDescription.md
 /dump
 Documentation/doc.md
 Documentation/State of Model Development.docx
+input/oct24_bavariaMaps/Bavaria.cpg
+input/oct24_bavariaMaps/Bavaria.dbf
+input/oct24_bavariaMaps/Bavaria.prj
+input/oct24_bavariaMaps/Bavaria.sbn
+input/oct24_bavariaMaps/Bavaria.sbx
+input/oct24_bavariaMaps/Bavaria.shp
+input/oct24_bavariaMaps/Bavaria.shp.xml
+input/oct24_bavariaMaps/Bavaria.shx
+input/oct24_bavariaMaps/dead_dat_reclass_val.rds
+input/oct24_bavariaMaps/hs_bavaria_10_24.asc
+input/oct24_bavariaMaps/shs_bavaria_10_24.asc
+input/oct24_bavariaMaps/shs_bavaria_10_24.tif
+input/oct24_bavariaMaps/suitability_hr_maxent_MCP95_MW2540_cover_fractions_beta_stretch.tif
+input/oct24_bavariaMaps/suitability_landscape_maxent_MCP95_MW2540_MW10km_cover_fractions_beta_stretch.tif
+input/oct24_bavariaMaps/suitability_si_maxent_MCP95_MW2540_MW10km_cover_fractions_beta_stretch.tif

@@ -68,6 +68,7 @@ pub fn group_setup(_cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, 
             max_size: 10000,
             current_ap: Vec::new(),
             active: true,
+            mfd: false,
         };
         //new_group.expand_territory_within_range(grid);
         //new_group.expand_territory_with_natural_shape_and_radius(grid);
@@ -232,6 +233,7 @@ pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Ce
        max_size: calculate_max_group_size_for_group(grid, group_id),
        current_ap: Vec::new(),
        active: true,
+       mfd: false,
    };
 
    new_group.expand_territory_with_natural_shape(grid); // fill the territory with cells
