@@ -395,7 +395,7 @@ pub fn move_one_step_towards_target_cell_with_random(group: &mut Groups, rng: &m
     // Check if there is a target cell set
     if let Some(target_cell) = group.target_cell {
         // Randomly decide whether to move towards the target or move randomly
-        if rng.gen_range(0..100) < 90 {
+        if rng.gen_range(0..100) < 90 {// DEBUG FIX ME percentage
             // Calculate the movement direction towards the target cell
             let direction = (
                 target_cell.0 as isize - group.x as isize,
@@ -502,7 +502,7 @@ pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, group: &mut Groups
           // Select the first cell (randomized) with quality > 0
      let target_cell = adjacent_cells
      .into_iter()
-     .filter(|&(x, y)| x < grid.len() && y < grid[0].len() && grid[x][y].quality > 0.0)
+     .filter(|&(x, y)| x < grid.len() && y < grid[0].len() && grid[x][y].quality > 0.18)
      .next()
      .unwrap_or_else(|| {
          // If no valid adjacent cells with quality > 0, move randomly within the grid

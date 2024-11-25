@@ -593,7 +593,10 @@ pub fn list_all_attraction_points(grid: &Vec<Vec<Cell>>, global_ap_list: &mut Ve
     for row in grid.iter() {
         for cell in row.iter() {
             if cell.territory.is_ap {
-                global_ap_list.push((cell.x_grid, cell.y_grid));
+                if cell.territory.core_cell_of_group == 0 {
+                    global_ap_list.push((cell.x_grid, cell.y_grid));
+                }
+                //global_ap_list.push((cell.x_grid, cell.y_grid));
             }
         }
     }
@@ -903,9 +906,6 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
         return false;
     }
 
-
-        
-
     //get the min x and y coordinates of the group
     let min_x = cells_of_group.iter().map(|(x, _)| x).min().unwrap();
     let min_y = cells_of_group.iter().map(|(_, y)| y).min().unwrap();
@@ -926,12 +926,13 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     //let center_x = min_x  + (width ) / 2;
     //let center_y = min_y  + (height) / 2;
     //let n_ap = rng.gen_range(4..8);
+    //println!("num_points: {}", num_points);
     let num_points_sqrt = (num_points as f64).sqrt() as usize;
 
-    let mut max_jitter: isize = 4;
+    let mut max_jitter: isize = 6;
 
     if num_points_sqrt < 2 {
-        max_jitter = 6;
+        max_jitter = 8;
     }
 
     //println!("max_jitter: {}", max_jitter);
@@ -1059,7 +1060,7 @@ pub fn make_core_cell_an_ap(grid: &mut Vec<Vec<Cell>>, cx: usize, cy: usize) {
 pub fn dynamic_ap(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng, globals: &mut GlobalVariables) {
     
     //if globals.year > 2 && ((globals.day == 1 && globals.month == 7) || (globals.day == 1 && globals.month == 10)){
-    if globals.year > 2 && ((globals.day == 1 ) || (globals.day == 10 ) || (globals.day == 19 )){ // FIX ME: changed to 3 times a month
+    if globals.year > 0 && ((globals.day == 1 ) || (globals.day == 10 ) || (globals.day == 19 )){ // FIX ME: changed to 3 times a month
        // println!("Dynamic AP placement");
        //log::info!("Dynamic AP placement");
        let mut groups_to_delete: Vec<usize> = Vec::new();
