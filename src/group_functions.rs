@@ -64,7 +64,7 @@ pub fn group_setup(_cell_info_list: &Vec<CellInfo>,  grid: &mut Vec<Vec<Cell>>, 
             },
             movement: MovementMode::Foraging,
             group_members: vec![],
-            daily_movement_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE, //<--------------------DEBUG FIX ME with actual values
+            daily_movement_distance: CONFIG.default_daily_movement_distance, //<--------------------DEBUG FIX ME with actual values
             max_size: 10000,
             current_ap: Vec::new(),
             active: true,
@@ -229,7 +229,7 @@ pub fn add_new_group_at_location(groups: &mut Vec<Groups>, grid: &mut Vec<Vec<Ce
        },
        movement: MovementMode::Foraging,
        group_members: Vec::new(),
-       daily_movement_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
+       daily_movement_distance: CONFIG.default_daily_movement_distance,
        max_size: calculate_max_group_size_for_group(grid, group_id),
        current_ap: Vec::new(),
        active: true,

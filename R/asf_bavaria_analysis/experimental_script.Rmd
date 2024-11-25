@@ -43,7 +43,7 @@ setwd("D:/OneDrive/Projects/asf_bavaria/Prototype/asf_model_bav_prototype")
 
 
 ```{r data prep}
-it <- 208      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
+it <- 210      #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< SET ME
 ```
 
 
@@ -3621,15 +3621,6 @@ unique(dfi$individual_type)
 ```{r}
 
 
-
-
-
-
-
-
-
-
-
 for (i in 1:max(groups$group_id))
 {
 
@@ -4040,7 +4031,7 @@ groups2 <- groups %>% left_join(globals, by = "iteration")
 
 
 #get group 130
-mcp_grp <- groups2 %>% filter(group_id == 130, age_class != "Piglet") #%>% filter(iteration == max(iteration))
+mcp_grp <- groups2 %>% filter(group_id == 5, age_class != "Piglet") #%>% filter(iteration == max(iteration))
 
 
 #mcp_grp <- mcp_grp %>% filter(iteration >= 672 *2, iteration <= 672*2 + 336)
@@ -4165,7 +4156,7 @@ space_use <- all_known_cells %>%
 
 all_grp_coord_df <- all_grp_coord_df %>% group_by(group_id) %>% filter(n() > 5)
 
-habitat_bavaria_df <- as.data.frame(habitat_bavaria3, xy = TRUE)
+habitat_bavaria_df <- as.data.frame(habitat_bavaria3, xy = TRUE) %>% rename(value = suitability_hr_maxent_MCP95_MW2540_cover_fractions_beta)
 
 all_grp_coord_df_c <- all_grp_coord_df %>%
   ungroup() %>%

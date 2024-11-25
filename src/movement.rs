@@ -42,7 +42,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     .expect("No attraction points in territory");
             
                 group.set_target_cell(new_target_cell);
-                group.remaining_stay_time = rng.gen_range(MIN_STAY_TIME..MAX_STAY_TIME);
+                group.remaining_stay_time = rng.gen_range(CONFIG.min_stay_time..CONFIG.max_stay_time);
             }
 
             // Steps
@@ -188,7 +188,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                                     }
                         }
                         group.set_target_cell(new_target_cell);
-                        group.remaining_stay_time = rng.gen_range(MIN_STAY_TIME..MAX_STAY_TIME);
+                        group.remaining_stay_time = rng.gen_range(CONFIG.min_stay_time..CONFIG.max_stay_time);
 
                         group.movement = MovementMode::ApTransition;
                        // group.target_cell = None;
@@ -290,7 +290,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
             }
         }
         // Reset movement distance
-        group.daily_movement_distance =  DEFAULT_DAILY_MOVEMENT_DISTANCE;
+        group.daily_movement_distance =  CONFIG.default_daily_movement_distance;
 
         // update the stay time around the ap
         group.update_remaining_stay_time();
@@ -359,7 +359,7 @@ pub fn move_towards_highest_quality(grid: &Vec<Vec<Cell>>, group: &mut Groups, r
     //update_memory(&mut individual.memory.known_cells, &mut individual.memory.known_cells_order, (individual.x, individual.y), MAX_KNOWN_CELLS);
     //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
 
-    update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), MAX_KNOWN_CELLS);
+    update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), CONFIG.max_known_cells);
     //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
 
 
@@ -411,7 +411,7 @@ pub fn move_one_step_towards_target_cell_with_random(group: &mut Groups, rng: &m
                 &mut group.memory.known_cells,
                 &mut group.memory.known_cells_order,
                 (group.x, group.y),
-                MAX_KNOWN_CELLS,
+                CONFIG.max_known_cells,
             );
         } else {
             // Move randomly
@@ -511,7 +511,7 @@ pub fn move_to_random_adjacent_cells_2(grid: &Vec<Vec<Cell>>, group: &mut Groups
          reset_group_coordinates_to_core_cell(group) // TEMP FIX ME
      });
 
-     update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), MAX_KNOWN_CELLS);
+     update_memory(&mut group.memory.known_cells, &mut group.memory.known_cells_order, (group.x, group.y), CONFIG.max_known_cells);
      //update_memory(&mut individual.memory.last_visited_cells, &mut individual.memory.last_visited_cells_order, (individual.x, individual.y), MAX_LAST_VISITED_CELLS);
  
      // Update individual's position

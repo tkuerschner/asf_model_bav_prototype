@@ -81,7 +81,7 @@ pub fn roamer_assignemnt(roamers: &mut Vec<RoamingIndividual>, groups: &mut Vec<
                 time_of_reproduction: member.time_of_reproduction,
                 origin_group_id: group.group_id,
                 target_cell: None,
-                daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
+                daily_distance: CONFIG.default_daily_movement_distance,
                 target_group: None,
                 known_groups: Vec::new(),
                 initial_dispersal: true,
@@ -283,7 +283,7 @@ pub fn initial_roamer_dispersal_movement(model: &mut Model ,  rng: &mut impl Rng
         }
         //log::info!("Dispersing roamer {:?} finished moving towards target for today", roamer.roamer_id);
         if roamer.initial_dispersal == true {
-            roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+            roamer.daily_distance = CONFIG.default_daily_movement_distance;
         }
     }
     // remove hunted roamers
@@ -486,7 +486,7 @@ pub fn move_roamer(roamer: &mut RoamingIndividual, grid: &mut Vec<Vec<Cell>>, i_
     }
 
     if !roamer.reached_target {
-        roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+        roamer.daily_distance = CONFIG.default_daily_movement_distance;
     }
 
     return false
@@ -656,8 +656,8 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &mut Vec<
     //let tcell = (tx, ty);
     //roamer.target_cell = Some(tcell);
 
-    if roamer.daily_distance < DEFAULT_DAILY_MOVEMENT_DISTANCE {
-        roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+    if roamer.daily_distance < CONFIG.default_daily_movement_distance {
+        roamer.daily_distance = CONFIG.default_daily_movement_distance;
     }
 
 
@@ -745,7 +745,7 @@ fn move_roamer_with_target_group(roamer: &mut RoamingIndividual, grid: &mut Vec<
     }
     //log::info!("Roamer {:?} finished moving with group for today", roamer.roamer_id);
     stay_with_target_group(roamer);
-    roamer.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+    roamer.daily_distance = CONFIG.default_daily_movement_distance;
     return false
   
 }

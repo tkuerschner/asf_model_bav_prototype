@@ -163,7 +163,7 @@ pub fn group_carcass_contact_handling(this_group: &mut Groups, rng: &mut impl Rn
         for member in this_group.group_members.iter_mut() {
             if member.health_status == HealthStatus::Susceptible {
                 if individual_carcass_contact_probability(rng) {
-                if rng.gen_bool(BETA_C) {
+                if rng.gen_bool(CONFIG.beta_c) {
                     member.health_status = HealthStatus::Infected;
                     member.infection_stage = InfectionStage::Incubation;
                     member.time_of_infection = Some(time);
@@ -175,7 +175,7 @@ pub fn group_carcass_contact_handling(this_group: &mut Groups, rng: &mut impl Rn
 }
 
 pub fn individual_carcass_contact_probability(rng: &mut impl Rng) -> bool {
-    if rng.gen_bool(CARCASS_CONTACT_PROB) {
+    if rng.gen_bool(CONFIG.carcass_contact_prob) {
         true
     } else {
         false

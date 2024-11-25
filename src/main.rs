@@ -28,9 +28,12 @@ use std::path::Path;
 
 use std::collections::BinaryHeap;
 use std::cmp::Ordering;
-use std::cmp::Reverse;
 use std::collections::VecDeque;
-use noise::{NoiseFn, Perlin};
+
+use serde::Deserialize;
+use lazy_static::lazy_static;
+use once_cell::sync::OnceCell;
+
 
 //use lazy_static::lazy_static;
 //use std::sync::Mutex;
@@ -748,8 +751,8 @@ impl Groups {
     
     pub fn expand_territory_with_natural_shape(&mut self, grid: &mut Vec<Vec<Cell>>) {
         // Constants for desired number of cells
-        let min_cells = 1000;
-        let max_cells = 2000;
+        let min_cells = CONFIG.min_hr_Cells;
+        let max_cells = CONFIG.max_hr_Cells;
     
         // Default radii for the ellipsoid
         let radius_x: f32 = 50.0;
@@ -793,7 +796,7 @@ impl Groups {
                             // Calculate the ellipsoid distance for the candidate cell
 
                             let mut rng = rand::thread_rng();
-                            let noise_factor = 0.1; // Low border fuzzyness
+                            let noise_factor = CONFIG.hr_border_fuzzy; // Low border fuzzyness
                             
                             let distance_sq = (new_x as f32 - core_x as f32).powi(2) / radius_x.powi(2)
                                 + (new_y as f32 - core_y as f32).powi(2) / radius_y.powi(2)
@@ -834,8 +837,8 @@ impl Groups {
    
     pub fn expand_territory_with_natural_shape_and_radius(&mut self, grid: &mut Vec<Vec<Cell>>) {
     // Constants for desired number of cells, shape, and radius
-    let min_desired_cells = 1000;
-    let max_desired_cells = 2000;
+    let min_desired_cells = CONFIG.min_hr_Cells;
+    let max_desired_cells = CONFIG.max_hr_Cells;
     let shape_factor = 0.5; // Adjust shape factor for desired shape
     let radius = 50;
 
@@ -1093,8 +1096,8 @@ pub struct LandscapeMetadata {
 struct Output {
 
 }
-
-// Define a struct to represent the input
+//
+//// Define a struct to represent the input
 //#[derive(Debug)]
 //struct Input {
 //max_age: u32,
@@ -1112,61 +1115,61 @@ struct Output {
 //
 //}
 
-//lazy_static! { //Default values
-//    static ref MAX_AGE: Mutex<u32> = Mutex::new(365 * 12);
-//    static ref PRESENCE_TIME_LIMIT: Mutex<usize> = Mutex::new(5);
-//    static ref PRESENCE_TIME_LIMIT1: Mutex<usize> = Mutex::new(5);
-//    static ref MOVE_CHANCE_PERCENTAGE: Mutex<usize> = Mutex::new(5);
-//    static ref MAX_KNOWN_CELLS: Mutex<usize> = Mutex::new(20);
-//    static ref MAX_LAST_VISITED_CELLS: Mutex<usize> = Mutex::new(3);
-//    static ref RUNTIME: Mutex<usize> = Mutex::new(365);
-//    static ref ADULT_SURVIVAL: Mutex<f64> = Mutex::new(0.65);
-//    static ref PIGLET_SURVIVAL: Mutex<f64> = Mutex::new(0.5);
-//    static ref ADULT_SURVIVAL_DAY: Mutex<f64> = Mutex::new(0.9647);
-//    static ref PIGLET_SURVIVAL_DAY: Mutex<f64> = Mutex::new(0.9438);
-//    static ref MIN_STAY_TIME: Mutex<usize> = Mutex::new(1);
-//    static ref MAX_STAY_TIME: Mutex<usize> = Mutex::new(14);
-//    static ref DEFAULT_DAILY_MOVEMENT_DISTANCE: Mutex<usize> = Mutex::new(20);
-//}
 
-//fn assign_to_constants(input_struct: &Input) {
-//    // Assign values to constants
-//    *MAX_AGE.lock().unwrap()                         = input_struct.max_age;
-//    *PRESENCE_TIME_LIMIT.lock().unwrap()             = input_struct.presence_time_limit;
-//    *MOVE_CHANCE_PERCENTAGE.lock().unwrap()          = input_struct.move_chance_percentage;
-//    *MAX_KNOWN_CELLS.lock().unwrap()                 = input_struct.max_known_cells;
-//    *RUNTIME.lock().unwrap()                         = input_struct.runtime;
-//    *ADULT_SURVIVAL.lock().unwrap()                  = input_struct.adult_survival;
-//    *PIGLET_SURVIVAL.lock().unwrap()                 = input_struct.piglet_survival;
-//    *ADULT_SURVIVAL_DAY.lock().unwrap()              = input_struct.adult_survival_day;
-//    *PIGLET_SURVIVAL_DAY.lock().unwrap()             = input_struct.piglet_survival_day;
-//    *MIN_STAY_TIME.lock().unwrap()                   = input_struct.min_stay_time;
-//    *MAX_STAY_TIME.lock().unwrap()                   = input_struct.max_stay_time;
-//    *DEFAULT_DAILY_MOVEMENT_DISTANCE.lock().unwrap() = input_struct.default_daily_movement_distance;
-//
-//}
+#[derive(Deserialize)]
+struct Config {
+    max_age: u32,
+    max_known_cells: usize,
+    runtime: usize,
+    adult_survival_day: f64,
+    piglet_survival_day: f64,
+    min_stay_time: usize,
+    max_stay_time: usize,
+    default_daily_movement_distance: usize,
+    good_year_chance: usize,
+    burn_in_period: usize,
+    beta_w: f64,
+    beta_b: f64,
+    beta_c: f64,
+    carcass_contact_prob: f64,
+    p_symptomatic: f64,
+    n_starting_groups: usize,
+    seed: u64,
+    min_hr_Cells: usize,
+    max_hr_Cells: usize,
+    hr_border_fuzzy: f32,
+    ap_max_jitter: isize,
+    ap_jitter_factor: isize,
+    min_ap: i32
 
-// consants
-const MAX_AGE: u32 = 365 * 12;
-//const PRESENCE_TIME_LIMIT: usize = 5;
-//const MOVE_CHANCE_PERCENTAGE: usize = 5;
-const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
-//const MAX_LAST_VISITED_CELLS: usize = 3;
-const RUNTIME: usize = 365 * 3; 
-//const ADULT_SURVIVAL: f64 = 0.65;
-//const PIGLET_SURVIVAL: f64 = 0.5;
-const ADULT_SURVIVAL_DAY: f64 =  0.9647;
-const PIGLET_SURVIVAL_DAY: f64 = 0.9438;
-const MIN_STAY_TIME: usize = 1;
-const MAX_STAY_TIME: usize = 14;
-const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
-const GODD_YEAR_CHANCE: usize = 15; // 15% chance of a good year
-const BURN_IN_PERIOD: usize = 0; // 365 * 2; // 2 years burn in period
-const BETA_W: f64 = 0.05; // within group transmission rate // FIX ME
+}
+
+lazy_static! {
+    static ref CONFIG: Config = read_config("config.json");
+}
+
+
+//// consants
+//const MAX_AGE: u32 = 365 * 12;
+////const PRESENCE_TIME_LIMIT: usize = 5;
+////const MOVE_CHANCE_PERCENTAGE: usize = 5;
+//const MAX_KNOWN_CELLS: usize = 60; // DEBUG FIX ME with actual values
+////const MAX_LAST_VISITED_CELLS: usize = 3;
+//const RUNTIME: usize = 365 * 3; 
+////const ADULT_SURVIVAL: f64 = 0.65;
+////const PIGLET_SURVIVAL: f64 = 0.5;
+//const ADULT_SURVIVAL_DAY: f64 =  0.9647;
+//const PIGLET_SURVIVAL_DAY: f64 = 0.9438;
+//const MIN_STAY_TIME: usize = 1;
+//const MAX_STAY_TIME: usize = 14;
+//const DEFAULT_DAILY_MOVEMENT_DISTANCE: usize = 20;
+//const GOOD_YEAR_CHANCE: usize = 15; // 15% chance of a good year
+//const BURN_IN_PERIOD: usize = 0; // 365 * 2; // 2 years burn in period
+//const BETA_W: f64 = 0.05; // within group transmission rate // FIX ME
 //const BETA_B: f64 = 0.001; // between group transmission rate // FIX ME
-const BETA_C: f64 = 0.6; // carcass transmission rate // FIX ME
-const CARCASS_CONTACT_PROB : f64 = 0.10; // carcass contact probability // FIX ME
-const P_SYMPTOMATIC: f64 = 0.5; // probability of being symptomatic // FIX ME
+//const BETA_C: f64 = 0.6; // carcass transmission rate // FIX ME
+//const CARCASS_CONTACT_PROB : f64 = 0.10; // carcass contact probability // FIX ME
+//const P_SYMPTOMATIC: f64 = 0.5; // probability of being symptomatic // FIX ME
 
 
 
@@ -1363,6 +1366,7 @@ fn main() {
     let _ = std::fs::remove_file("logs/outputLog.log");
     let sim_id = generate_unique_simulation_id();
 
+
      // Initialize the logger
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     
@@ -1373,10 +1377,10 @@ fn main() {
 
     log::info!("--------------------------->>> Starting simulation {} at time: {:?}", sim_id, start_time);
 
-    let mut rng = rand::thread_rng();
-    let seed = [0u8; 32]; // or any other seed
-    let mut rng2: StdRng = SeedableRng::from_seed(seed);
-    let num_groups = 125; // FIX ME DEBUG CHANGE TO 1
+    //let mut rng = rand::thread_rng();
+    let seed = CONFIG.seed;//[0u8; 32]; 
+    let mut rng: StdRng = SeedableRng::seed_from_u64(seed);
+    let num_groups = CONFIG.n_starting_groups; // FIX ME DEBUG CHANGE TO 1
 
     //let file_path = "input/landscape/redDeer_global_50m.asc";
   //let file_path = "input/landscape/test.asc";
@@ -1486,15 +1490,15 @@ fn main() {
     
     // Allocate survival probabilitiesall_grom1
     let survival_prob = SurvivalProbability {
-        adult: ADULT_SURVIVAL_DAY,
-        piglet: PIGLET_SURVIVAL_DAY,
+        adult: CONFIG.adult_survival_day,
+        piglet: CONFIG.piglet_survival_day,
     };
 
     //Debug print:
     println!("Setup complete -> starting iteration");
 
     // Simulate and save the grid state and individual state for each iteration
-    for iteration in 1..= RUNTIME {
+    for iteration in 1..= CONFIG.runtime {
 
         remove_dead_individuals(&mut model);
         check_group_territory_size_and_ap(&mut model);
@@ -1519,7 +1523,7 @@ fn main() {
         let hunting_per_month_list = vec![0.3,0.2,0.2,0.1,0.0,0.0,0.0,0.0,0.0,0.1,0.1,0.2];
         //high seat occupancy
         
-      if iteration > BURN_IN_PERIOD {
+      if iteration > CONFIG.burn_in_period {
         //get the current month
         let current_month = model.global_variables.month;
         //use the current month to get the position in the hunting list vector
@@ -1551,33 +1555,9 @@ fn main() {
         pathogen_transmission_within_groups(&mut model, &mut rng);
 
 
-        pathogen_progression(&mut model, &mut rng2);
+        pathogen_progression(&mut model, &mut rng);
 
       }
-
-
-      //FIX ME TESTER
-    //    if iteration == 1200  || iteration == 1400 || iteration == 1800  {
-    //        experimental_outbreak(&mut model);
-    //    }
-//
-    //   //if iteration above 500 and then every 25 itertaion
-    //   if  iteration > 1500 && iteration % 25 == 0 {
-    //       //check if there are any infected individuals
-    //   
-    //   experimental_outbreak2(&mut model);
-    //   }
-//
-//
-//
-
-     // if iteration > 1000 {
-     //   experimental_outbreak3(&mut model);
-     // }
-
-
-
-
 
         //dispersal
         if iteration > 100 {
@@ -1665,7 +1645,7 @@ fn main() {
       //  remove_half_of_all_groups(&mut model);
       // }
 
-        if iteration == (RUNTIME) {
+        if iteration == (CONFIG.runtime) {
             // Save the grid state for the current (last) iteration
             //println!("its happening");
             all_grid_states.push((iteration, model.grid.clone()));
@@ -1738,7 +1718,7 @@ fn main() {
 
         //print!("Day:{}, Month:{}, Year:{}, Individuals:{}\n", global_variables.day, global_variables.month, global_variables.year, global_variables.n_individuals);
         if model.global_variables.month == 1 && model.global_variables.day == 1{
-            let perc = (iteration as f64 / RUNTIME as f64 * 100.0).round();
+            let perc = (iteration as f64 / CONFIG.runtime as f64 * 100.0).round();
             let elapsed_time = start_time.elapsed().as_secs();
         println!("Simulation {}% complete! - Elapsed time: {}s", perc, elapsed_time);
         }

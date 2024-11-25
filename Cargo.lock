@@ -50,11 +50,15 @@ dependencies = [
  "chrono",
  "crossbeam",
  "kdtree",
+ "lazy_static",
  "log",
  "log4rs",
  "noise",
+ "once_cell",
  "rand 0.8.5",
  "rayon",
+ "serde",
+ "serde_json",
  "uuid",
 ]
 
@@ -385,6 +389,12 @@ checksum = "80ee359328fc9087e9e3fc0a4567c4dd27ec69a127d6a70e8d9dd22845b8b1a2"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "lazy_static"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"

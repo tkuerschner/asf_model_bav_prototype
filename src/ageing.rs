@@ -1,7 +1,8 @@
 use crate::AgeClass;
 //use crate::Groups;
 use crate::Model;
-use crate::MAX_AGE;
+use crate::CONFIG;
+//use crate::MAX_AGE;
 
 
 //pub fn ageing(groups: &mut Vec<Groups>, age_mortality: &mut u32) {
@@ -120,12 +121,12 @@ pub fn ageing(model: &mut Model) {
                         AgeClass::Adult
                     };
 
-                    if member.age >= MAX_AGE {
+                    if member.age >= CONFIG.max_age {
                         let mut age_mortality = age_mortality_clone.lock().unwrap();
                         **age_mortality += 1;
                     }
                 }
-                group.group_members.retain(|member| member.age < MAX_AGE);
+                group.group_members.retain(|member| member.age < CONFIG.max_age);
             }
         });
 
@@ -145,12 +146,12 @@ pub fn ageing(model: &mut Model) {
                  };
                 }
 
-                if roamer.age >= MAX_AGE {
+                if roamer.age >= CONFIG.max_age {
                     let mut age_mortality = age_mortality_clone.lock().unwrap();
                     **age_mortality += 1;
                 }
             }
-            roamers.retain(|roamer| roamer.age < MAX_AGE);
+            roamers.retain(|roamer| roamer.age < CONFIG.max_age);
         });
 
         // Process dispersers in parallel
@@ -167,12 +168,12 @@ pub fn ageing(model: &mut Model) {
                         AgeClass::Adult
                     };
 
-                    if disperser.age >= MAX_AGE {
+                    if disperser.age >= CONFIG.max_age {
                         let mut age_mortality = age_mortality_clone.lock().unwrap();
                         **age_mortality += 1;
                     }
                 }
-                disperser_group.dispersing_individuals.retain(|disperser| disperser.age < MAX_AGE);
+                disperser_group.dispersing_individuals.retain(|disperser| disperser.age < CONFIG.max_age);
             }
         });
     }).unwrap();

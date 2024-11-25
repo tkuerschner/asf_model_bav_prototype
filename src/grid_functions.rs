@@ -929,10 +929,10 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
     //println!("num_points: {}", num_points);
     let num_points_sqrt = (num_points as f64).sqrt() as usize;
 
-    let mut max_jitter: isize = 6;
+    let mut max_jitter: isize = CONFIG.ap_max_jitter;
 
     if num_points_sqrt < 2 {
-        max_jitter = 8;
+        max_jitter = max_jitter + CONFIG.ap_jitter_factor;
     }
 
     //println!("max_jitter: {}", max_jitter);
@@ -1006,7 +1006,7 @@ pub fn place_attraction_points_in_territory(grid: &mut Vec<Vec<Cell>>, group_id:
                // println!("Number of cells in group: {}", cells_of_group.len());
                // println!("Number of ap in group: {}", ap_count);
             
-            while ap_count < 4 {
+            while ap_count < CONFIG.min_ap {    
                 
                // create random ap in the groups territory
                // filter cells_of_group to exclude is_ap == true

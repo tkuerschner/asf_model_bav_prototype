@@ -82,7 +82,7 @@ pub fn pathogen_transmission_within_groups(model: &mut Model, rng: &mut impl Rng
                 // Check if member is susceptible and not already infected
                 if member.health_status == HealthStatus::Susceptible {
                     // Calculate the transmission probability based on the number of symptomatic and highly infectious individuals
-                    let transmission_probability = BETA_W * (infection_density_factor + highly_infectious_density_factor);
+                    let transmission_probability = CONFIG.beta_w * (infection_density_factor + highly_infectious_density_factor);
 
                     // Check if transmission is successful
                     if rng.gen_bool(transmission_probability) {
@@ -100,7 +100,7 @@ pub fn pathogen_transmission_within_groups(model: &mut Model, rng: &mut impl Rng
 
 pub fn pathogen_progression(model: &mut Model, rng: &mut StdRng) {
     let current_time = model.global_variables.current_time;
-    let p_symptomatic = P_SYMPTOMATIC;
+    let p_symptomatic = CONFIG.p_symptomatic;
 
     // Create a thread-safe RNG by cloning the main RNG for each thread
     scope(|s| {

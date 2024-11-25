@@ -116,7 +116,7 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
                 origin_group_id: group.group_id,
                 disperser_id: generate_disperser_id(),
                 target_cell: None,
-                daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
+                daily_distance: CONFIG.default_daily_movement_distance,
                 infection_stage: InfectionStage::NotInfected,
                 time_of_infection: None,
             };
@@ -137,7 +137,7 @@ pub fn dispersal_assignment(groups: &mut Vec<Groups>, dispersing_individuals: &m
                 dispersing_individuals: dispersing_individuals.clone(),
                 disp_grp_id: generate_disperser_id(),
                 target_cell: None,
-                daily_distance: DEFAULT_DAILY_MOVEMENT_DISTANCE,
+                daily_distance: CONFIG.default_daily_movement_distance,
                 disp_grp_x: dispersing_individuals[0].disp_indiv_x, // Use x of the first individual
                 disp_grp_y: dispersing_individuals[0].disp_indiv_y, // Use y of the first individual
                 marked_for_removal: false,
@@ -365,7 +365,7 @@ pub fn move_female_disperser_group(model: &mut Model, rng: &mut impl Rng, time: 
             }
             
             if !reached_target {
-                disperser_group.daily_distance = DEFAULT_DAILY_MOVEMENT_DISTANCE;
+                disperser_group.daily_distance = CONFIG.default_daily_movement_distance;
             }
 
             if reached_target {

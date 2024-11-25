@@ -37,7 +37,7 @@ pub fn good_year_check(model: &mut Model, rng: &mut impl Rng ){
 
     if model.global_variables.good_year == false {
         let random_number = rng.gen_range(0..100);
-        if random_number <= GODD_YEAR_CHANCE {
+        if random_number <= CONFIG.good_year_chance {
             model.global_variables.good_year = true;
         }
     } else {
@@ -218,4 +218,7 @@ pub fn copy_last_sim_to_active(folder_path: String) {
         (incubation, symptomatic, infected, recovered, dead, susceptible)
     }
 
- 
+    pub fn read_config(filename: &str) -> Config {
+        let data = fs::read_to_string(filename).expect("Unable to read file");
+        serde_json::from_str(&data).expect("Unable to parse JSON")
+    }
