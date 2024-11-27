@@ -43,7 +43,7 @@ config <- list(
   max_hr_cells                      = 2000,     #usize
   min_hr_cells                      = 1000,     #usize
   hr_border_fuzzy                   = 0.1,      #f32
-  ap_max_jitter                     = 6,        #isize
+  ap_max_jitter                     = 8,        #isize
   ap_jitter_factor                  = 2,        #isize
   min_ap                            = 4         #i32
 )

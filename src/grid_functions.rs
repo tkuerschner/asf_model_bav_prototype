@@ -584,6 +584,25 @@ pub fn get_closest_attraction_point_outside_territory(global_ap_list: &Vec<(usiz
     //get the closest attraction point outside the territory
     let closest_ap = get_closest_attraction_point(group, &ap_list_outside_territory);
 
+
+    //temp failsafe
+    // if the ap is more then 500 cells away from the group core cell, return a random high quality cell outside the territory within 500 cells of the core cell
+
+    if distance_squared(group.x, group.y, closest_ap.0, closest_ap.1) > 50 * 50 {
+        println!("AP is too far away from group core cell, selecting random cell within 50 cells of core cell");
+        let mut free_cells = Vec::new();
+        for (i, row) in global_ap_list.iter() {
+            if distance_squared(group.x, group.y, *row, *i) <= 100 * 100 {
+                free_cells.push((*row, *i));
+            }
+        }
+        let random_cell = free_cells.choose(&mut rand::thread_rng()).unwrap();
+        return *random_cell;
+    }
+
+    ////end temp failsafe
+
+
     closest_ap
 }
 

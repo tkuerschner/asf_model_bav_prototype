@@ -751,8 +751,8 @@ impl Groups {
     
     pub fn expand_territory_with_natural_shape(&mut self, grid: &mut Vec<Vec<Cell>>) {
         // Constants for desired number of cells
-        let min_cells = CONFIG.min_hr_Cells;
-        let max_cells = CONFIG.max_hr_Cells;
+        let min_cells = CONFIG.min_hr_cells;
+        let max_cells = CONFIG.max_hr_cells;
     
         // Default radii for the ellipsoid
         let radius_x: f32 = 50.0;
@@ -837,8 +837,8 @@ impl Groups {
    
     pub fn expand_territory_with_natural_shape_and_radius(&mut self, grid: &mut Vec<Vec<Cell>>) {
     // Constants for desired number of cells, shape, and radius
-    let min_desired_cells = CONFIG.min_hr_Cells;
-    let max_desired_cells = CONFIG.max_hr_Cells;
+    let min_desired_cells = CONFIG.min_hr_cells;
+    let max_desired_cells = CONFIG.max_hr_cells;
     let shape_factor = 0.5; // Adjust shape factor for desired shape
     let radius = 50;
 
@@ -1135,8 +1135,8 @@ struct Config {
     p_symptomatic: f64,
     n_starting_groups: usize,
     seed: u64,
-    min_hr_Cells: usize,
-    max_hr_Cells: usize,
+    min_hr_cells: usize,
+    max_hr_cells: usize,
     hr_border_fuzzy: f32,
     ap_max_jitter: isize,
     ap_jitter_factor: isize,
