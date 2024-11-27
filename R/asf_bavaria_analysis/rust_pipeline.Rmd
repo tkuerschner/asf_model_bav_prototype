@@ -29,7 +29,7 @@ config <- list(
   adult_survival_day                = 0.9647,   #f64
   piglet_survival_day               = 0.9438,   #f64
   min_stay_time                     = 1,        #usize
-  max_stay_time                     = 14,       #usize
+  max_stay_time                     = 7,       #usize
   default_daily_movement_distance   = 20,       #usize
   good_year_chance                  = 15,       #usize
   burn_in_period                    = 0,        #usize
@@ -40,7 +40,7 @@ config <- list(
   p_symptomatic                     = 0.5,      #f64
   n_starting_groups                 = 10,       #usize
   seed                              = 1234,     #u64
-  max_hr_cells                      = 2000,     #usize
+  max_hr_cells                      = 1800,     #usize
   min_hr_cells                      = 1000,     #usize
   hr_border_fuzzy                   = 0.1,      #f32
   ap_max_jitter                     = 8,        #isize

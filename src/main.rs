@@ -32,7 +32,6 @@ use std::collections::VecDeque;
 
 use serde::Deserialize;
 use lazy_static::lazy_static;
-use once_cell::sync::OnceCell;
 
 
 //use lazy_static::lazy_static;
@@ -105,7 +104,6 @@ pub struct Model {
     pub global_variables: GlobalVariables,
     pub roamers: Vec<RoamingIndividual>,
     pub dispersers: Vec<DispersingFemaleGroup>,
-    //pub interaction_layer: Vec<Vec<InteractionCell>>,
     pub interaction_layer: InteractionLayer,
     pub carcasses: Vec<Carcass>,
     pub high_seats: Vec<HighSeat>,
@@ -133,34 +131,9 @@ impl SimMetaData {
     
 }
 
+   
 
-
-
-     // Wrapper type for priority queue
-       #[derive(Debug, PartialEq)]
-       struct PriorityCell {
-           quality: f64,
-           position: (usize, usize),
-       }
-       
-       // Implement `Eq` for `PriorityCell`
-       impl Eq for PriorityCell {}
-       
-       // Implement `Ord` for `PriorityCell` (reverse for max-heap behavior)
-       impl Ord for PriorityCell {
-           fn cmp(&self, other: &Self) -> Ordering {
-               self.quality.partial_cmp(&other.quality).unwrap_or(Ordering::Equal).reverse()
-           }
-       }
-       
-       // Implement `PartialOrd` for `PriorityCell`
-       impl PartialOrd for PriorityCell {
-           fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-               Some(self.cmp(other))
-           }
-       }
-
-       #[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 struct HeapElement {
     priority: f64,
     coordinates: (usize, usize),
@@ -192,10 +165,6 @@ impl Ord for OrdFloat {
         self.partial_cmp(other).unwrap()
     }
 }
-
-
-
-
 
 
 #[derive(Debug, Clone)]

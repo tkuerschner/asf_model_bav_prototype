@@ -19,7 +19,7 @@
   "max_hr_cells": 1800,
   "min_hr_cells": 1000,
   "hr_border_fuzzy": 0.1,
-  "ap_max_jitter": 2,
+  "ap_max_jitter": 8,
   "ap_jitter_factor": 2,
   "min_ap": 4
 }
