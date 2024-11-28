@@ -94,6 +94,7 @@ pub fn copy_last_sim_to_active(folder_path: String) {
         let output_file = output_folder.join(file_name);
         fs::copy(path, output_file).expect("Failed to copy file to output folder");
     }
+    println!("Last simulation copied to active folder");
     }
 
     pub fn generate_iteration_sim_output_row(model: &mut Model){
