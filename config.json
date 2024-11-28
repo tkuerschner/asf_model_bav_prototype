@@ -1,7 +1,7 @@
 {
   "max_age": 4380,
   "max_known_cells": 60,
-  "runtime": 1095,
+  "runtime": 2190,
   "adult_survival_day": 0.9647,
   "piglet_survival_day": 0.9438,
   "min_stay_time": 1,
@@ -14,7 +14,7 @@
   "beta_c": 0.6,
   "carcass_contact_prob": 0.1,
   "p_symptomatic": 0.5,
-  "n_starting_groups": 10,
+  "n_starting_groups": 100,
   "seed": 1234,
   "max_hr_cells": 1800,
   "min_hr_cells": 1000,

@@ -589,7 +589,8 @@ pub fn get_closest_attraction_point_outside_territory(global_ap_list: &Vec<(usiz
     // if the ap is more then 500 cells away from the group core cell, return a random high quality cell outside the territory within 500 cells of the core cell
 
     if distance_squared(group.x, group.y, closest_ap.0, closest_ap.1) > 50 * 50 {
-        println!("AP is too far away from group core cell, selecting random cell within 50 cells of core cell");
+        //println!("AP is too far away from group core cell, selecting random cell within 50 cells of core cell");
+        log::info!("AP {}/{} is too far away from group {} core cell {} {}, selecting random cell within 50 cells of core cell",closest_ap.0, closest_ap.1, group.group_id, group.x, group.y);
         let mut free_cells = Vec::new();
         for (i, row) in global_ap_list.iter() {
             if distance_squared(group.x, group.y, *row, *i) <= 100 * 100 {
@@ -1079,7 +1080,7 @@ pub fn make_core_cell_an_ap(grid: &mut Vec<Vec<Cell>>, cx: usize, cy: usize) {
 pub fn dynamic_ap(grid: &mut Vec<Vec<Cell>>, groups: &mut Vec<Groups>, rng: &mut impl Rng, globals: &mut GlobalVariables) {
     
     //if globals.year > 2 && ((globals.day == 1 && globals.month == 7) || (globals.day == 1 && globals.month == 10)){
-    if globals.year > 0 && ((globals.day == 1 ) || (globals.day == 10 ) || (globals.day == 19 )){ // FIX ME: changed to 3 times a month
+    if globals.year > 0 && ((globals.day == 1 ) || (globals.day == 7 ) || (globals.day == 14 ) || (globals.day == 21 )){ // FIX ME: changed to 3 times a month // 4 times
        // println!("Dynamic AP placement");
        //log::info!("Dynamic AP placement");
        let mut groups_to_delete: Vec<usize> = Vec::new();

@@ -25,7 +25,7 @@ library(jsonlite)
 config <- list(
   max_age                           = 365 * 12, #u32
   max_known_cells                   = 60,       #usize
-  runtime                           = 365 * 3,  #usize
+  runtime                           = 365 * 6,  #usize
   adult_survival_day                = 0.9647,   #f64
   piglet_survival_day               = 0.9438,   #f64
   min_stay_time                     = 1,        #usize
@@ -38,7 +38,7 @@ config <- list(
   beta_c                            = 0.6,      #f64
   carcass_contact_prob              = 0.10,     #f64
   p_symptomatic                     = 0.5,      #f64
-  n_starting_groups                 = 10,       #usize
+  n_starting_groups                 = 100,       #usize
   seed                              = 1234,     #u64
   max_hr_cells                      = 1800,     #usize
   min_hr_cells                      = 1000,     #usize
