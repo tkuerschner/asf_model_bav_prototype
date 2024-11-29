@@ -223,3 +223,4 @@ pub fn copy_last_sim_to_active(folder_path: String) {
         let data = fs::read_to_string(filename).expect("Unable to read file");
         serde_json::from_str(&data).expect("Unable to parse JSON")
     }
+    

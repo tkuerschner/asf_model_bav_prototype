@@ -360,7 +360,7 @@ pub fn get_group_territory_size(grid: &Vec<Vec<Cell>>, group_id: usize) -> usize
 }
 
 
-// function to check if a groups territory is big enough and has ap
+
 
 pub fn check_group_territory_size_and_ap(model: &mut Model) {
     for group in model.groups.iter_mut() {
@@ -378,3 +378,6 @@ pub fn check_group_territory_size_and_ap(model: &mut Model) {
 
     model.groups.retain(|group| !group.mfd);
 }
+
+
+

@@ -620,7 +620,6 @@ pub fn list_all_attraction_points(grid: &Vec<Vec<Cell>>, global_ap_list: &mut Ve
             }
         }
     }
-  
 }
 
 
