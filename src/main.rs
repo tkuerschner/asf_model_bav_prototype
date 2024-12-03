@@ -1086,7 +1086,7 @@ struct Output {
 
 
 #[derive(Deserialize)]
-struct Config {
+pub struct Config {
     max_age: u32,
     max_known_cells: usize,
     runtime: usize,
