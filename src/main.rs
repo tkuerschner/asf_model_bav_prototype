@@ -765,7 +765,7 @@ impl Groups {
                             // Calculate the ellipsoid distance for the candidate cell
 
                             let mut rng = rand::thread_rng();
-                            let noise_factor = CONFIG.hr_border_fuzzy; // Low border fuzzyness
+                            let noise_factor = CONFIG.hr_border_fuzzy; //  border fuzzyness
                             
                             let distance_sq = (new_x as f32 - core_x as f32).powi(2) / radius_x.powi(2)
                                 + (new_y as f32 - core_y as f32).powi(2) / radius_y.powi(2)
@@ -1109,7 +1109,8 @@ pub struct Config {
     hr_border_fuzzy: f32,
     ap_max_jitter: isize,
     ap_jitter_factor: isize,
-    min_ap: i32
+    min_ap: i32,
+    excursion_probability: f64 
 
 }
 
@@ -1529,7 +1530,7 @@ fn main() {
       }
 
         //dispersal
-        if iteration > 100 {
+        if iteration > 15 {
 
         if model.global_variables.day == 1 {
            // println!("Dispersal triggered: year {}, month {}, day {}", global_variables.year, global_variables.month, global_variables.day);

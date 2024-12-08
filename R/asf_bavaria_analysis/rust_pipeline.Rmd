@@ -45,7 +45,8 @@ config <- list(
   hr_border_fuzzy                   = 0.1,      #f32
   ap_max_jitter                     = 8,        #isize
   ap_jitter_factor                  = 2,        #isize
-  min_ap                            = 4         #i32
+  min_ap                            = 4,        #i32
+  excursion_probability             = 0.1       #f64
 )
 
 write_json(config, "config.json", auto_unbox = TRUE, pretty = TRUE)

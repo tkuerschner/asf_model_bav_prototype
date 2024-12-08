@@ -29,6 +29,7 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
 
         //let realign_time = 3; //number of steps before realigning towards the target
 
+      
         while group.daily_movement_distance > 0  {
 
             
@@ -160,9 +161,9 @@ pub fn move_groups<R: Rng>( rng: &mut R, time: usize , model: &mut Model) {
                     if group.remaining_stay_time <= 0 { //if stay time around ap is used up get a new ap to move towards
                         
                         let new_target_cell;
-                        if rng.gen_range(1..100) > 95 { // 5% chance to choose a new ap outside the territory // DEBUG fix probability
+                        if rng.gen_range(0.0..1.0) <= CONFIG.excursion_probability { // chance to choose a new ap outside the territory 
                             
-                           
+                           //println!("Excursion mode activated for group {}", group.group_id);
                            let outside_ap = get_closest_attraction_point_outside_territory(&model.attract_points, group);
                             new_target_cell = outside_ap;
                          
